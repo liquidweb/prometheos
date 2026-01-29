@@ -1,0 +1,223 @@
+{{ define "body" }}
+    <!-- Search & Controls -->
+    <div class="controls-bar">
+      <form class="search-form" action="" method="post">
+        <div class="search-wrapper">
+          <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          <input type="text" 
+                 name="search-box" 
+                 class="search-input" 
+                 placeholder="Search alerts... (use ! to exclude)" 
+                 id="search-box"
+                 autocomplete="off" />
+        </div>
+        <button type="submit" class="btn btn-primary">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="11" cy="11" r="8"></circle>
+            <path d="m21 21-4.35-4.35"></path>
+          </svg>
+          Search
+        </button>
+      </form>
+      <div class="search-hint">
+        Tip: <code>!keyword</code> excludes results
+      </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs-container">
+      <button class="tab-btn active" onclick="openAlerts(event, 'active')">
+        Active Alerts
+        <span class="tab-badge" id="active-badge">0</span>
+      </button>
+      <button class="tab-btn" onclick="openAlerts(event, 'silenced')">
+        Silenced
+        <span class="tab-badge" id="silenced-badge">0</span>
+      </button>
+    </div>
+  </section>
+
+  <!-- Main Content -->
+  <main class="main-content">
+    <!-- Active Alerts Table -->
+    <div id="active" class="tab-panel">
+      <div class="table-container">
+        <table class="data-table" id="active-table">
+          <thead>
+            <tr>
+              <th class="sortable" data-sort="uid" onclick="sortTable('active-table', 0)">
+                <span>UID</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="account" onclick="sortTable('active-table', 1)">
+                <span>Account</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="host" onclick="sortTable('active-table', 2)">
+                <span>Hostname</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="location" onclick="sortTable('active-table', 3)">
+                <span>Location</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 4)">
+                <span>Prom Node</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 5)">
+                <span>Start Time</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th>Services</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {{ range $key, $value := . }}
+            {{if (ne $value.UID "TS")}}
+              {{if (ne $value.Silenced true)}}
+                <tr class="alert-row" data-uid="{{$value.UID}}">
+                  <td class="cell-mono">
+                    <span class="uid-badge">{{ $value.UID }}</span>
+                  </td>
+                  <td class="cell-text">
+                    <div class="cell-primary">{{$value.Account}}</div>
+                  </td>
+                  <td class="cell-text">
+                    <div class="hostname">
+                      <span class="status-dot critical"></span>
+                      {{$value.Hostname}}
+                    </div>
+                  </td>
+                  <td class="cell-text">{{$value.Location}}</td>
+                  <td class="cell-mono cell-muted">{{$value.Prom}}</td>
+                  <td class="cell-mono">
+                    <span class="time-badge">{{$value.Time}}</span>
+                  </td>
+                  <td class="cell-services">
+                    <div class="service-tags">
+                      {{range $value.Service}}
+                        <span class="service-tag">{{.}}</span>
+                      {{end}}
+                    </div>
+                  </td>
+                  <td class="cell-actions">
+                    <form action="" method="post" class="action-form">
+                      <input type="hidden" name="silence-alert" value="{{$value.Hostname}}" />
+                      <button type="submit" class="btn-action btn-silence" title="Silence this alert">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                          <line x1="12" y1="2" x2="12" y2="12"></line>
+                        </svg>
+                        Silence
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {{end}}
+            {{end}}
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="active-empty" style="display: none;">
+        <div class="empty-icon">✓</div>
+        <h3>All Clear</h3>
+        <p>No active alerts at this time</p>
+      </div>
+    </div>
+
+    <!-- Silenced Alerts Table -->
+    <div id="silenced" class="tab-panel" style="display: none;">
+      <div class="table-container">
+        <table class="data-table" id="silenced-table">
+          <thead>
+            <tr>
+              <th class="sortable" onclick="sortTable('silenced-table', 0)">
+                <span>UID</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 1)">
+                <span>Account</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 2)">
+                <span>Hostname</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 3)">
+                <span>Location</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 4)">
+                <span>Prom Node</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 5)">
+                <span>Start Time</span>
+                <span class="sort-icon">⇅</span>
+              </th>
+              <th>Services</th>
+              <th class="col-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+          {{ range $key, $value := . }}
+            {{if (ne $value.UID "TS")}}
+              {{if (eq $value.Silenced true)}}
+                <tr class="alert-row silenced-row" data-uid="{{$value.UID}}">
+                  <td class="cell-mono">
+                    <span class="uid-badge silenced">{{ $value.UID }}</span>
+                  </td>
+                  <td class="cell-text">
+                    <div class="cell-primary">{{$value.Account}}</div>
+                  </td>
+                  <td class="cell-text">
+                    <div class="hostname">
+                      <span class="status-dot silenced"></span>
+                      {{$value.Hostname}}
+                    </div>
+                  </td>
+                  <td class="cell-text">{{$value.Location}}</td>
+                  <td class="cell-mono cell-muted">{{$value.Prom}}</td>
+                  <td class="cell-mono">
+                    <span class="time-badge">{{$value.Time}}</span>
+                  </td>
+                  <td class="cell-services">
+                    <div class="service-tags">
+                      {{range $value.Service}}
+                        <span class="service-tag silenced">{{.}}</span>
+                      {{end}}
+                    </div>
+                  </td>
+                  <td class="cell-actions">
+                    <form action="" method="post" class="action-form">
+                      <input type="hidden" name="remove-silence" value="{{$value.Hostname}}" />
+                      <button type="submit" class="btn-action btn-unsilence" title="Unsilence this alert">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
+                          <path d="m9 12 2 2 4-4"></path>
+                        </svg>
+                        Unsilence
+                      </button>
+                    </form>
+                  </td>
+                </tr>
+              {{end}}
+            {{end}}
+          {{end}}
+          </tbody>
+        </table>
+      </div>
+      <div class="empty-state" id="silenced-empty" style="display: none;">
+        <div class="empty-icon">⏸</div>
+        <h3>No Silenced Alerts</h3>
+        <p>All alerts are currently active</p>
+      </div>
+    </div>
+  </main>
+{{ end }}

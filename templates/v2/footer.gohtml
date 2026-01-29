@@ -1,0 +1,528 @@
+{{ define "foot" }}
+  <style>
+    /* ========================================
+       DATA TABLE STYLES
+       ======================================== */
+    
+    .tab-panel {
+      animation: fadeIn 0.2s ease;
+    }
+    
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    
+    .table-container {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+    
+    .data-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    
+    .data-table thead {
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-default);
+    }
+    
+    .data-table th {
+      padding: 14px 16px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      user-select: none;
+    }
+    
+    .data-table th.sortable {
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .data-table th.sortable:hover {
+      color: var(--text-primary);
+      background: var(--bg-elevated);
+    }
+    
+    .data-table th.sortable span {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    
+    .sort-icon {
+      opacity: 0.4;
+      font-size: 12px;
+      transition: opacity 0.15s ease;
+    }
+    
+    .data-table th.sortable:hover .sort-icon,
+    .data-table th.sortable.asc .sort-icon,
+    .data-table th.sortable.desc .sort-icon {
+      opacity: 1;
+    }
+    
+    .data-table th.sortable.asc .sort-icon { content: '↑'; }
+    .data-table th.sortable.desc .sort-icon { content: '↓'; }
+    
+    .data-table th.sortable.asc .sort-icon::after { content: ' ↑'; }
+    .data-table th.sortable.desc .sort-icon::after { content: ' ↓'; }
+    
+    .data-table tbody tr {
+      border-bottom: 1px solid var(--border-subtle);
+      transition: background 0.1s ease;
+    }
+    
+    .data-table tbody tr:last-child {
+      border-bottom: none;
+    }
+    
+    .data-table tbody tr:hover {
+      background: var(--bg-tertiary);
+    }
+    
+    .data-table td {
+      padding: 14px 16px;
+      vertical-align: middle;
+    }
+    
+    /* Cell types */
+    .cell-mono {
+      font-family: var(--font-mono);
+      font-size: 12px;
+    }
+    
+    .cell-text {
+      color: var(--text-primary);
+    }
+    
+    .cell-muted {
+      color: var(--text-muted);
+    }
+    
+    .cell-primary {
+      font-weight: 500;
+    }
+    
+    /* UID Badge */
+    .uid-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    
+    .uid-badge.silenced {
+      background: var(--silenced-bg);
+      border-color: var(--silenced);
+      color: var(--silenced);
+    }
+    
+    /* Hostname with status dot */
+    .hostname {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+    }
+    
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    
+    .status-dot.critical {
+      background: var(--critical);
+      box-shadow: 0 0 8px var(--critical);
+      animation: pulse-critical 2s ease-in-out infinite;
+    }
+    
+    .status-dot.silenced {
+      background: var(--silenced);
+    }
+    
+    @keyframes pulse-critical {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    
+    /* Time badge */
+    .time-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    
+    /* Service tags */
+    .cell-services {
+      max-width: 300px;
+    }
+    
+    .service-tags {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+    
+    .service-tag {
+      display: inline-block;
+      padding: 4px 10px;
+      background: var(--critical-bg);
+      border: 1px solid rgba(255, 107, 107, 0.3);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--critical);
+    }
+    
+    .service-tag.silenced {
+      background: var(--silenced-bg);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: var(--silenced);
+    }
+    
+    /* Actions column */
+    .col-actions {
+      width: 120px;
+      text-align: right !important;
+    }
+    
+    .cell-actions {
+      text-align: right;
+    }
+    
+    .action-form {
+      display: inline;
+    }
+    
+    .btn-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-family: var(--font-sans);
+      font-size: 12px;
+      font-weight: 500;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+    
+    .btn-silence {
+      background: var(--silenced-bg);
+      border-color: rgba(139, 92, 246, 0.3);
+      color: var(--silenced);
+    }
+    
+    .btn-silence:hover {
+      background: var(--silenced);
+      color: white;
+      transform: translateY(-1px);
+    }
+    
+    .btn-unsilence {
+      background: var(--healthy-bg);
+      border-color: rgba(74, 222, 128, 0.3);
+      color: var(--healthy);
+    }
+    
+    .btn-unsilence:hover {
+      background: var(--healthy);
+      color: var(--bg-primary);
+      transform: translateY(-1px);
+    }
+    
+    /* Silenced row styling */
+    .silenced-row {
+      opacity: 0.7;
+    }
+    
+    .silenced-row:hover {
+      opacity: 1;
+    }
+    
+    /* Empty state */
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+    
+    .empty-icon {
+      font-size: 48px;
+      margin-bottom: 16px;
+      opacity: 0.5;
+    }
+    
+    .empty-state h3 {
+      font-size: 18px;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--text-primary);
+    }
+    
+    .empty-state p {
+      color: var(--text-muted);
+      font-size: 14px;
+    }
+    
+    /* ========================================
+       RESPONSIVE DESIGN
+       ======================================== */
+    
+    @media (max-width: 1200px) {
+      .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+    
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 0 16px;
+      }
+      
+      .status-overview {
+        padding: 16px;
+      }
+      
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .search-form {
+        min-width: 100%;
+      }
+      
+      .search-hint {
+        margin-left: 0;
+        margin-top: 8px;
+      }
+      
+      .main-content {
+        padding: 0 16px 16px;
+      }
+      
+      .table-container {
+        overflow-x: auto;
+      }
+      
+      .data-table {
+        min-width: 900px;
+      }
+    }
+    
+    /* ========================================
+       KEYBOARD FOCUS STYLES
+       ======================================== */
+    
+    .search-input:focus,
+    .btn:focus,
+    .btn-action:focus,
+    .tab-btn:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
+    
+    /* Skip link for accessibility */
+    .skip-link {
+      position: absolute;
+      top: -100%;
+      left: 16px;
+      padding: 8px 16px;
+      background: var(--accent);
+      color: white;
+      border-radius: var(--radius-md);
+      z-index: 1000;
+      transition: top 0.2s ease;
+    }
+    
+    .skip-link:focus {
+      top: 16px;
+    }
+  </style>
+
+  <script>
+    // ========================================
+    // TAB SWITCHING
+    // ========================================
+    
+    function openAlerts(evt, alertType) {
+      // Hide all tab panels
+      const panels = document.querySelectorAll('.tab-panel');
+      panels.forEach(panel => {
+        panel.style.display = 'none';
+      });
+      
+      // Remove active class from all tabs
+      const tabs = document.querySelectorAll('.tab-btn');
+      tabs.forEach(tab => {
+        tab.classList.remove('active');
+      });
+      
+      // Show selected panel and activate tab
+      document.getElementById(alertType).style.display = 'block';
+      evt.currentTarget.classList.add('active');
+    }
+    
+    // ========================================
+    // TABLE SORTING
+    // ========================================
+    
+    // Track sort state per table
+    const sortStates = {};
+    
+    function sortTable(tableId, columnIndex) {
+      const table = document.getElementById(tableId);
+      const tbody = table.querySelector('tbody');
+      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const th = table.querySelectorAll('th')[columnIndex];
+      
+      // Initialize sort state for this table/column
+      const stateKey = `${tableId}-${columnIndex}`;
+      if (!sortStates[stateKey]) {
+        sortStates[stateKey] = 'asc';
+      } else {
+        sortStates[stateKey] = sortStates[stateKey] === 'asc' ? 'desc' : 'asc';
+      }
+      
+      const direction = sortStates[stateKey];
+      
+      // Update header classes
+      table.querySelectorAll('th').forEach(header => {
+        header.classList.remove('asc', 'desc');
+      });
+      th.classList.add(direction);
+      
+      // Sort rows
+      rows.sort((a, b) => {
+        const aVal = a.cells[columnIndex].textContent.trim().toLowerCase();
+        const bVal = b.cells[columnIndex].textContent.trim().toLowerCase();
+        
+        // Check if values are dates (YYYY-MM-DD HH:MM:SS format)
+        const datePattern = /^\d{4}-\d{2}-\d{2}/;
+        if (datePattern.test(aVal) && datePattern.test(bVal)) {
+          const aDate = new Date(aVal.replace(' ', 'T'));
+          const bDate = new Date(bVal.replace(' ', 'T'));
+          return direction === 'asc' ? aDate - bDate : bDate - aDate;
+        }
+        
+        // Default string comparison
+        if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+        if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+        return 0;
+      });
+      
+      // Re-append sorted rows
+      rows.forEach(row => tbody.appendChild(row));
+    }
+    
+    // ========================================
+    // COUNT BADGES & EMPTY STATES
+    // ========================================
+    
+    function updateCounts() {
+      const activeTable = document.getElementById('active-table');
+      const silencedTable = document.getElementById('silenced-table');
+      
+      const activeCount = activeTable ? activeTable.querySelectorAll('tbody tr').length : 0;
+      const silencedCount = silencedTable ? silencedTable.querySelectorAll('tbody tr').length : 0;
+      
+      // Update badges
+      const activeBadge = document.getElementById('active-badge');
+      const silencedBadge = document.getElementById('silenced-badge');
+      const silencedCardCount = document.getElementById('silenced-count');
+      
+      if (activeBadge) activeBadge.textContent = activeCount;
+      if (silencedBadge) silencedBadge.textContent = silencedCount;
+      if (silencedCardCount) silencedCardCount.textContent = silencedCount;
+      
+      // Show/hide empty states
+      const activeEmpty = document.getElementById('active-empty');
+      const silencedEmpty = document.getElementById('silenced-empty');
+      const activeTableContainer = activeTable ? activeTable.closest('.table-container') : null;
+      const silencedTableContainer = silencedTable ? silencedTable.closest('.table-container') : null;
+      
+      if (activeCount === 0) {
+        if (activeTableContainer) activeTableContainer.style.display = 'none';
+        if (activeEmpty) activeEmpty.style.display = 'block';
+      } else {
+        if (activeTableContainer) activeTableContainer.style.display = 'block';
+        if (activeEmpty) activeEmpty.style.display = 'none';
+      }
+      
+      if (silencedCount === 0) {
+        if (silencedTableContainer) silencedTableContainer.style.display = 'none';
+        if (silencedEmpty) silencedEmpty.style.display = 'block';
+      } else {
+        if (silencedTableContainer) silencedTableContainer.style.display = 'block';
+        if (silencedEmpty) silencedEmpty.style.display = 'none';
+      }
+    }
+    
+    // ========================================
+    // KEYBOARD NAVIGATION
+    // ========================================
+    
+    document.addEventListener('keydown', function(e) {
+      // Alt+1 = Active tab, Alt+2 = Silenced tab
+      if (e.altKey && e.key === '1') {
+        e.preventDefault();
+        document.querySelector('.tab-btn').click();
+      }
+      if (e.altKey && e.key === '2') {
+        e.preventDefault();
+        document.querySelectorAll('.tab-btn')[1].click();
+      }
+      
+      // / to focus search
+      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+        document.getElementById('search-box').focus();
+      }
+      
+      // Escape to blur search
+      if (e.key === 'Escape') {
+        document.getElementById('search-box').blur();
+      }
+    });
+    
+    // ========================================
+    // INITIALIZATION
+    // ========================================
+    
+    document.addEventListener('DOMContentLoaded', function() {
+      updateCounts();
+      
+      // Auto-focus search on page load (optional)
+      // document.getElementById('search-box').focus();
+    });
+  </script>
+</body>
+</html>
+{{ end }}

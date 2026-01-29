@@ -1,0 +1,116 @@
+{{ define "body" }}
+
+
+
+    <table class="content">
+      <tr id="search-row">
+        <td colspan="7" id="searchbox-col">
+          <form id="search" class="" action="" method="post">
+            <input type="text" name="search-box" id="search-box" />
+
+            <input type="submit" value="Search" />
+          </form>
+        </td>
+      </tr>
+    </table>
+    <table class="tab">
+      <tr>
+        <td><button class="tablinks  active" onclick="openAlerts(event, 'active')">Active Alerts</button> </td>
+        <td><button class="tablinks" onclick="openAlerts(event, 'silenced')">Silenced Alerts</button> </td>
+      </tr>
+    </table>
+    <div id="active" class="myTabs">
+      <table>
+        <tr id="header">
+          <td>UID</td>
+          <td>Account</td>
+          <td>Host</td>
+          <td>Location</td>
+          <td>Prom Node</td>
+          <td>Start Time</td>
+          <td>Service</td>
+        </tr>
+      {{ range $key, $value := . }}
+        {{if (ne $value.UID "TS")}}
+          {{if (ne $value.Silenced true)}}
+            <tr>
+              <td id="uid">{{ $value.UID }}</td>
+              <td id="acct">{{$value.Account}}</td>
+              <td id="host">{{$value.Hostname}}</td>
+              <td id="loc">{{$value.Location}}</td>
+              <td id="prom">{{$value.Prom}}</td>
+              <td id="time">{{$value.Time}}</td>
+              <td id="service">{{range $value.Service}}{{.}}<br>{{end}}</td>
+              
+              <td id="silence">
+                <form id="silence" class="" action="" method="post">
+                  <input type="hidden" name="silence-alert" value="{{$value.Hostname}}" />
+                  <input type="submit" value="Silence" />
+                </form>
+              </td>      
+            </tr>
+          {{end}}
+        {{end}}
+      {{end}}
+      </table>
+    </div>
+    <div id="silenced" class="myTabs" style="display:none">
+      <table>
+        <tr id="header">
+          <td>UID</td>
+          <td>Account</td>
+          <td>Host</td>
+          <td>Location</td>
+          <td>Prom Node</td>
+          <td>Start Time</td>
+          <td>Service</td>
+        </tr>
+      {{ range $key, $value := . }}
+        {{if (ne $value.UID "TS")}}
+          {{if (eq $value.Silenced true)}}
+            <tr>
+              <td id="uid">{{ $value.UID }}</td>
+              <td id="acct">{{$value.Account}}</td>
+              <td id="host">{{$value.Hostname}}</td>
+              <td id="loc">{{$value.Location}}</td>
+              <td id="prom">{{$value.Prom}}</td>
+              <td id="time">{{$value.Time}}</td>
+              <td id="service">{{range $value.Service}}{{.}}<br>{{end}}</td>
+              
+              <td id="silence">
+                <form id="silence" class="" action="" method="post">
+                  <input type="hidden" name="remove-silence" value="{{$value.Hostname}}" />
+                  <input type="submit" value="Unsilence" />
+                </form>
+              </td>      
+            </tr>
+          {{end}}
+        {{end}}
+      {{end}}
+      </table>
+    </div>
+
+    <script>
+      function openAlerts(evt, alertType) {
+        var i, tabcontent, tablinks;
+        tabcontent = document.getElementsByClassName("myTabs");
+
+        for (i = 0; i < tabcontent.length; i++) {
+          tabcontent[i].style.display = "none";
+        }
+
+        tablinks = document.getElementsByClassName("tablinks");
+
+        for (i = 0; i < tablinks.length; i++) {
+          tablinks[i].className = tablinks[i].className.replace(" active", "");
+        }
+
+        document.getElementById(alertType).style.display = "block";
+
+        evt.currentTarget.className += " active";
+      }
+    </script>
+
+
+
+{{ end }}
