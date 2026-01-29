@@ -1,16 +1,16 @@
 {{ define "body" }}
     <!-- Search & Controls -->
     <div class="controls-bar">
-      <form class="search-form" action="" method="post">
+      <form class="search-form" action="" method="post" id="search-form">
         <div class="search-wrapper">
           <svg class="search-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <circle cx="11" cy="11" r="8"></circle>
             <path d="m21 21-4.35-4.35"></path>
           </svg>
-          <input type="text" 
-                 name="search-box" 
-                 class="search-input" 
-                 placeholder="Search alerts... (use ! to exclude)" 
+          <input type="text"
+                 name="search-box"
+                 class="search-input"
+                 placeholder="Search alerts... (use ! to exclude)"
                  id="search-box"
                  autocomplete="off" />
         </div>
@@ -22,8 +22,106 @@
           Search
         </button>
       </form>
+      <div class="filter-controls">
+        <button type="button" class="btn btn-secondary filter-btn" id="filter-toggle">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polygon points="22 3 2 3 10 12.46 10 19 14 21 14 12.46 22 3"></polygon>
+          </svg>
+          Filters
+          <span class="filter-badge" id="filter-badge">0</span>
+        </button>
+        <div class="export-dropdown">
+          <button type="button" class="btn btn-secondary" id="export-btn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+              <polyline points="7 10 12 15 17 10"></polyline>
+              <line x1="12" y1="15" x2="12" y2="3"></line>
+            </svg>
+            Export
+          </button>
+          <div class="export-menu" id="export-menu">
+            <button type="button" class="export-option" onclick="exportData('csv')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Export as CSV
+            </button>
+            <button type="button" class="export-option" onclick="exportData('json')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                <polyline points="14 2 14 8 20 8"></polyline>
+              </svg>
+              Export as JSON
+            </button>
+          </div>
+        </div>
+      </div>
       <div class="search-hint">
-        Tip: <code>!keyword</code> excludes results
+        Tip: <code>!keyword</code> excludes results &bull; Press <code>/</code> to focus
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    <div class="filters-panel" id="filters-panel">
+      <div class="filters-header">
+        <span class="filters-title">Advanced Filters</span>
+        <button type="button" class="btn btn-ghost btn-sm" onclick="clearAllFilters()">Clear All</button>
+      </div>
+      <div class="filters-grid">
+        <div class="filter-group">
+          <label class="filter-label">Location</label>
+          <select class="filter-select" id="filter-location" onchange="applyFilters()">
+            <option value="">All Locations</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Prom Node</label>
+          <select class="filter-select" id="filter-prom" onchange="applyFilters()">
+            <option value="">All Nodes</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Time Range</label>
+          <select class="filter-select" id="filter-time" onchange="applyFilters()">
+            <option value="">All Time</option>
+            <option value="1h">Last 1 Hour</option>
+            <option value="6h">Last 6 Hours</option>
+            <option value="24h">Last 24 Hours</option>
+            <option value="7d">Last 7 Days</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Service</label>
+          <select class="filter-select" id="filter-service" onchange="applyFilters()">
+            <option value="">All Services</option>
+          </select>
+        </div>
+      </div>
+      <div class="filter-actions">
+        <button type="button" class="btn btn-primary btn-sm" onclick="applyFilters()">Apply Filters</button>
+        <button type="button" class="btn btn-secondary btn-sm" onclick="toggleFiltersPanel()">Close</button>
+      </div>
+    </div>
+
+    <!-- Active Filters Tags -->
+    <div class="active-filters" id="active-filters"></div>
+
+    <!-- Bulk Actions Bar -->
+    <div class="bulk-actions-bar" id="bulk-actions">
+      <div class="bulk-info">
+        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this)">
+        <span><span class="bulk-count" id="selected-count">0</span> alerts selected</span>
+      </div>
+      <div class="bulk-buttons">
+        <button type="button" class="btn-bulk" onclick="bulkSilence()">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+          Silence Selected
+        </button>
+        <button type="button" class="btn-bulk" onclick="clearSelection()">Cancel</button>
       </div>
     </div>
 
@@ -41,36 +139,39 @@
   </section>
 
   <!-- Main Content -->
-  <main class="main-content">
+  <main class="main-content" id="main-content">
     <!-- Active Alerts Table -->
     <div id="active" class="tab-panel">
       <div class="table-container">
         <table class="data-table" id="active-table">
           <thead>
             <tr>
-              <th class="sortable" data-sort="uid" onclick="sortTable('active-table', 0)">
+              <th class="col-checkbox">
+                <input type="checkbox" class="row-checkbox-header" onchange="toggleAllInTable('active-table', this)">
+              </th>
+              <th class="sortable" data-sort="uid" onclick="sortTable('active-table', 1)">
                 <span>UID</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="account" onclick="sortTable('active-table', 1)">
+              <th class="sortable" data-sort="account" onclick="sortTable('active-table', 2)">
                 <span>Account</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="host" onclick="sortTable('active-table', 2)">
+              <th class="sortable" data-sort="host" onclick="sortTable('active-table', 3)">
                 <span>Hostname</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="location" onclick="sortTable('active-table', 3)">
+              <th class="sortable" data-sort="location" onclick="sortTable('active-table', 4)">
                 <span>Location</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 4)">
+              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 5)">
                 <span>Prom Node</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 5)">
+              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 6)">
                 <span>Start Time</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th>Services</th>
               <th class="col-actions">Actions</th>
@@ -80,7 +181,10 @@
           {{ range $key, $value := . }}
             {{if (ne $value.UID "TS")}}
               {{if (ne $value.Silenced true)}}
-                <tr class="alert-row" data-uid="{{$value.UID}}">
+                <tr class="alert-row" data-uid="{{$value.UID}}" data-location="{{$value.Location}}" data-prom="{{$value.Prom}}" data-time="{{$value.Time}}" data-services="{{range $i, $s := $value.Service}}{{if $i}},{{end}}{{$s}}{{end}}">
+                  <td class="cell-checkbox">
+                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}" onchange="updateSelectionCount()">
+                  </td>
                   <td class="cell-mono">
                     <span class="uid-badge">{{ $value.UID }}</span>
                   </td>
@@ -125,7 +229,12 @@
         </table>
       </div>
       <div class="empty-state" id="active-empty" style="display: none;">
-        <div class="empty-icon">✓</div>
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+            <polyline points="22 4 12 14.01 9 11.01"></polyline>
+          </svg>
+        </div>
         <h3>All Clear</h3>
         <p>No active alerts at this time</p>
       </div>
@@ -137,29 +246,32 @@
         <table class="data-table" id="silenced-table">
           <thead>
             <tr>
-              <th class="sortable" onclick="sortTable('silenced-table', 0)">
-                <span>UID</span>
-                <span class="sort-icon">⇅</span>
+              <th class="col-checkbox">
+                <input type="checkbox" class="row-checkbox-header" onchange="toggleAllInTable('silenced-table', this)">
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 1)">
-                <span>Account</span>
-                <span class="sort-icon">⇅</span>
+                <span>UID</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 2)">
-                <span>Hostname</span>
-                <span class="sort-icon">⇅</span>
+                <span>Account</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 3)">
-                <span>Location</span>
-                <span class="sort-icon">⇅</span>
+                <span>Hostname</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 4)">
-                <span>Prom Node</span>
-                <span class="sort-icon">⇅</span>
+                <span>Location</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 5)">
+                <span>Prom Node</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 6)">
                 <span>Start Time</span>
-                <span class="sort-icon">⇅</span>
+                <span class="sort-icon">&#8597;</span>
               </th>
               <th>Services</th>
               <th class="col-actions">Actions</th>
@@ -169,7 +281,10 @@
           {{ range $key, $value := . }}
             {{if (ne $value.UID "TS")}}
               {{if (eq $value.Silenced true)}}
-                <tr class="alert-row silenced-row" data-uid="{{$value.UID}}">
+                <tr class="alert-row silenced-row" data-uid="{{$value.UID}}" data-location="{{$value.Location}}" data-prom="{{$value.Prom}}" data-time="{{$value.Time}}" data-services="{{range $i, $s := $value.Service}}{{if $i}},{{end}}{{$s}}{{end}}">
+                  <td class="cell-checkbox">
+                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}" onchange="updateSelectionCount()">
+                  </td>
                   <td class="cell-mono">
                     <span class="uid-badge silenced">{{ $value.UID }}</span>
                   </td>
@@ -214,7 +329,12 @@
         </table>
       </div>
       <div class="empty-state" id="silenced-empty" style="display: none;">
-        <div class="empty-icon">⏸</div>
+        <div class="empty-icon">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+            <line x1="12" y1="2" x2="12" y2="12"></line>
+          </svg>
+        </div>
         <h3>No Silenced Alerts</h3>
         <p>All alerts are currently active</p>
       </div>

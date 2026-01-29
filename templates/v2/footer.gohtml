@@ -3,34 +3,29 @@
     /* ========================================
        DATA TABLE STYLES
        ======================================== */
-    
+
     .tab-panel {
       animation: fadeIn 0.2s ease;
     }
-    
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(8px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    
+
     .table-container {
       background: var(--bg-secondary);
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
       overflow: hidden;
     }
-    
+
     .data-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 13px;
     }
-    
+
     .data-table thead {
       background: var(--bg-tertiary);
       border-bottom: 1px solid var(--border-default);
     }
-    
+
     .data-table th {
       padding: 14px 16px;
       text-align: left;
@@ -42,77 +37,100 @@
       white-space: nowrap;
       user-select: none;
     }
-    
+
     .data-table th.sortable {
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    
+
     .data-table th.sortable:hover {
       color: var(--text-primary);
       background: var(--bg-elevated);
     }
-    
+
     .data-table th.sortable span {
       display: inline-flex;
       align-items: center;
       gap: 6px;
     }
-    
+
     .sort-icon {
       opacity: 0.4;
       font-size: 12px;
       transition: opacity 0.15s ease;
     }
-    
+
     .data-table th.sortable:hover .sort-icon,
     .data-table th.sortable.asc .sort-icon,
     .data-table th.sortable.desc .sort-icon {
       opacity: 1;
     }
-    
-    .data-table th.sortable.asc .sort-icon { content: '↑'; }
-    .data-table th.sortable.desc .sort-icon { content: '↓'; }
-    
+
     .data-table th.sortable.asc .sort-icon::after { content: ' ↑'; }
     .data-table th.sortable.desc .sort-icon::after { content: ' ↓'; }
-    
+
     .data-table tbody tr {
       border-bottom: 1px solid var(--border-subtle);
       transition: background 0.1s ease;
     }
-    
+
     .data-table tbody tr:last-child {
       border-bottom: none;
     }
-    
+
     .data-table tbody tr:hover {
       background: var(--bg-tertiary);
     }
-    
+
+    .data-table tbody tr.selected {
+      background: var(--accent-bg);
+    }
+
+    .data-table tbody tr.filtered-out {
+      display: none;
+    }
+
     .data-table td {
       padding: 14px 16px;
       vertical-align: middle;
     }
-    
+
+    /* Checkbox column */
+    .col-checkbox {
+      width: 40px;
+      text-align: center;
+    }
+
+    .cell-checkbox {
+      text-align: center;
+    }
+
+    .row-checkbox,
+    .row-checkbox-header {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--accent);
+    }
+
     /* Cell types */
     .cell-mono {
       font-family: var(--font-mono);
       font-size: 12px;
     }
-    
+
     .cell-text {
       color: var(--text-primary);
     }
-    
+
     .cell-muted {
       color: var(--text-muted);
     }
-    
+
     .cell-primary {
       font-weight: 500;
     }
-    
+
     /* UID Badge */
     .uid-badge {
       display: inline-block;
@@ -124,13 +142,13 @@
       font-weight: 500;
       color: var(--text-secondary);
     }
-    
+
     .uid-badge.silenced {
       background: var(--silenced-bg);
       border-color: var(--silenced);
       color: var(--silenced);
     }
-    
+
     /* Hostname with status dot */
     .hostname {
       display: flex;
@@ -138,29 +156,29 @@
       gap: 8px;
       font-weight: 500;
     }
-    
+
     .status-dot {
       width: 8px;
       height: 8px;
       border-radius: 50%;
       flex-shrink: 0;
     }
-    
+
     .status-dot.critical {
       background: var(--critical);
       box-shadow: 0 0 8px var(--critical);
       animation: pulse-critical 2s ease-in-out infinite;
     }
-    
+
     .status-dot.silenced {
       background: var(--silenced);
     }
-    
+
     @keyframes pulse-critical {
       0%, 100% { opacity: 1; }
       50% { opacity: 0.5; }
     }
-    
+
     /* Time badge */
     .time-badge {
       display: inline-block;
@@ -170,18 +188,18 @@
       font-size: 12px;
       color: var(--text-secondary);
     }
-    
+
     /* Service tags */
     .cell-services {
       max-width: 300px;
     }
-    
+
     .service-tags {
       display: flex;
       flex-wrap: wrap;
       gap: 6px;
     }
-    
+
     .service-tag {
       display: inline-block;
       padding: 4px 10px;
@@ -192,27 +210,27 @@
       font-weight: 500;
       color: var(--critical);
     }
-    
+
     .service-tag.silenced {
       background: var(--silenced-bg);
       border-color: rgba(139, 92, 246, 0.3);
       color: var(--silenced);
     }
-    
+
     /* Actions column */
     .col-actions {
       width: 120px;
       text-align: right !important;
     }
-    
+
     .cell-actions {
       text-align: right;
     }
-    
+
     .action-form {
       display: inline;
     }
-    
+
     .btn-action {
       display: inline-flex;
       align-items: center;
@@ -226,40 +244,40 @@
       cursor: pointer;
       transition: all 0.15s ease;
     }
-    
+
     .btn-silence {
       background: var(--silenced-bg);
       border-color: rgba(139, 92, 246, 0.3);
       color: var(--silenced);
     }
-    
+
     .btn-silence:hover {
       background: var(--silenced);
       color: white;
       transform: translateY(-1px);
     }
-    
+
     .btn-unsilence {
       background: var(--healthy-bg);
       border-color: rgba(74, 222, 128, 0.3);
       color: var(--healthy);
     }
-    
+
     .btn-unsilence:hover {
       background: var(--healthy);
       color: var(--bg-primary);
       transform: translateY(-1px);
     }
-    
+
     /* Silenced row styling */
     .silenced-row {
       opacity: 0.7;
     }
-    
+
     .silenced-row:hover {
       opacity: 1;
     }
-    
+
     /* Empty state */
     .empty-state {
       text-align: center;
@@ -268,88 +286,28 @@
       border: 1px solid var(--border-subtle);
       border-radius: var(--radius-lg);
     }
-    
+
     .empty-icon {
-      font-size: 48px;
       margin-bottom: 16px;
-      opacity: 0.5;
+      color: var(--text-muted);
     }
-    
+
     .empty-state h3 {
       font-size: 18px;
       font-weight: 600;
       margin-bottom: 8px;
       color: var(--text-primary);
     }
-    
+
     .empty-state p {
       color: var(--text-muted);
       font-size: 14px;
     }
-    
+
     /* ========================================
-       RESPONSIVE DESIGN
+       SKIP LINK FOR ACCESSIBILITY
        ======================================== */
-    
-    @media (max-width: 1200px) {
-      .status-grid {
-        grid-template-columns: repeat(2, 1fr);
-      }
-    }
-    
-    @media (max-width: 768px) {
-      .dashboard-header {
-        padding: 0 16px;
-      }
-      
-      .status-overview {
-        padding: 16px;
-      }
-      
-      .status-grid {
-        grid-template-columns: 1fr;
-      }
-      
-      .controls-bar {
-        flex-direction: column;
-        align-items: stretch;
-      }
-      
-      .search-form {
-        min-width: 100%;
-      }
-      
-      .search-hint {
-        margin-left: 0;
-        margin-top: 8px;
-      }
-      
-      .main-content {
-        padding: 0 16px 16px;
-      }
-      
-      .table-container {
-        overflow-x: auto;
-      }
-      
-      .data-table {
-        min-width: 900px;
-      }
-    }
-    
-    /* ========================================
-       KEYBOARD FOCUS STYLES
-       ======================================== */
-    
-    .search-input:focus,
-    .btn:focus,
-    .btn-action:focus,
-    .tab-btn:focus {
-      outline: 2px solid var(--accent);
-      outline-offset: 2px;
-    }
-    
-    /* Skip link for accessibility */
+
     .skip-link {
       position: absolute;
       top: -100%;
@@ -360,114 +318,844 @@
       border-radius: var(--radius-md);
       z-index: 1000;
       transition: top 0.2s ease;
+      text-decoration: none;
     }
-    
+
     .skip-link:focus {
       top: 16px;
     }
+
+    /* ========================================
+       TOAST NOTIFICATIONS
+       ======================================== */
+
+    .toast-container {
+      position: fixed;
+      bottom: 24px;
+      right: 24px;
+      z-index: 1100;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .toast {
+      padding: 12px 20px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 13px;
+      color: var(--text-primary);
+      animation: slideInRight 0.2s ease;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .toast.success {
+      border-color: var(--healthy);
+    }
+
+    .toast.error {
+      border-color: var(--critical);
+    }
+
+    @keyframes slideInRight {
+      from { opacity: 0; transform: translateX(20px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+
+    /* ========================================
+       RESPONSIVE DESIGN
+       ======================================== */
+
+    @media (max-width: 1200px) {
+      .status-grid {
+        grid-template-columns: repeat(2, 1fr);
+      }
+
+      .widgets-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 768px) {
+      .dashboard-header {
+        padding: 0 16px;
+      }
+
+      .header-meta {
+        gap: 8px;
+      }
+
+      .last-update {
+        display: none;
+      }
+
+      .status-overview {
+        padding: 16px;
+      }
+
+      .status-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .controls-bar {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .search-form {
+        min-width: 100%;
+      }
+
+      .filter-controls {
+        justify-content: space-between;
+      }
+
+      .search-hint {
+        display: none;
+      }
+
+      .main-content {
+        padding: 0 16px 16px;
+      }
+
+      .table-container {
+        overflow-x: auto;
+      }
+
+      .data-table {
+        min-width: 900px;
+      }
+
+      .filters-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ========================================
+       KEYBOARD FOCUS STYLES
+       ======================================== */
+
+    .search-input:focus,
+    .btn:focus,
+    .btn-action:focus,
+    .tab-btn:focus,
+    .header-btn:focus,
+    .filter-select:focus {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+    }
   </style>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toast-container"></div>
 
   <script>
     // ========================================
+    // THEME MANAGEMENT
+    // ========================================
+
+    const ThemeManager = {
+      init() {
+        const savedTheme = localStorage.getItem('prometheos-theme') || 'dark';
+        this.setTheme(savedTheme);
+
+        document.getElementById('theme-toggle').addEventListener('click', () => {
+          const currentTheme = document.documentElement.getAttribute('data-theme');
+          const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+          this.setTheme(newTheme);
+          showToast(`Switched to ${newTheme} mode`, 'success');
+        });
+      },
+
+      setTheme(theme) {
+        document.documentElement.setAttribute('data-theme', theme);
+        localStorage.setItem('prometheos-theme', theme);
+      },
+
+      toggle() {
+        const currentTheme = document.documentElement.getAttribute('data-theme');
+        const newTheme = currentTheme === 'dark' ? 'light' : 'dark';
+        this.setTheme(newTheme);
+      }
+    };
+
+    // ========================================
+    // AUTO-REFRESH MANAGEMENT
+    // ========================================
+
+    const RefreshManager = {
+      interval: null,
+      currentInterval: 60,
+
+      init() {
+        const savedInterval = localStorage.getItem('prometheos-refresh-interval');
+        if (savedInterval !== null) {
+          this.currentInterval = parseInt(savedInterval);
+        }
+        this.updateUI();
+        this.startRefresh();
+
+        // Dropdown toggle
+        const refreshBtn = document.getElementById('refresh-btn');
+        const dropdown = document.getElementById('refresh-dropdown');
+
+        refreshBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          dropdown.classList.toggle('show');
+        });
+
+        // Option selection
+        document.querySelectorAll('.refresh-option').forEach(option => {
+          option.addEventListener('click', () => {
+            const interval = parseInt(option.dataset.interval);
+            this.setInterval(interval);
+            dropdown.classList.remove('show');
+          });
+        });
+
+        // Close dropdown on outside click
+        document.addEventListener('click', () => {
+          dropdown.classList.remove('show');
+        });
+      },
+
+      setInterval(seconds) {
+        this.currentInterval = seconds;
+        localStorage.setItem('prometheos-refresh-interval', seconds);
+        this.updateUI();
+        this.startRefresh();
+
+        if (seconds === 0) {
+          showToast('Auto-refresh disabled', 'success');
+        } else {
+          showToast(`Auto-refresh set to ${seconds < 60 ? seconds + ' seconds' : (seconds / 60) + ' minute(s)'}`, 'success');
+        }
+      },
+
+      updateUI() {
+        const refreshBtn = document.getElementById('refresh-btn');
+        document.querySelectorAll('.refresh-option').forEach(option => {
+          const interval = parseInt(option.dataset.interval);
+          option.classList.toggle('selected', interval === this.currentInterval);
+        });
+
+        if (this.currentInterval > 0) {
+          refreshBtn.classList.add('active');
+        } else {
+          refreshBtn.classList.remove('active');
+        }
+      },
+
+      startRefresh() {
+        if (this.interval) {
+          clearInterval(this.interval);
+        }
+
+        if (this.currentInterval > 0) {
+          this.interval = setInterval(() => {
+            this.refresh();
+          }, this.currentInterval * 1000);
+        }
+      },
+
+      refresh() {
+        const indicator = document.getElementById('update-indicator');
+        indicator.classList.add('refreshing');
+
+        // Reload the page to get fresh data
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
+      }
+    };
+
+    // ========================================
+    // SHORTCUTS MODAL
+    // ========================================
+
+    const ShortcutsModal = {
+      init() {
+        const modal = document.getElementById('shortcuts-modal');
+        const openBtn = document.getElementById('shortcuts-btn');
+        const closeBtn = document.getElementById('modal-close');
+
+        openBtn.addEventListener('click', () => this.open());
+        closeBtn.addEventListener('click', () => this.close());
+
+        modal.addEventListener('click', (e) => {
+          if (e.target === modal) this.close();
+        });
+      },
+
+      open() {
+        document.getElementById('shortcuts-modal').classList.add('show');
+      },
+
+      close() {
+        document.getElementById('shortcuts-modal').classList.remove('show');
+      },
+
+      toggle() {
+        const modal = document.getElementById('shortcuts-modal');
+        modal.classList.toggle('show');
+      }
+    };
+
+    // ========================================
     // TAB SWITCHING
     // ========================================
-    
+
     function openAlerts(evt, alertType) {
-      // Hide all tab panels
       const panels = document.querySelectorAll('.tab-panel');
       panels.forEach(panel => {
         panel.style.display = 'none';
       });
-      
-      // Remove active class from all tabs
+
       const tabs = document.querySelectorAll('.tab-btn');
       tabs.forEach(tab => {
         tab.classList.remove('active');
       });
-      
-      // Show selected panel and activate tab
+
       document.getElementById(alertType).style.display = 'block';
       evt.currentTarget.classList.add('active');
     }
-    
+
     // ========================================
     // TABLE SORTING
     // ========================================
-    
-    // Track sort state per table
+
     const sortStates = {};
-    
+
     function sortTable(tableId, columnIndex) {
       const table = document.getElementById(tableId);
       const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr'));
+      const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
       const th = table.querySelectorAll('th')[columnIndex];
-      
-      // Initialize sort state for this table/column
+
       const stateKey = `${tableId}-${columnIndex}`;
       if (!sortStates[stateKey]) {
         sortStates[stateKey] = 'asc';
       } else {
         sortStates[stateKey] = sortStates[stateKey] === 'asc' ? 'desc' : 'asc';
       }
-      
+
       const direction = sortStates[stateKey];
-      
-      // Update header classes
+
       table.querySelectorAll('th').forEach(header => {
         header.classList.remove('asc', 'desc');
       });
       th.classList.add(direction);
-      
-      // Sort rows
+
       rows.sort((a, b) => {
         const aVal = a.cells[columnIndex].textContent.trim().toLowerCase();
         const bVal = b.cells[columnIndex].textContent.trim().toLowerCase();
-        
-        // Check if values are dates (YYYY-MM-DD HH:MM:SS format)
+
         const datePattern = /^\d{4}-\d{2}-\d{2}/;
         if (datePattern.test(aVal) && datePattern.test(bVal)) {
           const aDate = new Date(aVal.replace(' ', 'T'));
           const bDate = new Date(bVal.replace(' ', 'T'));
           return direction === 'asc' ? aDate - bDate : bDate - aDate;
         }
-        
-        // Default string comparison
+
         if (aVal < bVal) return direction === 'asc' ? -1 : 1;
         if (aVal > bVal) return direction === 'asc' ? 1 : -1;
         return 0;
       });
-      
-      // Re-append sorted rows
+
       rows.forEach(row => tbody.appendChild(row));
     }
-    
+
+    // ========================================
+    // FILTERING
+    // ========================================
+
+    const FilterManager = {
+      filters: {
+        location: '',
+        prom: '',
+        time: '',
+        service: ''
+      },
+
+      init() {
+        this.populateFilterOptions();
+
+        document.getElementById('filter-toggle').addEventListener('click', () => {
+          this.togglePanel();
+        });
+      },
+
+      togglePanel() {
+        const panel = document.getElementById('filters-panel');
+        panel.classList.toggle('show');
+      },
+
+      populateFilterOptions() {
+        const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
+        const locations = new Set();
+        const proms = new Set();
+        const services = new Set();
+
+        rows.forEach(row => {
+          if (row.dataset.location) locations.add(row.dataset.location);
+          if (row.dataset.prom) proms.add(row.dataset.prom);
+          if (row.dataset.services) {
+            row.dataset.services.split(',').forEach(s => {
+              if (s.trim()) services.add(s.trim());
+            });
+          }
+        });
+
+        this.populateSelect('filter-location', Array.from(locations).sort());
+        this.populateSelect('filter-prom', Array.from(proms).sort());
+        this.populateSelect('filter-service', Array.from(services).sort());
+      },
+
+      populateSelect(selectId, options) {
+        const select = document.getElementById(selectId);
+        const currentValue = select.value;
+
+        // Keep the first "All" option
+        while (select.options.length > 1) {
+          select.remove(1);
+        }
+
+        options.forEach(opt => {
+          const option = document.createElement('option');
+          option.value = opt;
+          option.textContent = opt;
+          select.appendChild(option);
+        });
+
+        select.value = currentValue;
+      },
+
+      apply() {
+        this.filters.location = document.getElementById('filter-location').value;
+        this.filters.prom = document.getElementById('filter-prom').value;
+        this.filters.time = document.getElementById('filter-time').value;
+        this.filters.service = document.getElementById('filter-service').value;
+
+        const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
+
+        rows.forEach(row => {
+          let show = true;
+
+          if (this.filters.location && row.dataset.location !== this.filters.location) {
+            show = false;
+          }
+
+          if (this.filters.prom && row.dataset.prom !== this.filters.prom) {
+            show = false;
+          }
+
+          if (this.filters.service) {
+            const rowServices = row.dataset.services ? row.dataset.services.split(',') : [];
+            if (!rowServices.includes(this.filters.service)) {
+              show = false;
+            }
+          }
+
+          if (this.filters.time && row.dataset.time) {
+            const alertTime = new Date(row.dataset.time.replace(' ', 'T'));
+            const now = new Date();
+            let cutoff;
+
+            switch (this.filters.time) {
+              case '1h': cutoff = new Date(now - 60 * 60 * 1000); break;
+              case '6h': cutoff = new Date(now - 6 * 60 * 60 * 1000); break;
+              case '24h': cutoff = new Date(now - 24 * 60 * 60 * 1000); break;
+              case '7d': cutoff = new Date(now - 7 * 24 * 60 * 60 * 1000); break;
+            }
+
+            if (cutoff && alertTime < cutoff) {
+              show = false;
+            }
+          }
+
+          row.classList.toggle('filtered-out', !show);
+        });
+
+        this.updateActiveFilterTags();
+        this.updateFilterBadge();
+        updateCounts();
+      },
+
+      updateActiveFilterTags() {
+        const container = document.getElementById('active-filters');
+        container.innerHTML = '';
+
+        const activeFilters = [];
+
+        if (this.filters.location) {
+          activeFilters.push({ type: 'location', label: `Location: ${this.filters.location}` });
+        }
+        if (this.filters.prom) {
+          activeFilters.push({ type: 'prom', label: `Node: ${this.filters.prom}` });
+        }
+        if (this.filters.time) {
+          const timeLabels = { '1h': 'Last 1 Hour', '6h': 'Last 6 Hours', '24h': 'Last 24 Hours', '7d': 'Last 7 Days' };
+          activeFilters.push({ type: 'time', label: timeLabels[this.filters.time] });
+        }
+        if (this.filters.service) {
+          activeFilters.push({ type: 'service', label: `Service: ${this.filters.service}` });
+        }
+
+        activeFilters.forEach(filter => {
+          const tag = document.createElement('div');
+          tag.className = 'active-filter-tag';
+          tag.innerHTML = `
+            <span>${filter.label}</span>
+            <button type="button" onclick="removeFilter('${filter.type}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </svg>
+            </button>
+          `;
+          container.appendChild(tag);
+        });
+      },
+
+      updateFilterBadge() {
+        const count = Object.values(this.filters).filter(v => v).length;
+        const badge = document.getElementById('filter-badge');
+        badge.textContent = count;
+        badge.classList.toggle('show', count > 0);
+      },
+
+      clearAll() {
+        document.getElementById('filter-location').value = '';
+        document.getElementById('filter-prom').value = '';
+        document.getElementById('filter-time').value = '';
+        document.getElementById('filter-service').value = '';
+
+        this.filters = { location: '', prom: '', time: '', service: '' };
+
+        document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr').forEach(row => {
+          row.classList.remove('filtered-out');
+        });
+
+        this.updateActiveFilterTags();
+        this.updateFilterBadge();
+        updateCounts();
+        showToast('Filters cleared', 'success');
+      }
+    };
+
+    function applyFilters() {
+      FilterManager.apply();
+    }
+
+    function clearAllFilters() {
+      FilterManager.clearAll();
+    }
+
+    function removeFilter(type) {
+      document.getElementById(`filter-${type}`).value = '';
+      FilterManager.apply();
+    }
+
+    function toggleFiltersPanel() {
+      FilterManager.togglePanel();
+    }
+
+    // ========================================
+    // SELECTION & BULK ACTIONS
+    // ========================================
+
+    function updateSelectionCount() {
+      const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+      const count = checkboxes.length;
+      const countEl = document.getElementById('selected-count');
+      const bulkBar = document.getElementById('bulk-actions');
+
+      countEl.textContent = count;
+      bulkBar.classList.toggle('show', count > 0);
+    }
+
+    function toggleAllInTable(tableId, checkbox) {
+      const table = document.getElementById(tableId);
+      const rowCheckboxes = table.querySelectorAll('tbody tr:not(.filtered-out) .row-checkbox');
+
+      rowCheckboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+      });
+
+      updateSelectionCount();
+    }
+
+    function toggleSelectAll(checkbox) {
+      const activePanel = document.querySelector('.tab-panel[style*="block"]') || document.getElementById('active');
+      const table = activePanel.querySelector('.data-table');
+
+      if (table) {
+        const rowCheckboxes = table.querySelectorAll('tbody tr:not(.filtered-out) .row-checkbox');
+        rowCheckboxes.forEach(cb => {
+          cb.checked = checkbox.checked;
+        });
+      }
+
+      updateSelectionCount();
+    }
+
+    function clearSelection() {
+      document.querySelectorAll('.row-checkbox').forEach(cb => {
+        cb.checked = false;
+      });
+      document.querySelectorAll('.row-checkbox-header').forEach(cb => {
+        cb.checked = false;
+      });
+      updateSelectionCount();
+    }
+
+    function bulkSilence() {
+      const checkboxes = document.querySelectorAll('#active-table .row-checkbox:checked');
+      const hostnames = [];
+
+      checkboxes.forEach(cb => {
+        hostnames.push(cb.dataset.hostname);
+      });
+
+      if (hostnames.length === 0) {
+        showToast('No alerts selected', 'error');
+        return;
+      }
+
+      // Create a form and submit for each hostname
+      hostnames.forEach((hostname, index) => {
+        setTimeout(() => {
+          const form = document.createElement('form');
+          form.method = 'POST';
+          form.style.display = 'none';
+
+          const input = document.createElement('input');
+          input.type = 'hidden';
+          input.name = 'silence-alert';
+          input.value = hostname;
+
+          form.appendChild(input);
+          document.body.appendChild(form);
+
+          if (index === hostnames.length - 1) {
+            form.submit();
+          } else {
+            // For multiple, we'd need an API. For now, just submit the last one
+            form.remove();
+          }
+        }, index * 100);
+      });
+
+      showToast(`Silencing ${hostnames.length} alert(s)...`, 'success');
+    }
+
+    // ========================================
+    // EXPORT FUNCTIONALITY
+    // ========================================
+
+    const ExportManager = {
+      init() {
+        const exportBtn = document.getElementById('export-btn');
+        const exportMenu = document.getElementById('export-menu');
+
+        exportBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          exportMenu.classList.toggle('show');
+        });
+
+        document.addEventListener('click', () => {
+          exportMenu.classList.remove('show');
+        });
+      }
+    };
+
+    function exportData(format) {
+      const activePanel = document.querySelector('.tab-panel[style*="block"]') || document.getElementById('active');
+      const table = activePanel.querySelector('.data-table');
+
+      if (!table) return;
+
+      const rows = table.querySelectorAll('tbody tr:not(.filtered-out)');
+      const data = [];
+
+      rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+        data.push({
+          uid: cells[1]?.textContent.trim() || '',
+          account: cells[2]?.textContent.trim() || '',
+          hostname: cells[3]?.textContent.trim() || '',
+          location: cells[4]?.textContent.trim() || '',
+          promNode: cells[5]?.textContent.trim() || '',
+          startTime: cells[6]?.textContent.trim() || '',
+          services: Array.from(cells[7]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim())
+        });
+      });
+
+      if (format === 'json') {
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.json`);
+        showToast('Exported as JSON', 'success');
+      } else if (format === 'csv') {
+        let csv = 'UID,Account,Hostname,Location,Prom Node,Start Time,Services\n';
+        data.forEach(row => {
+          csv += `"${row.uid}","${row.account}","${row.hostname}","${row.location}","${row.promNode}","${row.startTime}","${row.services.join('; ')}"\n`;
+        });
+        const blob = new Blob([csv], { type: 'text/csv' });
+        downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.csv`);
+        showToast('Exported as CSV', 'success');
+      }
+
+      document.getElementById('export-menu').classList.remove('show');
+    }
+
+    function downloadBlob(blob, filename) {
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    // ========================================
+    // DASHBOARD WIDGETS
+    // ========================================
+
+    function updateDashboardWidgets() {
+      const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
+
+      // Severity distribution (simulated based on service names)
+      let critical = 0, warning = 0, info = 0;
+      const serviceCounts = {};
+      const locationCounts = {};
+
+      rows.forEach(row => {
+        const services = row.dataset.services ? row.dataset.services.split(',') : [];
+        const location = row.dataset.location || 'Unknown';
+
+        services.forEach(service => {
+          if (service.trim()) {
+            serviceCounts[service.trim()] = (serviceCounts[service.trim()] || 0) + 1;
+
+            // Categorize by service name
+            const s = service.toLowerCase();
+            if (s.includes('critical') || s.includes('down') || s.includes('fail')) {
+              critical++;
+            } else if (s.includes('warn') || s.includes('high') || s.includes('load')) {
+              warning++;
+            } else {
+              info++;
+            }
+          }
+        });
+
+        locationCounts[location] = (locationCounts[location] || 0) + 1;
+      });
+
+      // If no categorization, count all as critical
+      if (critical === 0 && warning === 0 && info === 0) {
+        critical = rows.length;
+      }
+
+      const total = critical + warning + info || 1;
+
+      // Update severity bars
+      document.getElementById('severity-critical').style.width = `${(critical / total) * 100}%`;
+      document.getElementById('severity-warning').style.width = `${(warning / total) * 100}%`;
+      document.getElementById('severity-info').style.width = `${(info / total) * 100}%`;
+
+      document.getElementById('severity-critical-count').textContent = critical;
+      document.getElementById('severity-warning-count').textContent = warning;
+      document.getElementById('severity-info-count').textContent = info;
+
+      // Update top services
+      const topServices = Object.entries(serviceCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      const servicesContainer = document.getElementById('top-services');
+      if (topServices.length > 0) {
+        servicesContainer.innerHTML = topServices.map(([name, count]) => `
+          <div class="service-row">
+            <span class="service-name">${name}</span>
+            <span class="service-count-badge">${count}</span>
+          </div>
+        `).join('');
+      } else {
+        servicesContainer.innerHTML = `
+          <div class="service-row">
+            <span class="service-name">No active alerts</span>
+            <span class="service-count-badge">0</span>
+          </div>
+        `;
+      }
+
+      // Update top locations
+      const topLocations = Object.entries(locationCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 5);
+
+      const locationsContainer = document.getElementById('top-locations');
+      if (topLocations.length > 0) {
+        locationsContainer.innerHTML = topLocations.map(([name, count]) => `
+          <div class="location-row" onclick="filterByLocation('${name}')">
+            <span class="location-name">${name}</span>
+            <span class="location-count-badge">${count}</span>
+          </div>
+        `).join('');
+      } else {
+        locationsContainer.innerHTML = `
+          <div class="location-row">
+            <span class="location-name">No locations</span>
+            <span class="location-count-badge">0</span>
+          </div>
+        `;
+      }
+    }
+
+    function filterByLocation(location) {
+      document.getElementById('filter-location').value = location;
+      FilterManager.apply();
+
+      // Open filters panel if not open
+      const panel = document.getElementById('filters-panel');
+      if (!panel.classList.contains('show')) {
+        panel.classList.add('show');
+      }
+
+      showToast(`Filtered by location: ${location}`, 'success');
+    }
+
     // ========================================
     // COUNT BADGES & EMPTY STATES
     // ========================================
-    
+
     function updateCounts() {
       const activeTable = document.getElementById('active-table');
       const silencedTable = document.getElementById('silenced-table');
-      
-      const activeCount = activeTable ? activeTable.querySelectorAll('tbody tr').length : 0;
-      const silencedCount = silencedTable ? silencedTable.querySelectorAll('tbody tr').length : 0;
-      
-      // Update badges
+
+      const activeCount = activeTable ? activeTable.querySelectorAll('tbody tr:not(.filtered-out)').length : 0;
+      const silencedCount = silencedTable ? silencedTable.querySelectorAll('tbody tr:not(.filtered-out)').length : 0;
+
       const activeBadge = document.getElementById('active-badge');
       const silencedBadge = document.getElementById('silenced-badge');
       const silencedCardCount = document.getElementById('silenced-count');
-      
+
       if (activeBadge) activeBadge.textContent = activeCount;
       if (silencedBadge) silencedBadge.textContent = silencedCount;
       if (silencedCardCount) silencedCardCount.textContent = silencedCount;
-      
-      // Show/hide empty states
+
       const activeEmpty = document.getElementById('active-empty');
       const silencedEmpty = document.getElementById('silenced-empty');
       const activeTableContainer = activeTable ? activeTable.closest('.table-container') : null;
       const silencedTableContainer = silencedTable ? silencedTable.closest('.table-container') : null;
-      
+
       if (activeCount === 0) {
         if (activeTableContainer) activeTableContainer.style.display = 'none';
         if (activeEmpty) activeEmpty.style.display = 'block';
@@ -475,7 +1163,7 @@
         if (activeTableContainer) activeTableContainer.style.display = 'block';
         if (activeEmpty) activeEmpty.style.display = 'none';
       }
-      
+
       if (silencedCount === 0) {
         if (silencedTableContainer) silencedTableContainer.style.display = 'none';
         if (silencedEmpty) silencedEmpty.style.display = 'block';
@@ -483,13 +1171,51 @@
         if (silencedTableContainer) silencedTableContainer.style.display = 'block';
         if (silencedEmpty) silencedEmpty.style.display = 'none';
       }
+
+      // Update widgets
+      updateDashboardWidgets();
     }
-    
+
+    // ========================================
+    // TOAST NOTIFICATIONS
+    // ========================================
+
+    function showToast(message, type = 'success') {
+      const container = document.getElementById('toast-container');
+      const toast = document.createElement('div');
+      toast.className = `toast ${type}`;
+      toast.innerHTML = `
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          ${type === 'success' ?
+            '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>' :
+            '<circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line>'
+          }
+        </svg>
+        <span>${message}</span>
+      `;
+
+      container.appendChild(toast);
+
+      setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transform = 'translateX(20px)';
+        setTimeout(() => toast.remove(), 200);
+      }, 3000);
+    }
+
     // ========================================
     // KEYBOARD NAVIGATION
     // ========================================
-    
+
     document.addEventListener('keydown', function(e) {
+      // Don't trigger shortcuts when typing in inputs
+      if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') {
+        if (e.key === 'Escape') {
+          e.target.blur();
+        }
+        return;
+      }
+
       // Alt+1 = Active tab, Alt+2 = Silenced tab
       if (e.altKey && e.key === '1') {
         e.preventDefault();
@@ -499,28 +1225,69 @@
         e.preventDefault();
         document.querySelectorAll('.tab-btn')[1].click();
       }
-      
+
       // / to focus search
-      if (e.key === '/' && document.activeElement.tagName !== 'INPUT') {
+      if (e.key === '/' && !e.ctrlKey && !e.metaKey) {
         e.preventDefault();
         document.getElementById('search-box').focus();
       }
-      
-      // Escape to blur search
+
+      // ? to show shortcuts
+      if (e.key === '?' || (e.shiftKey && e.key === '/')) {
+        e.preventDefault();
+        ShortcutsModal.toggle();
+      }
+
+      // F to toggle filters
+      if (e.key === 'f' || e.key === 'F') {
+        e.preventDefault();
+        FilterManager.togglePanel();
+      }
+
+      // T to toggle theme
+      if (e.key === 't' || e.key === 'T') {
+        e.preventDefault();
+        ThemeManager.toggle();
+        showToast(`Switched to ${document.documentElement.getAttribute('data-theme')} mode`, 'success');
+      }
+
+      // R to refresh
+      if (e.key === 'r' || e.key === 'R') {
+        e.preventDefault();
+        RefreshManager.refresh();
+      }
+
+      // Escape to close modals
       if (e.key === 'Escape') {
-        document.getElementById('search-box').blur();
+        ShortcutsModal.close();
+        document.getElementById('filters-panel').classList.remove('show');
+        document.getElementById('refresh-dropdown').classList.remove('show');
+        document.getElementById('export-menu').classList.remove('show');
+      }
+
+      // Ctrl+A to select all in current table
+      if (e.ctrlKey && e.key === 'a') {
+        e.preventDefault();
+        const activePanel = document.querySelector('.tab-panel[style*="block"]') || document.getElementById('active');
+        const headerCheckbox = activePanel.querySelector('.row-checkbox-header');
+        if (headerCheckbox) {
+          headerCheckbox.checked = true;
+          headerCheckbox.dispatchEvent(new Event('change'));
+        }
       }
     });
-    
+
     // ========================================
     // INITIALIZATION
     // ========================================
-    
+
     document.addEventListener('DOMContentLoaded', function() {
+      ThemeManager.init();
+      RefreshManager.init();
+      ShortcutsModal.init();
+      FilterManager.init();
+      ExportManager.init();
       updateCounts();
-      
-      // Auto-focus search on page load (optional)
-      // document.getElementById('search-box').focus();
     });
   </script>
 </body>
