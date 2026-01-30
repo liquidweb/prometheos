@@ -1686,6 +1686,12 @@
         DensityManager.setDensity(densities[nextIndex]);
         showToast(`Switched to ${densities[nextIndex]} view`, 'success');
       }
+
+      // C to open column configuration
+      if (e.key === 'c' || e.key === 'C') {
+        e.preventDefault();
+        ColumnManager.open();
+      }
     });
 
     // ========================================
@@ -2603,6 +2609,500 @@
     };
 
     // ========================================
+    // COLUMN MANAGER
+    // ========================================
+
+    const ColumnManager = {
+      modal: null,
+      columns: [],
+      discoveredFields: { labels: [], annotations: [], core: [] },
+      profiles: {
+        default: ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'],
+        compact: ['checkbox', 'hostname', 'account', 'services', 'time', 'actions'],
+        detailed: ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'],
+        custom: []
+      },
+      currentProfile: 'default',
+
+      init() {
+        this.modal = document.getElementById('column-config-modal');
+        this.loadConfig();
+        this.applyColumns();
+
+        // Close modal on overlay click
+        if (this.modal) {
+          this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.close();
+          });
+        }
+
+        // Keyboard shortcut
+        document.addEventListener('keydown', (e) => {
+          if (e.key === 'Escape' && this.modal?.classList.contains('show')) {
+            this.close();
+          }
+        });
+      },
+
+      loadConfig() {
+        const saved = localStorage.getItem('prometheos_column_config');
+        if (saved) {
+          try {
+            const config = JSON.parse(saved);
+            this.columns = config.columns || this.profiles.default;
+            this.currentProfile = config.profile || 'default';
+            this.profiles.custom = config.customProfile || [];
+            this.discoveredFields = config.discoveredFields || { labels: [], annotations: [], core: [] };
+          } catch (e) {
+            this.columns = [...this.profiles.default];
+          }
+        } else {
+          this.columns = [...this.profiles.default];
+        }
+      },
+
+      saveConfig() {
+        localStorage.setItem('prometheos_column_config', JSON.stringify({
+          columns: this.columns,
+          profile: this.currentProfile,
+          customProfile: this.profiles.custom,
+          discoveredFields: this.discoveredFields
+        }));
+      },
+
+      open() {
+        if (!this.modal) return;
+        this.renderVisibleColumns();
+        this.renderApiFields();
+        this.updatePreview();
+        this.updateProfileButtons();
+        this.modal.classList.add('show');
+      },
+
+      close() {
+        if (this.modal) {
+          this.modal.classList.remove('show');
+        }
+      },
+
+      applyAndClose() {
+        this.applyColumns();
+        this.saveConfig();
+        this.close();
+      },
+
+      renderVisibleColumns() {
+        const list = document.getElementById('visible-columns-list');
+        const countBadge = document.getElementById('visible-columns-count');
+        if (!list) return;
+
+        const allColumns = this.getAllColumnDefinitions();
+
+        list.innerHTML = this.columns
+          .filter(colId => colId !== 'checkbox' && colId !== 'actions')
+          .map((colId, index) => {
+            const col = allColumns.find(c => c.id === colId) || { id: colId, name: colId, source: 'custom' };
+            return `
+              <div class="column-item selected" data-column-id="${col.id}" draggable="true">
+                <input type="checkbox" class="column-checkbox" checked onchange="ColumnManager.toggleColumn('${col.id}')">
+                <div class="column-info">
+                  <div class="column-name">${this.escapeHtml(col.name)}</div>
+                  <div class="column-source">${col.source}</div>
+                </div>
+                <div class="column-drag-handle">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="8" y1="6" x2="16" y2="6"></line>
+                    <line x1="8" y1="12" x2="16" y2="12"></line>
+                    <line x1="8" y1="18" x2="16" y2="18"></line>
+                  </svg>
+                </div>
+              </div>
+            `;
+          }).join('');
+
+        // Add available but not visible columns
+        const availableCols = allColumns.filter(col =>
+          !this.columns.includes(col.id) && col.id !== 'checkbox' && col.id !== 'actions'
+        );
+
+        if (availableCols.length > 0) {
+          list.innerHTML += availableCols.map(col => `
+            <div class="column-item" data-column-id="${col.id}">
+              <input type="checkbox" class="column-checkbox" onchange="ColumnManager.toggleColumn('${col.id}')">
+              <div class="column-info">
+                <div class="column-name">${this.escapeHtml(col.name)}</div>
+                <div class="column-source">${col.source}</div>
+              </div>
+              <div class="column-drag-handle">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="16" y2="6"></line>
+                  <line x1="8" y1="12" x2="16" y2="12"></line>
+                  <line x1="8" y1="18" x2="16" y2="18"></line>
+                </svg>
+              </div>
+            </div>
+          `).join('');
+        }
+
+        if (countBadge) {
+          countBadge.textContent = `${this.columns.length - 2} columns`; // -2 for checkbox and actions
+        }
+
+        this.initDragDrop();
+      },
+
+      getAllColumnDefinitions() {
+        const defaultCols = [
+          { id: 'uid', name: 'UID', source: 'core' },
+          { id: 'account', name: 'Account', source: 'core' },
+          { id: 'hostname', name: 'Hostname', source: 'core' },
+          { id: 'location', name: 'Location', source: 'core' },
+          { id: 'prom', name: 'Prom Node', source: 'core' },
+          { id: 'time', name: 'Start Time', source: 'core' },
+          { id: 'services', name: 'Services', source: 'core' }
+        ];
+
+        // Add discovered fields
+        const labelCols = this.discoveredFields.labels.map(f => ({
+          id: `label_${f.name}`, name: f.name, source: 'label'
+        }));
+        const annotationCols = this.discoveredFields.annotations.map(f => ({
+          id: `annotation_${f.name}`, name: f.name, source: 'annotation'
+        }));
+
+        return [...defaultCols, ...labelCols, ...annotationCols];
+      },
+
+      toggleColumn(colId) {
+        const idx = this.columns.indexOf(colId);
+        if (idx > -1) {
+          this.columns.splice(idx, 1);
+        } else {
+          // Insert before 'actions'
+          const actionsIdx = this.columns.indexOf('actions');
+          if (actionsIdx > -1) {
+            this.columns.splice(actionsIdx, 0, colId);
+          } else {
+            this.columns.push(colId);
+          }
+        }
+        this.currentProfile = 'custom';
+        this.profiles.custom = [...this.columns];
+        this.renderVisibleColumns();
+        this.updatePreview();
+        this.updateProfileButtons();
+      },
+
+      initDragDrop() {
+        const list = document.getElementById('visible-columns-list');
+        if (!list) return;
+
+        const items = list.querySelectorAll('.column-item[draggable="true"]');
+        items.forEach(item => {
+          item.addEventListener('dragstart', (e) => {
+            item.classList.add('dragging');
+            e.dataTransfer.setData('text/plain', item.dataset.columnId);
+          });
+          item.addEventListener('dragend', () => {
+            item.classList.remove('dragging');
+          });
+          item.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            const dragging = list.querySelector('.dragging');
+            if (dragging && item !== dragging) {
+              const rect = item.getBoundingClientRect();
+              const midY = rect.top + rect.height / 2;
+              if (e.clientY < midY) {
+                item.parentNode.insertBefore(dragging, item);
+              } else {
+                item.parentNode.insertBefore(dragging, item.nextSibling);
+              }
+            }
+          });
+          item.addEventListener('drop', () => {
+            this.updateColumnOrder();
+          });
+        });
+      },
+
+      updateColumnOrder() {
+        const list = document.getElementById('visible-columns-list');
+        if (!list) return;
+
+        const newOrder = ['checkbox'];
+        list.querySelectorAll('.column-item.selected').forEach(item => {
+          newOrder.push(item.dataset.columnId);
+        });
+        newOrder.push('actions');
+
+        this.columns = newOrder;
+        this.currentProfile = 'custom';
+        this.profiles.custom = [...this.columns];
+        this.updatePreview();
+        this.updateProfileButtons();
+      },
+
+      renderApiFields() {
+        // Update field grids
+        ['labels', 'annotations', 'core'].forEach(type => {
+          const grid = document.getElementById(`${type === 'labels' ? 'label' : type === 'annotations' ? 'annotation' : type}-fields-grid`);
+          const count = document.getElementById(`${type === 'labels' ? 'label' : type === 'annotations' ? 'annotation' : type}-fields-count`);
+
+          if (!grid) return;
+
+          const fields = type === 'core' ? this.getCoreFields() : this.discoveredFields[type];
+
+          if (count) count.textContent = fields.length;
+
+          if (fields.length === 0) {
+            grid.innerHTML = '<div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>';
+            return;
+          }
+
+          grid.innerHTML = fields.map(field => {
+            const colId = type === 'core' ? field.id : `${type === 'labels' ? 'label' : 'annotation'}_${field.name}`;
+            const isAdded = this.columns.includes(colId);
+            return `
+              <div class="api-field-card ${isAdded ? 'added' : ''}" data-field-id="${colId}">
+                <div class="api-field-header">
+                  <span class="api-field-name">${this.escapeHtml(field.name)}</span>
+                  <span class="api-field-type ${type === 'labels' ? 'label' : type === 'annotations' ? 'annotation' : 'core'}">${type === 'labels' ? 'Label' : type === 'annotations' ? 'Ann.' : 'Core'}</span>
+                </div>
+                ${field.sample ? `<div class="api-field-sample" title="${this.escapeHtml(field.sample)}">${this.escapeHtml(field.sample.substring(0, 40))}${field.sample.length > 40 ? '...' : ''}</div>` : ''}
+                <div class="api-field-actions">
+                  <button type="button" class="btn-add-column" ${isAdded ? 'disabled' : ''} onclick="ColumnManager.addFieldAsColumn('${colId}', '${this.escapeHtml(field.name)}', '${type}')">
+                    ${isAdded ? 'Added' : 'Add Column'}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('');
+        });
+      },
+
+      getCoreFields() {
+        return [
+          { id: 'uid', name: 'UID', sample: 'ABC123' },
+          { id: 'account', name: 'Account', sample: 'Production' },
+          { id: 'hostname', name: 'Hostname', sample: 'web-server-01' },
+          { id: 'location', name: 'Location', sample: 'US-East' },
+          { id: 'prom', name: 'Prom Node', sample: 'prometheus-1' },
+          { id: 'time', name: 'Start Time', sample: '2024-01-15 10:30' },
+          { id: 'services', name: 'Services', sample: 'nginx, php-fpm' }
+        ];
+      },
+
+      async discoverFields() {
+        const statusDot = document.getElementById('api-status-dot');
+        const statusText = document.getElementById('api-status-text');
+        const endpointInput = document.getElementById('api-endpoint');
+
+        if (statusDot) statusDot.classList.add('loading');
+        if (statusText) statusText.textContent = 'Scanning...';
+
+        try {
+          // Discover fields from current table data
+          const labels = new Map();
+          const annotations = new Map();
+
+          // Scan table rows for data attributes
+          document.querySelectorAll('.alert-row').forEach(row => {
+            // Get all data attributes
+            Object.keys(row.dataset).forEach(key => {
+              const value = row.dataset[key];
+              if (value && key !== 'uid') {
+                if (!labels.has(key)) {
+                  labels.set(key, { name: key, sample: value, count: 1 });
+                } else {
+                  labels.get(key).count++;
+                }
+              }
+            });
+          });
+
+          // Check for additional fields in cells
+          document.querySelectorAll('.alert-row td[data-field]').forEach(cell => {
+            const field = cell.dataset.field;
+            const value = cell.textContent.trim();
+            if (field && value) {
+              if (!labels.has(field)) {
+                labels.set(field, { name: field, sample: value, count: 1 });
+              }
+            }
+          });
+
+          // Simulated additional AlertManager fields that might be available
+          const commonLabels = [
+            { name: 'alertname', sample: 'HighCPUUsage' },
+            { name: 'severity', sample: 'critical' },
+            { name: 'instance', sample: '10.0.0.1:9090' },
+            { name: 'job', sample: 'node_exporter' },
+            { name: 'env', sample: 'production' },
+            { name: 'team', sample: 'infrastructure' },
+            { name: 'datacenter', sample: 'dc1' }
+          ];
+
+          const commonAnnotations = [
+            { name: 'summary', sample: 'High CPU usage detected' },
+            { name: 'description', sample: 'CPU usage is above 80% for 5 minutes' },
+            { name: 'runbook_url', sample: 'https://runbooks.example.com/high-cpu' },
+            { name: 'dashboard_url', sample: 'https://grafana.example.com/d/xyz' }
+          ];
+
+          // Merge discovered with common
+          commonLabels.forEach(l => {
+            if (!labels.has(l.name)) {
+              labels.set(l.name, l);
+            }
+          });
+
+          this.discoveredFields.labels = Array.from(labels.values());
+          this.discoveredFields.annotations = commonAnnotations;
+          this.discoveredFields.core = this.getCoreFields();
+
+          if (statusDot) statusDot.classList.remove('loading');
+          if (statusText) statusText.textContent = `Found ${this.discoveredFields.labels.length + this.discoveredFields.annotations.length} fields`;
+          if (endpointInput) endpointInput.value = window.location.origin + '/api/v1/alerts';
+
+          this.saveConfig();
+          this.renderApiFields();
+
+        } catch (error) {
+          if (statusDot) {
+            statusDot.classList.remove('loading');
+            statusDot.classList.add('error');
+          }
+          if (statusText) statusText.textContent = 'Error scanning fields';
+          console.error('Field discovery error:', error);
+        }
+      },
+
+      addFieldAsColumn(colId, fieldName, type) {
+        if (this.columns.includes(colId)) return;
+
+        // Add to discovered fields if not present
+        if (type === 'labels' && !this.discoveredFields.labels.find(f => f.name === fieldName)) {
+          this.discoveredFields.labels.push({ name: fieldName, sample: '' });
+        } else if (type === 'annotations' && !this.discoveredFields.annotations.find(f => f.name === fieldName)) {
+          this.discoveredFields.annotations.push({ name: fieldName, sample: '' });
+        }
+
+        // Insert before 'actions'
+        const actionsIdx = this.columns.indexOf('actions');
+        if (actionsIdx > -1) {
+          this.columns.splice(actionsIdx, 0, colId);
+        } else {
+          this.columns.push(colId);
+        }
+
+        this.currentProfile = 'custom';
+        this.profiles.custom = [...this.columns];
+        this.renderVisibleColumns();
+        this.renderApiFields();
+        this.updatePreview();
+        this.updateProfileButtons();
+      },
+
+      applyProfile(profileName) {
+        if (this.profiles[profileName]) {
+          this.columns = [...this.profiles[profileName]];
+          if (this.columns.length === 0) {
+            this.columns = [...this.profiles.default];
+          }
+        }
+        this.currentProfile = profileName;
+        this.renderVisibleColumns();
+        this.updatePreview();
+        this.updateProfileButtons();
+      },
+
+      updateProfileButtons() {
+        document.querySelectorAll('.profile-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.profile === this.currentProfile);
+        });
+      },
+
+      updatePreview() {
+        const headerRow = document.getElementById('preview-header-row');
+        const sampleRow = document.getElementById('preview-sample-row');
+        if (!headerRow || !sampleRow) return;
+
+        const allCols = this.getAllColumnDefinitions();
+        const visibleCols = this.columns.filter(id => id !== 'checkbox' && id !== 'actions');
+
+        headerRow.innerHTML = visibleCols.map(colId => {
+          const col = allCols.find(c => c.id === colId) || { name: colId };
+          return `<th>${this.escapeHtml(col.name)}</th>`;
+        }).join('');
+
+        // Generate sample data
+        const firstRow = document.querySelector('.alert-row');
+        sampleRow.innerHTML = visibleCols.map(colId => {
+          let value = '—';
+          if (firstRow) {
+            if (colId === 'uid') value = firstRow.querySelector('.uid-badge')?.textContent || '—';
+            else if (colId === 'account') value = firstRow.querySelector('.cell-primary')?.textContent || '—';
+            else if (colId === 'hostname') value = firstRow.querySelector('.hostname')?.textContent?.trim() || '—';
+            else if (colId === 'time') value = firstRow.querySelector('.time-badge')?.textContent || '—';
+            else if (colId === 'services') value = firstRow.querySelector('.service-tags')?.textContent?.trim().substring(0, 20) || '—';
+            else if (firstRow.dataset[colId]) value = firstRow.dataset[colId];
+            else if (colId.startsWith('label_')) value = firstRow.dataset[colId.replace('label_', '')] || '—';
+          }
+          return `<td>${this.escapeHtml(value)}</td>`;
+        }).join('');
+      },
+
+      applyColumns() {
+        const tables = ['active-table', 'silenced-table'];
+        const allCols = this.getAllColumnDefinitions();
+
+        tables.forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          // Update header visibility
+          const headers = table.querySelectorAll('thead th');
+          headers.forEach((th, index) => {
+            const colId = this.getColumnIdByIndex(index);
+            if (colId) {
+              th.style.display = this.columns.includes(colId) ? '' : 'none';
+            }
+          });
+
+          // Update cell visibility
+          table.querySelectorAll('tbody tr').forEach(row => {
+            row.querySelectorAll('td').forEach((td, index) => {
+              const colId = this.getColumnIdByIndex(index);
+              if (colId) {
+                td.style.display = this.columns.includes(colId) ? '' : 'none';
+              }
+            });
+          });
+        });
+      },
+
+      getColumnIdByIndex(index) {
+        const mapping = ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'];
+        return mapping[index] || null;
+      },
+
+      resetToDefault() {
+        this.columns = [...this.profiles.default];
+        this.currentProfile = 'default';
+        this.renderVisibleColumns();
+        this.updatePreview();
+        this.updateProfileButtons();
+      },
+
+      escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    };
+
+    // ========================================
     // INITIALIZATION
     // ========================================
 
@@ -2617,6 +3117,7 @@
       SectionManager.init();
       TimeRangeManager.init();
       IncidentManager.init();
+      ColumnManager.init();
 
       // Close status dropdowns on outside click
       document.addEventListener('click', (e) => {

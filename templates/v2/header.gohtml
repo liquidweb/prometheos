@@ -1712,6 +1712,489 @@
     }
 
     /* ========================================
+       COLUMN CONFIGURATION & API EXPLORER
+       ======================================== */
+
+    .column-config-modal {
+      max-width: 700px;
+    }
+
+    .column-config-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .column-config-section {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .column-config-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-config-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .column-config-section-badge {
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .column-list {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .column-item:hover {
+      border-color: var(--border-default);
+      background: var(--bg-tertiary);
+    }
+
+    .column-item.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .column-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .column-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .column-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .column-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .column-source {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .column-drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: var(--text-muted);
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .column-item:hover .column-drag-handle {
+      opacity: 1;
+    }
+
+    .column-item.dragging {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+
+    /* API Explorer Panel */
+    .api-explorer {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .api-explorer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .api-explorer-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .api-explorer-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .api-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--healthy);
+    }
+
+    .api-status-dot.loading {
+      background: var(--warning);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .api-status-dot.error {
+      background: var(--critical);
+    }
+
+    .api-explorer-content {
+      padding: 16px;
+    }
+
+    .api-endpoint-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .api-endpoint-input {
+      flex: 1;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+    }
+
+    .api-endpoint-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .api-endpoint-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .api-fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .api-field-card {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+    }
+
+    .api-field-card:hover {
+      border-color: var(--border-default);
+    }
+
+    .api-field-card.added {
+      border-color: var(--healthy);
+      background: var(--healthy-bg);
+    }
+
+    .api-field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .api-field-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .api-field-type {
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .api-field-type.label { background: var(--info-bg); color: var(--info); }
+    .api-field-type.annotation { background: var(--warning-bg); color: var(--warning); }
+    .api-field-type.core { background: var(--silenced-bg); color: var(--silenced); }
+
+    .api-field-sample {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+
+    .api-field-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: auto;
+    }
+
+    .btn-add-column {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-add-column:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-add-column:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Preview Table */
+    .column-preview {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .column-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .column-preview-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-table td {
+      padding: 10px 12px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .column-preview-table-wrapper {
+      overflow-x: auto;
+    }
+
+    /* Column Config Button */
+    .column-config-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Saved Column Profiles */
+    .column-profiles {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+    }
+
+    .profiles-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .profile-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .profile-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .profile-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .profile-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+    }
+
+    .modal-footer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* API Category Styles */
+    .api-field-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .api-category {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .api-category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .api-category-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .api-category-count {
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .api-fields-grid {
+      padding: 12px;
+    }
+
+    .api-fields-empty {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .column-profiles-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .column-profile-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .column-profile-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .column-profile-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* ========================================
        COLLAPSIBLE SECTIONS
        ======================================== */
 
@@ -2827,7 +3310,130 @@
               <span class="shortcut-description">Cycle view density</span>
               <div class="shortcut-keys"><span class="key">D</span></div>
             </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Configure columns</span>
+              <div class="shortcut-keys"><span class="key">C</span></div>
+            </div>
           </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Column Configuration Modal -->
+  <div class="modal-overlay" id="column-config-modal">
+    <div class="modal column-config-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Configure Columns</h2>
+        <button class="modal-close" onclick="ColumnManager.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="column-config-body">
+          <!-- Column Profiles -->
+          <div class="column-profiles">
+            <span class="profiles-label">Presets:</span>
+            <div class="profile-btns">
+              <button type="button" class="profile-btn active" data-profile="default" onclick="ColumnManager.applyProfile('default')">Default</button>
+              <button type="button" class="profile-btn" data-profile="compact" onclick="ColumnManager.applyProfile('compact')">Compact</button>
+              <button type="button" class="profile-btn" data-profile="detailed" onclick="ColumnManager.applyProfile('detailed')">Detailed</button>
+              <button type="button" class="profile-btn" data-profile="custom" onclick="ColumnManager.applyProfile('custom')">Custom</button>
+            </div>
+          </div>
+
+          <!-- Current Columns -->
+          <div class="column-config-section">
+            <div class="column-config-section-header">
+              <span class="column-config-section-title">Visible Columns</span>
+              <span class="column-config-section-badge" id="visible-columns-count">8 columns</span>
+            </div>
+            <div class="column-list" id="visible-columns-list">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <!-- API Explorer -->
+          <div class="api-explorer">
+            <div class="api-explorer-header">
+              <div class="api-explorer-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+                API Field Explorer
+              </div>
+              <div class="api-explorer-status">
+                <span class="api-status-dot" id="api-status-dot"></span>
+                <span id="api-status-text">Ready</span>
+              </div>
+            </div>
+            <div class="api-explorer-content">
+              <div class="api-endpoint-form">
+                <input type="text" class="api-endpoint-input" id="api-endpoint" placeholder="AlertManager API endpoint (auto-detected)" readonly>
+                <button type="button" class="btn btn-primary btn-sm" onclick="ColumnManager.discoverFields()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                  Discover Fields
+                </button>
+              </div>
+              <div class="api-field-categories" id="api-field-categories">
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Labels</span>
+                    <span class="api-category-count" id="label-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="label-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Annotations</span>
+                    <span class="api-category-count" id="annotation-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="annotation-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Core Fields</span>
+                    <span class="api-category-count" id="core-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="core-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column Preview -->
+          <div class="column-preview">
+            <div class="column-preview-title">Preview</div>
+            <div class="column-preview-table-wrapper">
+              <table class="column-preview-table" id="column-preview-table">
+                <thead>
+                  <tr id="preview-header-row"></tr>
+                </thead>
+                <tbody>
+                  <tr id="preview-sample-row"></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ColumnManager.resetToDefault()">Reset to Default</button>
+        <div class="modal-footer-actions">
+          <button type="button" class="btn btn-secondary" onclick="ColumnManager.close()">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="ColumnManager.applyAndClose()">Apply Changes</button>
         </div>
       </div>
     </div>
