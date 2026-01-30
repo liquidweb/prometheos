@@ -1,6 +1,6 @@
 {{ define "head" }}
 <!DOCTYPE html>
-<html lang="en" data-theme="dark">
+<html lang="en" data-theme="dark" data-density="comfortable">
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -1342,6 +1342,376 @@
     }
 
     /* ========================================
+       DENSITY/VIEW MODES
+       ======================================== */
+
+    /* Compact Mode */
+    [data-density="compact"] .status-grid {
+      gap: 8px;
+    }
+
+    [data-density="compact"] .status-card {
+      padding: 12px;
+    }
+
+    [data-density="compact"] .status-card-value {
+      font-size: 28px;
+    }
+
+    [data-density="compact"] .widgets-grid {
+      gap: 8px;
+    }
+
+    [data-density="compact"] .widget {
+      padding: 12px;
+    }
+
+    [data-density="compact"] .quick-stats {
+      padding: 10px;
+      gap: 8px;
+    }
+
+    [data-density="compact"] .quick-stat {
+      padding: 8px;
+    }
+
+    [data-density="compact"] .quick-stat-icon {
+      width: 32px;
+      height: 32px;
+    }
+
+    [data-density="compact"] .quick-stat-value {
+      font-size: 16px;
+    }
+
+    [data-density="compact"] .analytics-grid {
+      gap: 8px;
+    }
+
+    [data-density="compact"] .widget-lg {
+      padding: 12px;
+    }
+
+    [data-density="compact"] .data-table th,
+    [data-density="compact"] .data-table td {
+      padding: 8px 12px;
+    }
+
+    [data-density="compact"] .data-table {
+      font-size: 12px;
+    }
+
+    [data-density="compact"] .controls-bar {
+      padding: 10px 14px;
+    }
+
+    [data-density="compact"] .oldest-alert-card {
+      padding: 12px;
+    }
+
+    /* Spacious Mode */
+    [data-density="spacious"] .status-grid {
+      gap: 24px;
+    }
+
+    [data-density="spacious"] .status-card {
+      padding: 28px;
+    }
+
+    [data-density="spacious"] .status-card-value {
+      font-size: 44px;
+    }
+
+    [data-density="spacious"] .widgets-grid {
+      gap: 24px;
+    }
+
+    [data-density="spacious"] .widget {
+      padding: 28px;
+    }
+
+    [data-density="spacious"] .quick-stats {
+      padding: 24px;
+      gap: 20px;
+    }
+
+    [data-density="spacious"] .quick-stat {
+      padding: 16px;
+    }
+
+    [data-density="spacious"] .quick-stat-icon {
+      width: 48px;
+      height: 48px;
+    }
+
+    [data-density="spacious"] .quick-stat-value {
+      font-size: 22px;
+    }
+
+    [data-density="spacious"] .analytics-grid {
+      gap: 24px;
+    }
+
+    [data-density="spacious"] .widget-lg {
+      padding: 28px;
+    }
+
+    [data-density="spacious"] .data-table th,
+    [data-density="spacious"] .data-table td {
+      padding: 18px 20px;
+    }
+
+    [data-density="spacious"] .controls-bar {
+      padding: 20px 24px;
+    }
+
+    [data-density="spacious"] .oldest-alert-card {
+      padding: 24px;
+    }
+
+    /* View Toggle Dropdown */
+    .view-toggle {
+      position: relative;
+    }
+
+    .view-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 160px;
+      padding: 8px 0;
+      display: none;
+      z-index: 200;
+    }
+
+    .view-dropdown.show {
+      display: block;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .view-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .view-option:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .view-option.selected {
+      color: var(--accent);
+    }
+
+    .view-option .check {
+      width: 16px;
+      opacity: 0;
+    }
+
+    .view-option.selected .check {
+      opacity: 1;
+    }
+
+    .view-option-icon {
+      display: flex;
+      gap: 2px;
+    }
+
+    .view-option-icon span {
+      width: 4px;
+      background: currentColor;
+      border-radius: 1px;
+    }
+
+    .view-option-icon.compact span { height: 8px; }
+    .view-option-icon.comfortable span { height: 12px; }
+    .view-option-icon.spacious span { height: 16px; }
+
+    /* ========================================
+       SAVED FILTER PRESETS
+       ======================================== */
+
+    .presets-control {
+      position: relative;
+    }
+
+    .presets-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 280px;
+      padding: 0;
+      display: none;
+      z-index: 200;
+    }
+
+    .presets-dropdown.show {
+      display: block;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .presets-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .presets-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .presets-list {
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .preset-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 16px;
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .preset-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .preset-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .preset-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .preset-filters {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .preset-actions {
+      display: flex;
+      gap: 4px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .preset-item:hover .preset-actions {
+      opacity: 1;
+    }
+
+    .preset-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-elevated);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .preset-action-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .preset-action-btn.delete:hover {
+      color: var(--critical);
+      background: var(--critical-bg);
+    }
+
+    .presets-empty {
+      padding: 24px 16px;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 13px;
+    }
+
+    .presets-footer {
+      padding: 12px 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .save-preset-form {
+      display: flex;
+      gap: 8px;
+    }
+
+    .preset-name-input {
+      flex: 1;
+      padding: 8px 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+    }
+
+    .preset-name-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .preset-name-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .btn-save-preset {
+      padding: 8px 12px;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-md);
+      color: white;
+      font-size: 12px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-save-preset:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-save-preset:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* ========================================
        TABS
        ======================================== */
 
@@ -1643,6 +2013,41 @@
             </div>
           </div>
 
+          <!-- View density toggle -->
+          <div class="view-toggle">
+            <button class="header-btn" id="view-toggle-btn" title="Change view density">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </button>
+            <div class="view-dropdown" id="view-dropdown">
+              <div class="view-option" data-density="compact">
+                <span class="check">&#10003;</span>
+                <div class="view-option-icon compact">
+                  <span></span><span></span><span></span>
+                </div>
+                <span>Compact</span>
+              </div>
+              <div class="view-option selected" data-density="comfortable">
+                <span class="check">&#10003;</span>
+                <div class="view-option-icon comfortable">
+                  <span></span><span></span><span></span>
+                </div>
+                <span>Comfortable</span>
+              </div>
+              <div class="view-option" data-density="spacious">
+                <span class="check">&#10003;</span>
+                <div class="view-option-icon spacious">
+                  <span></span><span></span><span></span>
+                </div>
+                <span>Spacious</span>
+              </div>
+            </div>
+          </div>
+
           <!-- Theme toggle -->
           <button class="header-btn theme-btn" id="theme-toggle" title="Toggle light/dark mode">
             <svg class="sun-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -1734,6 +2139,10 @@
             <div class="shortcut-row">
               <span class="shortcut-description">Select all visible</span>
               <div class="shortcut-keys"><span class="key">Ctrl</span><span class="key">A</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Cycle view density</span>
+              <div class="shortcut-keys"><span class="key">D</span></div>
             </div>
           </div>
         </div>
