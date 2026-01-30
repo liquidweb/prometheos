@@ -1700,17 +1700,33 @@
 
     const SectionManager = {
       collapsed: {},
+      // Sections that should be collapsed by default
+      defaultCollapsed: ['distribution', 'metrics', 'charts', 'incidents'],
 
       init() {
         const saved = localStorage.getItem('prometheos-collapsed-sections');
-        this.collapsed = saved ? JSON.parse(saved) : {};
 
-        // Apply saved states
+        if (saved) {
+          // Use saved preferences
+          this.collapsed = JSON.parse(saved);
+        } else {
+          // First load: collapse all analytics sections by default
+          this.defaultCollapsed.forEach(section => {
+            this.collapsed[section] = true;
+          });
+        }
+
+        // Apply states
         Object.keys(this.collapsed).forEach(section => {
           if (this.collapsed[section]) {
             this.setCollapsed(section, true, false);
           }
         });
+
+        // Save initial state if first load
+        if (!saved) {
+          localStorage.setItem('prometheos-collapsed-sections', JSON.stringify(this.collapsed));
+        }
       },
 
       toggle(section) {
@@ -1810,14 +1826,59 @@
     const IncidentManager = {
       incidents: [],
       selectedAlerts: new Set(),
-      CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes
+      windowMinutes: 5,
+      CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes (default)
 
       init() {
+        // Load saved window setting
+        const savedWindow = localStorage.getItem('prometheos-incident-window');
+        if (savedWindow) {
+          this.windowMinutes = parseInt(savedWindow) || 5;
+          this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
+        }
+
+        // Update select element
+        const select = document.getElementById('incident-window-select');
+        if (select) {
+          select.value = this.windowMinutes.toString();
+        }
+
         const saved = localStorage.getItem('prometheos-incidents');
         this.incidents = saved ? JSON.parse(saved) : [];
         this.detectIncidents();
         this.render();
         this.updateExportCounts();
+      },
+
+      setWindow(minutes) {
+        this.windowMinutes = parseInt(minutes) || 5;
+        this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
+        localStorage.setItem('prometheos-incident-window', this.windowMinutes.toString());
+        showToast(`Incident window set to ${this.windowMinutes} minutes`, 'success');
+      },
+
+      rescan() {
+        // Preserve only "saved" incidents (ones with custom names or notes)
+        const savedIncidents = this.incidents.filter(inc => this.isIncidentSaved(inc));
+        this.incidents = savedIncidents;
+
+        // Re-detect and merge
+        this.detectIncidents();
+
+        const newCount = this.incidents.length - savedIncidents.length;
+        showToast(`Rescanned: found ${newCount} new incident(s), preserved ${savedIncidents.length} saved`, 'success');
+      },
+
+      isIncidentSaved(incident) {
+        // An incident is considered "saved" if:
+        // 1. It has notes
+        // 2. Its name was manually changed (doesn't start with "Incident ")
+        // 3. Its status was changed from 'investigating'
+        return (
+          (incident.notes && incident.notes.length > 0) ||
+          !incident.name.startsWith('Incident ') ||
+          incident.status !== 'investigating'
+        );
       },
 
       detectIncidents() {

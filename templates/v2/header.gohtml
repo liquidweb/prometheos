@@ -2262,6 +2262,39 @@
       gap: 8px;
     }
 
+    /* Incident Time Selector */
+    .incident-time-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    .incident-time-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .incident-time-select {
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .incident-time-select:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
     .section-content {
       transition: all 0.2s ease;
     }
@@ -3878,12 +3911,23 @@
           <span class="section-badge" id="incidents-badge">0 groups</span>
         </div>
         <div class="section-header-right" onclick="event.stopPropagation()">
-          <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.detectIncidents()">
+          <div class="incident-time-selector">
+            <label class="incident-time-label">Window:</label>
+            <select class="incident-time-select" id="incident-window-select" onchange="IncidentManager.setWindow(this.value)">
+              <option value="2">2 min</option>
+              <option value="5" selected>5 min</option>
+              <option value="10">10 min</option>
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="60">1 hour</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.rescan()" title="Rescan and clear unsaved incidents">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
               <path d="M21 3v5h-5"></path>
             </svg>
-            Re-detect
+            Rescan
           </button>
         </div>
       </div>
@@ -3914,7 +3958,7 @@
                 <path d="M2 12l10 5 10-5"></path>
               </svg>
             </div>
-            <span class="widget-empty-text">No incidents detected. Alerts within 5 minutes of each other are grouped.</span>
+            <span class="widget-empty-text">No incidents detected. Alerts within the configured time window are grouped.</span>
           </div>
         </div>
       </div>
