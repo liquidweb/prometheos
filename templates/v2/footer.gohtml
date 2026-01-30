@@ -667,6 +667,644 @@
     };
 
     // ========================================
+    // ALERT DETAILS DRAWER
+    // ========================================
+
+    const AlertDrawer = {
+      overlay: null,
+      currentAlert: null,
+      currentIndex: 0,
+      alerts: [],
+
+      init() {
+        this.overlay = document.getElementById('alert-drawer-overlay');
+
+        // Close on overlay click
+        if (this.overlay) {
+          this.overlay.addEventListener('click', (e) => {
+            if (e.target === this.overlay) this.close();
+          });
+        }
+
+        // Make alert rows clickable
+        this.bindRowClicks();
+
+        // Keyboard navigation
+        document.addEventListener('keydown', (e) => {
+          if (!this.overlay?.classList.contains('show')) return;
+
+          if (e.key === 'ArrowLeft' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            this.previous();
+          } else if (e.key === 'ArrowRight' || e.key === 'ArrowDown') {
+            e.preventDefault();
+            this.next();
+          }
+        });
+      },
+
+      bindRowClicks() {
+        document.querySelectorAll('.alert-row').forEach(row => {
+          row.addEventListener('click', (e) => {
+            // Don't open drawer if clicking on checkbox, button, or link
+            if (e.target.closest('input, button, a, .row-checkbox')) return;
+            this.openFromRow(row);
+          });
+        });
+      },
+
+      openFromRow(row) {
+        // Build alerts array from visible rows
+        const table = row.closest('table');
+        this.alerts = Array.from(table.querySelectorAll('tbody tr:not(.filtered-out)'));
+        this.currentIndex = this.alerts.indexOf(row);
+
+        this.populateFromRow(row);
+        this.open();
+      },
+
+      open() {
+        if (this.overlay) {
+          this.overlay.classList.add('show');
+          this.updateNavigation();
+        }
+      },
+
+      close() {
+        if (this.overlay) {
+          this.overlay.classList.remove('show');
+        }
+      },
+
+      populateFromRow(row) {
+        this.currentAlert = {
+          uid: row.querySelector('.uid-badge')?.textContent || '',
+          account: row.querySelector('.cell-primary')?.textContent || '',
+          hostname: row.querySelector('.hostname')?.textContent?.trim() || '',
+          location: row.dataset.location || '',
+          prom: row.dataset.prom || '',
+          time: row.dataset.time || '',
+          services: row.dataset.services || '',
+          isSilenced: row.closest('#silenced') !== null
+        };
+
+        // Populate fields
+        document.getElementById('drawer-hostname').textContent = this.currentAlert.hostname;
+        document.getElementById('drawer-uid').textContent = this.currentAlert.uid;
+        document.getElementById('drawer-account').textContent = this.currentAlert.account;
+        document.getElementById('drawer-hostname-full').textContent = this.currentAlert.hostname;
+        document.getElementById('drawer-location').textContent = this.currentAlert.location || '—';
+        document.getElementById('drawer-prom').textContent = this.currentAlert.prom || '—';
+        document.getElementById('drawer-time').textContent = this.currentAlert.time || '—';
+
+        // Calculate duration
+        if (this.currentAlert.time) {
+          const start = new Date(this.currentAlert.time.replace(' ', 'T'));
+          const now = new Date();
+          const diffMs = now - start;
+          const hours = Math.floor(diffMs / (1000 * 60 * 60));
+          const minutes = Math.floor((diffMs % (1000 * 60 * 60)) / (1000 * 60));
+          document.getElementById('drawer-duration').textContent =
+            hours > 0 ? `${hours}h ${minutes}m` : `${minutes}m`;
+        } else {
+          document.getElementById('drawer-duration').textContent = '—';
+        }
+
+        // Populate services
+        const servicesContainer = document.getElementById('drawer-services');
+        const services = this.currentAlert.services.split(',').filter(s => s.trim());
+        servicesContainer.innerHTML = services.length > 0
+          ? services.map(s => `<span class="drawer-service-tag">${this.escapeHtml(s.trim())}</span>`).join('')
+          : '<span class="drawer-info-value">No services</span>';
+
+        // Populate labels from data attributes
+        const labelsContainer = document.getElementById('drawer-labels');
+        const labels = [];
+        Object.keys(row.dataset).forEach(key => {
+          if (!['time', 'services', 'location', 'prom', 'uid'].includes(key)) {
+            labels.push({ key, value: row.dataset[key] });
+          }
+        });
+
+        if (labels.length > 0) {
+          labelsContainer.innerHTML = labels.map(l => `
+            <span class="drawer-label">
+              <span class="drawer-label-key">${this.escapeHtml(l.key)}:</span>
+              <span class="drawer-label-value">${this.escapeHtml(l.value)}</span>
+            </span>
+          `).join('');
+          document.getElementById('drawer-labels-section').style.display = 'block';
+        } else {
+          document.getElementById('drawer-labels-section').style.display = 'none';
+        }
+
+        // Update silence button
+        const silenceBtn = document.getElementById('drawer-silence-btn');
+        const silenceText = document.getElementById('drawer-silence-text');
+        if (this.currentAlert.isSilenced) {
+          silenceBtn.classList.remove('danger');
+          silenceBtn.classList.add('secondary');
+          silenceText.textContent = 'Unsilence Alert';
+        } else {
+          silenceBtn.classList.remove('secondary');
+          silenceBtn.classList.add('danger');
+          silenceText.textContent = 'Silence Alert';
+        }
+      },
+
+      updateNavigation() {
+        const prevBtn = document.getElementById('drawer-prev-btn');
+        const nextBtn = document.getElementById('drawer-next-btn');
+        const position = document.getElementById('drawer-position');
+
+        prevBtn.disabled = this.currentIndex === 0;
+        nextBtn.disabled = this.currentIndex === this.alerts.length - 1;
+        position.textContent = `${this.currentIndex + 1} of ${this.alerts.length}`;
+      },
+
+      previous() {
+        if (this.currentIndex > 0) {
+          this.currentIndex--;
+          this.populateFromRow(this.alerts[this.currentIndex]);
+          this.updateNavigation();
+        }
+      },
+
+      next() {
+        if (this.currentIndex < this.alerts.length - 1) {
+          this.currentIndex++;
+          this.populateFromRow(this.alerts[this.currentIndex]);
+          this.updateNavigation();
+        }
+      },
+
+      silenceAlert() {
+        if (!this.currentAlert) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.style.display = 'none';
+
+        const input = document.createElement('input');
+        input.name = this.currentAlert.isSilenced ? 'remove-silence' : 'silence-alert';
+        input.value = this.currentAlert.hostname;
+        form.appendChild(input);
+
+        document.body.appendChild(form);
+        form.submit();
+      },
+
+      copyAsText() {
+        if (!this.currentAlert) return;
+
+        const text = `Alert: ${this.currentAlert.hostname}
+UID: ${this.currentAlert.uid}
+Account: ${this.currentAlert.account}
+Location: ${this.currentAlert.location}
+Prom Node: ${this.currentAlert.prom}
+Started: ${this.currentAlert.time}
+Services: ${this.currentAlert.services}`;
+
+        navigator.clipboard.writeText(text).then(() => {
+          showToast('Alert details copied to clipboard', 'success');
+        }).catch(() => {
+          showToast('Failed to copy to clipboard', 'error');
+        });
+      },
+
+      copyAsJSON() {
+        if (!this.currentAlert) return;
+
+        const json = JSON.stringify(this.currentAlert, null, 2);
+        navigator.clipboard.writeText(json).then(() => {
+          showToast('Alert JSON copied to clipboard', 'success');
+        }).catch(() => {
+          showToast('Failed to copy to clipboard', 'error');
+        });
+      },
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    };
+
+    // ========================================
+    // BULK ACTIONS
+    // ========================================
+
+    const BulkActions = {
+      selectedRows: new Set(),
+      bar: null,
+
+      init() {
+        this.bar = document.getElementById('bulk-actions-bar');
+        this.bindCheckboxes();
+      },
+
+      bindCheckboxes() {
+        // Row checkboxes
+        document.querySelectorAll('.row-checkbox').forEach(checkbox => {
+          checkbox.addEventListener('change', (e) => {
+            e.stopPropagation();
+            const row = checkbox.closest('tr');
+            if (checkbox.checked) {
+              this.selectedRows.add(row);
+              row.classList.add('selected');
+            } else {
+              this.selectedRows.delete(row);
+              row.classList.remove('selected');
+            }
+            this.updateBar();
+          });
+        });
+
+        // Header checkboxes (select all)
+        document.querySelectorAll('.row-checkbox-header').forEach(headerCheckbox => {
+          headerCheckbox.addEventListener('change', () => {
+            const table = headerCheckbox.closest('table');
+            const checkboxes = table.querySelectorAll('tbody .row-checkbox');
+            checkboxes.forEach(checkbox => {
+              const row = checkbox.closest('tr');
+              if (!row.classList.contains('filtered-out')) {
+                checkbox.checked = headerCheckbox.checked;
+                if (headerCheckbox.checked) {
+                  this.selectedRows.add(row);
+                  row.classList.add('selected');
+                } else {
+                  this.selectedRows.delete(row);
+                  row.classList.remove('selected');
+                }
+              }
+            });
+            this.updateBar();
+          });
+        });
+      },
+
+      updateBar() {
+        const count = this.selectedRows.size;
+        document.getElementById('bulk-count').textContent = count;
+
+        if (count > 0) {
+          this.bar.classList.add('show');
+        } else {
+          this.bar.classList.remove('show');
+        }
+      },
+
+      clearSelection() {
+        this.selectedRows.forEach(row => {
+          row.classList.remove('selected');
+          const checkbox = row.querySelector('.row-checkbox');
+          if (checkbox) checkbox.checked = false;
+        });
+        this.selectedRows.clear();
+
+        // Uncheck header checkboxes
+        document.querySelectorAll('.row-checkbox-header').forEach(cb => cb.checked = false);
+
+        this.updateBar();
+      },
+
+      getSelectedData() {
+        return Array.from(this.selectedRows).map(row => ({
+          uid: row.querySelector('.uid-badge')?.textContent || '',
+          account: row.querySelector('.cell-primary')?.textContent || '',
+          hostname: row.querySelector('.hostname')?.textContent?.trim() || '',
+          location: row.dataset.location || '',
+          prom: row.dataset.prom || '',
+          time: row.dataset.time || '',
+          services: row.dataset.services || ''
+        }));
+      },
+
+      silenceSelected() {
+        const hostnames = this.getSelectedData().map(a => a.hostname);
+        if (hostnames.length === 0) return;
+
+        // For now, silence one at a time (could be batched with API)
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.style.display = 'none';
+
+        hostnames.forEach(hostname => {
+          const input = document.createElement('input');
+          input.name = 'silence-alert';
+          input.value = hostname;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        showToast(`Silencing ${hostnames.length} alert(s)...`, 'success');
+        form.submit();
+      },
+
+      unsilenceSelected() {
+        const hostnames = this.getSelectedData().map(a => a.hostname);
+        if (hostnames.length === 0) return;
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.style.display = 'none';
+
+        hostnames.forEach(hostname => {
+          const input = document.createElement('input');
+          input.name = 'remove-silence';
+          input.value = hostname;
+          form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        showToast(`Unsilencing ${hostnames.length} alert(s)...`, 'success');
+        form.submit();
+      },
+
+      createIncident() {
+        const data = this.getSelectedData();
+        if (data.length < 2) {
+          showToast('Select at least 2 alerts to create an incident', 'error');
+          return;
+        }
+
+        // Use IncidentManager to create incident
+        IncidentManager.createFromAlerts(data);
+        this.clearSelection();
+        showToast(`Created incident with ${data.length} alerts`, 'success');
+      },
+
+      copySelected() {
+        const data = this.getSelectedData();
+        if (data.length === 0) return;
+
+        const text = data.map(a =>
+          `${a.hostname} | ${a.account} | ${a.services} | ${a.time}`
+        ).join('\n');
+
+        navigator.clipboard.writeText(text).then(() => {
+          showToast(`Copied ${data.length} alert(s) to clipboard`, 'success');
+        }).catch(() => {
+          showToast('Failed to copy to clipboard', 'error');
+        });
+      }
+    };
+
+    // ========================================
+    // NEW ALERTS INDICATOR
+    // ========================================
+
+    const NewAlertsIndicator = {
+      banner: null,
+      knownAlerts: new Set(),
+      newAlerts: [],
+
+      init() {
+        this.banner = document.getElementById('new-alerts-banner');
+
+        // Build initial known alerts set
+        document.querySelectorAll('#active-table tbody tr').forEach(row => {
+          const id = this.getAlertId(row);
+          if (id) this.knownAlerts.add(id);
+        });
+
+        // Check for new alerts on refresh
+        this.startPolling();
+      },
+
+      getAlertId(row) {
+        const hostname = row.querySelector('.hostname')?.textContent?.trim();
+        const time = row.dataset.time;
+        return hostname && time ? `${hostname}-${time}` : null;
+      },
+
+      startPolling() {
+        // Check every refresh cycle if there are new alerts
+        // This integrates with the existing RefreshManager
+        const originalRefresh = RefreshManager.refresh.bind(RefreshManager);
+        RefreshManager.refresh = () => {
+          this.checkForNewAlerts();
+          originalRefresh();
+        };
+      },
+
+      checkForNewAlerts() {
+        // After page refresh, this will run on the new page
+        // For now, we detect new alerts client-side by comparing DOM
+        const currentAlerts = new Set();
+        document.querySelectorAll('#active-table tbody tr').forEach(row => {
+          const id = this.getAlertId(row);
+          if (id) {
+            currentAlerts.add(id);
+            if (!this.knownAlerts.has(id)) {
+              this.newAlerts.push(row);
+              row.classList.add('new-alert');
+            }
+          }
+        });
+
+        if (this.newAlerts.length > 0) {
+          this.show();
+        }
+      },
+
+      show() {
+        if (this.banner) {
+          document.getElementById('new-alerts-count').textContent = this.newAlerts.length;
+          this.banner.classList.add('show');
+        }
+      },
+
+      dismiss() {
+        if (this.banner) {
+          this.banner.classList.remove('show');
+          // Add new alerts to known set
+          this.newAlerts.forEach(row => {
+            const id = this.getAlertId(row);
+            if (id) this.knownAlerts.add(id);
+            row.classList.remove('new-alert');
+          });
+          this.newAlerts = [];
+        }
+      },
+
+      scrollToNew() {
+        if (this.newAlerts.length > 0) {
+          this.newAlerts[0].scrollIntoView({ behavior: 'smooth', block: 'center' });
+          this.dismiss();
+        }
+      }
+    };
+
+    // ========================================
+    // URL STATE MANAGER
+    // ========================================
+
+    const URLState = {
+      init() {
+        // Read state from URL on load
+        this.loadFromURL();
+
+        // Update URL when state changes (debounced)
+        this.setupListeners();
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', () => this.loadFromURL());
+      },
+
+      loadFromURL() {
+        const params = new URLSearchParams(window.location.search);
+
+        // Tab
+        const tab = params.get('tab');
+        if (tab === 'silenced') {
+          document.querySelectorAll('.tab-btn')[1]?.click();
+        }
+
+        // Search
+        const search = params.get('q');
+        if (search) {
+          const searchBox = document.getElementById('search-box');
+          if (searchBox) {
+            searchBox.value = search;
+            searchBox.dispatchEvent(new Event('input'));
+          }
+        }
+
+        // Time range
+        const range = params.get('range');
+        if (range && TimeRangeManager.rangeMs[range]) {
+          TimeRangeManager.setRange(range);
+        }
+
+        // Theme
+        const theme = params.get('theme');
+        if (theme === 'dark' || theme === 'light') {
+          ThemeManager.setTheme(theme);
+        }
+
+        // Density
+        const density = params.get('density');
+        if (['compact', 'comfortable', 'spacious'].includes(density)) {
+          DensityManager.setDensity(density);
+        }
+
+        // Filters
+        const location = params.get('location');
+        const account = params.get('account');
+        const service = params.get('service');
+        const prom = params.get('prom');
+
+        if (location || account || service || prom) {
+          // Open filters panel and set values
+          if (location) {
+            const el = document.getElementById('filter-location');
+            if (el) el.value = location;
+          }
+          if (account) {
+            const el = document.getElementById('filter-account');
+            if (el) el.value = account;
+          }
+          if (service) {
+            const el = document.getElementById('filter-service');
+            if (el) el.value = service;
+          }
+          if (prom) {
+            const el = document.getElementById('filter-prom');
+            if (el) el.value = prom;
+          }
+
+          // Apply filters
+          setTimeout(() => FilterManager.applyFilters(), 100);
+        }
+      },
+
+      setupListeners() {
+        // Search box
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+          searchBox.addEventListener('input', this.debounce(() => this.updateURL(), 500));
+        }
+
+        // Tab buttons
+        document.querySelectorAll('.tab-btn').forEach(btn => {
+          btn.addEventListener('click', () => this.updateURL());
+        });
+
+        // Filter changes
+        ['filter-location', 'filter-account', 'filter-service', 'filter-prom'].forEach(id => {
+          const el = document.getElementById(id);
+          if (el) {
+            el.addEventListener('change', () => this.updateURL());
+          }
+        });
+      },
+
+      updateURL() {
+        const params = new URLSearchParams();
+
+        // Tab
+        const activeTab = document.querySelector('.tab-btn.active');
+        if (activeTab?.textContent?.toLowerCase().includes('silenced')) {
+          params.set('tab', 'silenced');
+        }
+
+        // Search
+        const search = document.getElementById('search-box')?.value;
+        if (search) params.set('q', search);
+
+        // Time range
+        if (TimeRangeManager.current !== '24h') {
+          params.set('range', TimeRangeManager.current);
+        }
+
+        // Filters
+        const location = document.getElementById('filter-location')?.value;
+        const account = document.getElementById('filter-account')?.value;
+        const service = document.getElementById('filter-service')?.value;
+        const prom = document.getElementById('filter-prom')?.value;
+
+        if (location) params.set('location', location);
+        if (account) params.set('account', account);
+        if (service) params.set('service', service);
+        if (prom) params.set('prom', prom);
+
+        // Update URL without reload
+        const newURL = params.toString()
+          ? `${window.location.pathname}?${params.toString()}`
+          : window.location.pathname;
+
+        window.history.replaceState({}, '', newURL);
+      },
+
+      getShareableURL() {
+        this.updateURL();
+        return window.location.href;
+      },
+
+      copyShareableURL() {
+        const url = this.getShareableURL();
+        navigator.clipboard.writeText(url).then(() => {
+          showToast('Dashboard URL copied to clipboard', 'success');
+        }).catch(() => {
+          showToast('Failed to copy URL', 'error');
+        });
+      },
+
+      debounce(func, wait) {
+        let timeout;
+        return function executedFunction(...args) {
+          const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+          };
+          clearTimeout(timeout);
+          timeout = setTimeout(later, wait);
+        };
+      }
+    };
+
+    // ========================================
     // TAB SWITCHING
     // ========================================
 
@@ -1724,6 +2362,7 @@
         ShortcutsModal.close();
         HelpModal.close();
         ColumnManager.close();
+        AlertDrawer.close();
         document.getElementById('filters-panel').classList.remove('show');
         document.getElementById('refresh-dropdown').classList.remove('show');
         document.getElementById('export-menu').classList.remove('show');
@@ -2020,6 +2659,40 @@
           notes: [],
           createdAt: new Date().toISOString()
         };
+      },
+
+      createFromAlerts(alertsData) {
+        // Create incident from bulk-selected alerts
+        const alerts = alertsData.map(a => ({
+          id: a.hostname + '-' + a.time,
+          hostname: a.hostname,
+          account: a.account,
+          time: new Date(a.time?.replace(' ', 'T') || Date.now()),
+          timeStr: a.time,
+          services: a.services,
+          location: a.location
+        }));
+
+        alerts.sort((a, b) => a.time - b.time);
+
+        const incident = {
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+          name: `Manual Incident ${new Date().toLocaleString()}`,
+          status: 'investigating',
+          alerts: alerts,
+          startTime: alerts[0]?.time?.toISOString() || new Date().toISOString(),
+          endTime: alerts[alerts.length - 1]?.time?.toISOString() || new Date().toISOString(),
+          notes: [],
+          createdAt: new Date().toISOString()
+        };
+
+        this.incidents.push(incident);
+        this.save();
+        this.render();
+        this.updateIncidentCounts();
+
+        // Expand incidents section
+        SectionManager.setCollapsed('incidents', false);
       },
 
       mergeIncidents(newIncidents) {
@@ -3249,6 +3922,10 @@
       IncidentManager.init();
       ColumnManager.init();
       HelpModal.init();
+      AlertDrawer.init();
+      BulkActions.init();
+      NewAlertsIndicator.init();
+      URLState.init();
 
       // Close status dropdowns on outside click
       document.addEventListener('click', (e) => {

@@ -2414,6 +2414,477 @@
     }
 
     /* ========================================
+       ALERT DETAILS DRAWER
+       ======================================== */
+
+    .alert-drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 1000;
+    }
+
+    .alert-drawer-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .alert-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 520px;
+      max-width: 90vw;
+      height: 100vh;
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border-subtle);
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-drawer-overlay.show .alert-drawer {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-secondary);
+    }
+
+    .drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .drawer-title .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--critical);
+      animation: pulse 2s infinite;
+    }
+
+    .drawer-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .drawer-section {
+      margin-bottom: 24px;
+    }
+
+    .drawer-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .drawer-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .drawer-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .drawer-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .drawer-info-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .drawer-info-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .drawer-info-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .drawer-info-value.mono {
+      font-family: monospace;
+      font-size: 12px;
+      background: var(--bg-tertiary);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .drawer-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .drawer-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+    }
+
+    .drawer-label-key {
+      color: var(--text-muted);
+    }
+
+    .drawer-label-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .drawer-services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .drawer-service-tag {
+      padding: 4px 10px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .drawer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drawer-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-action-btn.primary {
+      background: var(--accent);
+      border: none;
+      color: white;
+    }
+
+    .drawer-action-btn.primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .drawer-action-btn.secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      color: var(--text-primary);
+    }
+
+    .drawer-action-btn.secondary:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .drawer-action-btn.danger {
+      background: var(--critical-bg);
+      border: 1px solid var(--critical);
+      color: var(--critical);
+    }
+
+    .drawer-action-btn.danger:hover {
+      background: var(--critical);
+      color: white;
+    }
+
+    .drawer-copy-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .drawer-copy-group .drawer-action-btn {
+      flex: 1;
+    }
+
+    .drawer-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-secondary);
+    }
+
+    .drawer-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-nav-btn:hover:not(:disabled) {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .drawer-nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .drawer-nav-position {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========================================
+       BULK ACTIONS BAR
+       ======================================== */
+
+    .bulk-actions-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      z-index: 900;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .bulk-actions-bar.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .bulk-actions-count {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .bulk-actions-count .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      background: var(--accent);
+      border-radius: 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bulk-actions-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bulk-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .bulk-action-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-strong);
+    }
+
+    .bulk-action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .bulk-action-btn.primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .bulk-actions-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .bulk-actions-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* ========================================
+       NEW ALERTS INDICATOR
+       ======================================== */
+
+    .new-alerts-banner {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--accent);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 800;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .new-alerts-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .new-alerts-banner:hover {
+      filter: brightness(1.1);
+    }
+
+    .new-alerts-banner svg {
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .new-alerts-dismiss {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .new-alerts-dismiss:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Clickable alert rows */
+    .alert-row {
+      cursor: pointer;
+    }
+
+    .alert-row:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .alert-row.selected {
+      background: var(--accent-bg);
+    }
+
+    /* ========================================
        COLLAPSIBLE SECTIONS
        ======================================== */
 
@@ -3918,6 +4389,178 @@
         <button type="button" class="btn btn-primary" onclick="HelpModal.close()">Got it</button>
       </div>
     </div>
+  </div>
+
+  <!-- Alert Details Drawer -->
+  <div class="alert-drawer-overlay" id="alert-drawer-overlay">
+    <div class="alert-drawer" id="alert-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span class="status-dot"></span>
+          <span id="drawer-hostname">Alert Details</span>
+        </div>
+        <button class="drawer-close" onclick="AlertDrawer.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-section">
+          <div class="drawer-section-title">Basic Information</div>
+          <div class="drawer-info-grid">
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">UID</span>
+              <span class="drawer-info-value mono" id="drawer-uid">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Account</span>
+              <span class="drawer-info-value" id="drawer-account">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Hostname</span>
+              <span class="drawer-info-value" id="drawer-hostname-full">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Location</span>
+              <span class="drawer-info-value" id="drawer-location">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Prom Node</span>
+              <span class="drawer-info-value" id="drawer-prom">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Started</span>
+              <span class="drawer-info-value" id="drawer-time">—</span>
+            </div>
+            <div class="drawer-info-item full-width">
+              <span class="drawer-info-label">Duration</span>
+              <span class="drawer-info-value" id="drawer-duration">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="drawer-section-title">Services</div>
+          <div class="drawer-services" id="drawer-services">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="drawer-section" id="drawer-labels-section">
+          <div class="drawer-section-title">Labels</div>
+          <div class="drawer-labels" id="drawer-labels">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="drawer-section-title">Quick Actions</div>
+          <div class="drawer-actions">
+            <button class="drawer-action-btn danger" id="drawer-silence-btn" onclick="AlertDrawer.silenceAlert()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+              </svg>
+              <span id="drawer-silence-text">Silence Alert</span>
+            </button>
+            <div class="drawer-copy-group">
+              <button class="drawer-action-btn secondary" onclick="AlertDrawer.copyAsText()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy Text
+              </button>
+              <button class="drawer-action-btn secondary" onclick="AlertDrawer.copyAsJSON()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                Copy JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <div class="drawer-nav">
+          <button class="drawer-nav-btn" id="drawer-prev-btn" onclick="AlertDrawer.previous()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Previous
+          </button>
+          <span class="drawer-nav-position" id="drawer-position">1 of 10</span>
+          <button class="drawer-nav-btn" id="drawer-next-btn" onclick="AlertDrawer.next()">
+            Next
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  <div class="bulk-actions-bar" id="bulk-actions-bar">
+    <div class="bulk-actions-count">
+      <span class="count-badge" id="bulk-count">0</span>
+      <span>alerts selected</span>
+    </div>
+    <div class="bulk-actions-btns">
+      <button class="bulk-action-btn" onclick="BulkActions.silenceSelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+          <line x1="12" y1="2" x2="12" y2="12"></line>
+        </svg>
+        Silence
+      </button>
+      <button class="bulk-action-btn" onclick="BulkActions.unsilenceSelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Unsilence
+      </button>
+      <button class="bulk-action-btn" onclick="BulkActions.createIncident()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+        Create Incident
+      </button>
+      <button class="bulk-action-btn primary" onclick="BulkActions.copySelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      </button>
+    </div>
+    <button class="bulk-actions-close" onclick="BulkActions.clearSelection()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- New Alerts Banner -->
+  <div class="new-alerts-banner" id="new-alerts-banner" onclick="NewAlertsIndicator.scrollToNew()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+    <span><strong id="new-alerts-count">0</strong> new alerts</span>
+    <button class="new-alerts-dismiss" onclick="event.stopPropagation(); NewAlertsIndicator.dismiss()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
   </div>
 
   <!-- Status Overview -->
