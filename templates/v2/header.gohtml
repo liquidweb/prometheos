@@ -1712,6 +1712,1204 @@
     }
 
     /* ========================================
+       COLUMN CONFIGURATION & API EXPLORER
+       ======================================== */
+
+    .column-config-modal {
+      max-width: 700px;
+    }
+
+    .column-config-body {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+    }
+
+    .column-config-section {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .column-config-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-config-section-title {
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .column-config-section-badge {
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .column-list {
+      padding: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 250px;
+      overflow-y: auto;
+    }
+
+    .column-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .column-item:hover {
+      border-color: var(--border-default);
+      background: var(--bg-tertiary);
+    }
+
+    .column-item.selected {
+      border-color: var(--accent);
+      background: var(--accent-bg);
+    }
+
+    .column-item.disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .column-checkbox {
+      width: 18px;
+      height: 18px;
+      accent-color: var(--accent);
+      cursor: pointer;
+    }
+
+    .column-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .column-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .column-source {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .column-drag-handle {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      color: var(--text-muted);
+      cursor: grab;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .column-item:hover .column-drag-handle {
+      opacity: 1;
+    }
+
+    .column-item.dragging {
+      opacity: 0.5;
+      border-style: dashed;
+    }
+
+    /* API Explorer Panel */
+    .api-explorer {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+    }
+
+    .api-explorer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .api-explorer-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .api-explorer-status {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .api-status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--healthy);
+    }
+
+    .api-status-dot.loading {
+      background: var(--warning);
+      animation: pulse 1s ease-in-out infinite;
+    }
+
+    .api-status-dot.error {
+      background: var(--critical);
+    }
+
+    .api-explorer-content {
+      padding: 16px;
+    }
+
+    .api-endpoint-form {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+
+    .api-endpoint-input {
+      flex: 1;
+      padding: 10px 14px;
+      font-family: var(--font-mono);
+      font-size: 13px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+    }
+
+    .api-endpoint-input:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .api-endpoint-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    .api-fields-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 8px;
+    }
+
+    .api-field-card {
+      display: flex;
+      flex-direction: column;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+    }
+
+    .api-field-card:hover {
+      border-color: var(--border-default);
+    }
+
+    .api-field-card.added {
+      border-color: var(--healthy);
+      background: var(--healthy-bg);
+    }
+
+    .api-field-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 6px;
+    }
+
+    .api-field-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .api-field-type {
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 500;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    .api-field-type.label { background: var(--info-bg); color: var(--info); }
+    .api-field-type.annotation { background: var(--warning-bg); color: var(--warning); }
+    .api-field-type.core { background: var(--silenced-bg); color: var(--silenced); }
+
+    .api-field-sample {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      margin-bottom: 8px;
+    }
+
+    .api-field-actions {
+      display: flex;
+      gap: 4px;
+      margin-top: auto;
+    }
+
+    .btn-add-column {
+      flex: 1;
+      padding: 6px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--accent);
+      border: none;
+      border-radius: var(--radius-sm);
+      color: white;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .btn-add-column:hover {
+      background: var(--accent-hover);
+    }
+
+    .btn-add-column:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* Preview Table */
+    .column-preview {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+
+    .column-preview-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .column-preview-table th {
+      padding: 10px 12px;
+      text-align: left;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-table td {
+      padding: 10px 12px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .column-preview-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .column-preview-table-wrapper {
+      overflow-x: auto;
+    }
+
+    /* Column Config Button */
+    .column-config-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* Saved Column Profiles */
+    .column-profiles {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+    }
+
+    .profiles-label {
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .profile-btns {
+      display: flex;
+      gap: 6px;
+    }
+
+    .profile-btn {
+      padding: 6px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .profile-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .profile-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-tertiary);
+    }
+
+    .modal-footer-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    /* API Category Styles */
+    .api-field-categories {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .api-category {
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      overflow: hidden;
+    }
+
+    .api-category-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .api-category-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .api-category-count {
+      padding: 2px 8px;
+      background: var(--bg-elevated);
+      border-radius: 10px;
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .api-fields-grid {
+      padding: 12px;
+    }
+
+    .api-fields-empty {
+      text-align: center;
+      padding: 20px;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .column-profiles-label {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .column-profile-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .column-profile-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .column-profile-btn.active {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    /* ========================================
+       HELP MODAL
+       ======================================== */
+
+    .help-modal {
+      max-width: 800px;
+      max-height: 85vh;
+    }
+
+    .help-modal-body {
+      padding: 0;
+      max-height: 60vh;
+      overflow-y: auto;
+    }
+
+    .help-tabs {
+      display: flex;
+      gap: 4px;
+      padding: 16px 20px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-subtle);
+      position: sticky;
+      top: 0;
+      z-index: 1;
+    }
+
+    .help-tab {
+      padding: 8px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      background: transparent;
+      border: 1px solid transparent;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .help-tab:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+    }
+
+    .help-tab.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    .help-content {
+      padding: 20px;
+    }
+
+    .help-section {
+      margin-bottom: 24px;
+    }
+
+    .help-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 0 12px 0;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .help-text {
+      font-size: 13px;
+      line-height: 1.6;
+      color: var(--text-secondary);
+      margin: 0 0 12px 0;
+    }
+
+    .help-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 12px;
+    }
+
+    @media (max-width: 600px) {
+      .help-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .help-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+    }
+
+    .help-item-label {
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .help-item-desc {
+      font-size: 12px;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+
+    .help-list {
+      margin: 0;
+      padding-left: 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+    }
+
+    .help-list li {
+      margin-bottom: 6px;
+    }
+
+    .help-list li:last-child {
+      margin-bottom: 0;
+    }
+
+    .help-shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 10px;
+    }
+
+    .help-shortcut {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      font-size: 12px;
+    }
+
+    .help-shortcut kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    }
+
+    .help-shortcut span {
+      color: var(--text-secondary);
+    }
+
+    .help-content kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      padding: 2px 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .help-content code {
+      padding: 2px 6px;
+      background: var(--bg-tertiary);
+      border-radius: 4px;
+      font-family: monospace;
+      font-size: 12px;
+      color: var(--accent);
+    }
+
+    .help-footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .help-footer-info {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .help-footer-info kbd {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      padding: 2px 6px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 2px;
+    }
+
+    .help-btn {
+      position: relative;
+    }
+
+    /* ========================================
+       ALERT DETAILS DRAWER
+       ======================================== */
+
+    .alert-drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0, 0, 0, 0.4);
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.2s ease;
+      z-index: 1000;
+    }
+
+    .alert-drawer-overlay.show {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .alert-drawer {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 520px;
+      max-width: 90vw;
+      height: 100vh;
+      background: var(--bg-primary);
+      border-left: 1px solid var(--border-subtle);
+      box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      z-index: 1001;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .alert-drawer-overlay.show .alert-drawer {
+      transform: translateX(0);
+    }
+
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-subtle);
+      background: var(--bg-secondary);
+    }
+
+    .drawer-title {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .drawer-title .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: var(--critical);
+      animation: pulse 2s infinite;
+    }
+
+    .drawer-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-md);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px;
+    }
+
+    .drawer-section {
+      margin-bottom: 24px;
+    }
+
+    .drawer-section:last-child {
+      margin-bottom: 0;
+    }
+
+    .drawer-section-title {
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+    }
+
+    .drawer-info-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+
+    .drawer-info-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .drawer-info-item.full-width {
+      grid-column: 1 / -1;
+    }
+
+    .drawer-info-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .drawer-info-value {
+      font-size: 13px;
+      color: var(--text-primary);
+      word-break: break-word;
+    }
+
+    .drawer-info-value.mono {
+      font-family: monospace;
+      font-size: 12px;
+      background: var(--bg-tertiary);
+      padding: 6px 10px;
+      border-radius: var(--radius-sm);
+    }
+
+    .drawer-labels {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .drawer-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+    }
+
+    .drawer-label-key {
+      color: var(--text-muted);
+    }
+
+    .drawer-label-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .drawer-services {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .drawer-service-tag {
+      padding: 4px 10px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .drawer-actions {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .drawer-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      padding: 10px 16px;
+      font-size: 13px;
+      font-weight: 500;
+      border-radius: var(--radius-md);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-action-btn.primary {
+      background: var(--accent);
+      border: none;
+      color: white;
+    }
+
+    .drawer-action-btn.primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .drawer-action-btn.secondary {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      color: var(--text-primary);
+    }
+
+    .drawer-action-btn.secondary:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .drawer-action-btn.danger {
+      background: var(--critical-bg);
+      border: 1px solid var(--critical);
+      color: var(--critical);
+    }
+
+    .drawer-action-btn.danger:hover {
+      background: var(--critical);
+      color: white;
+    }
+
+    .drawer-copy-group {
+      display: flex;
+      gap: 8px;
+    }
+
+    .drawer-copy-group .drawer-action-btn {
+      flex: 1;
+    }
+
+    .drawer-footer {
+      padding: 16px 20px;
+      border-top: 1px solid var(--border-subtle);
+      background: var(--bg-secondary);
+    }
+
+    .drawer-nav {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .drawer-nav-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 12px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .drawer-nav-btn:hover:not(:disabled) {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .drawer-nav-btn:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    .drawer-nav-position {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    /* ========================================
+       BULK ACTIONS BAR
+       ======================================== */
+
+    .bulk-actions-bar {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(100px);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 12px 20px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+      z-index: 900;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.25s ease;
+    }
+
+    .bulk-actions-bar.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .bulk-actions-count {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .bulk-actions-count .count-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 24px;
+      height: 24px;
+      padding: 0 8px;
+      background: var(--accent);
+      border-radius: 12px;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .bulk-actions-btns {
+      display: flex;
+      gap: 8px;
+    }
+
+    .bulk-action-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 14px;
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .bulk-action-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--border-strong);
+    }
+
+    .bulk-action-btn.primary {
+      background: var(--accent);
+      border-color: var(--accent);
+      color: white;
+    }
+
+    .bulk-action-btn.primary:hover {
+      filter: brightness(1.1);
+    }
+
+    .bulk-actions-close {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      margin-left: 8px;
+    }
+
+    .bulk-actions-close:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    /* ========================================
+       NEW ALERTS INDICATOR
+       ======================================== */
+
+    .new-alerts-banner {
+      position: fixed;
+      top: 80px;
+      left: 50%;
+      transform: translateX(-50%) translateY(-100px);
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      background: var(--accent);
+      border-radius: var(--radius-lg);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+      color: white;
+      font-size: 13px;
+      font-weight: 500;
+      z-index: 800;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.3s ease;
+      cursor: pointer;
+    }
+
+    .new-alerts-banner.show {
+      transform: translateX(-50%) translateY(0);
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .new-alerts-banner:hover {
+      filter: brightness(1.1);
+    }
+
+    .new-alerts-banner svg {
+      animation: bounce 1s infinite;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+
+    .new-alerts-dismiss {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      background: rgba(255,255,255,0.2);
+      border: none;
+      border-radius: 50%;
+      color: white;
+      cursor: pointer;
+      margin-left: 4px;
+    }
+
+    .new-alerts-dismiss:hover {
+      background: rgba(255,255,255,0.3);
+    }
+
+    /* Clickable alert rows */
+    .alert-row {
+      cursor: pointer;
+    }
+
+    .alert-row:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .alert-row.selected {
+      background: var(--accent-bg);
+    }
+
+    .alert-row.new-alert {
+      background: var(--success-bg, rgba(34, 197, 94, 0.1));
+      animation: newAlertPulse 2s ease-in-out;
+    }
+
+    .alert-row.new-alert td:first-child {
+      position: relative;
+    }
+
+    .alert-row.new-alert td:first-child::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--success, #22c55e);
+    }
+
+    @keyframes newAlertPulse {
+      0% { background: var(--success-bg, rgba(34, 197, 94, 0.2)); }
+      50% { background: var(--success-bg, rgba(34, 197, 94, 0.1)); }
+      100% { background: transparent; }
+    }
+
+    /* ========================================
        COLLAPSIBLE SECTIONS
        ======================================== */
 
@@ -1777,6 +2975,39 @@
       display: flex;
       align-items: center;
       gap: 8px;
+    }
+
+    /* Incident Time Selector */
+    .incident-time-selector {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-sm);
+    }
+
+    .incident-time-label {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .incident-time-select {
+      padding: 2px 6px;
+      font-size: 11px;
+      font-weight: 500;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
+    .incident-time-select:focus {
+      outline: none;
+      border-color: var(--accent);
     }
 
     .section-content {
@@ -2763,6 +3994,15 @@
               <path d="M7 16h10"></path>
             </svg>
           </button>
+
+          <!-- Help button -->
+          <button class="header-btn help-btn" id="help-btn" title="Help & Features (H)">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"></path>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </button>
         </div>
       </div>
     </div>
@@ -2827,10 +4067,594 @@
               <span class="shortcut-description">Cycle view density</span>
               <div class="shortcut-keys"><span class="key">D</span></div>
             </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Configure columns</span>
+              <div class="shortcut-keys"><span class="key">C</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Help guide</span>
+              <div class="shortcut-keys"><span class="key">H</span></div>
+            </div>
+          </div>
+          <div class="shortcut-category">
+            <div class="shortcut-category-title">Alert Drawer</div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Previous alert</span>
+              <div class="shortcut-keys"><span class="key">←</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Next alert</span>
+              <div class="shortcut-keys"><span class="key">→</span></div>
+            </div>
           </div>
         </div>
       </div>
     </div>
+  </div>
+
+  <!-- Column Configuration Modal -->
+  <div class="modal-overlay" id="column-config-modal">
+    <div class="modal column-config-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Configure Columns</h2>
+        <button class="modal-close" onclick="ColumnManager.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="column-config-body">
+          <!-- Column Profiles -->
+          <div class="column-profiles">
+            <span class="profiles-label">Presets:</span>
+            <div class="profile-btns">
+              <button type="button" class="profile-btn active" data-profile="default" onclick="ColumnManager.applyProfile('default')">Default</button>
+              <button type="button" class="profile-btn" data-profile="compact" onclick="ColumnManager.applyProfile('compact')">Compact</button>
+              <button type="button" class="profile-btn" data-profile="detailed" onclick="ColumnManager.applyProfile('detailed')">Detailed</button>
+              <button type="button" class="profile-btn" data-profile="custom" onclick="ColumnManager.applyProfile('custom')">Custom</button>
+            </div>
+          </div>
+
+          <!-- Current Columns -->
+          <div class="column-config-section">
+            <div class="column-config-section-header">
+              <span class="column-config-section-title">Visible Columns</span>
+              <span class="column-config-section-badge" id="visible-columns-count">8 columns</span>
+            </div>
+            <div class="column-list" id="visible-columns-list">
+              <!-- Populated by JavaScript -->
+            </div>
+          </div>
+
+          <!-- API Explorer -->
+          <div class="api-explorer">
+            <div class="api-explorer-header">
+              <div class="api-explorer-title">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 2l-2 2m-7.61 7.61a5.5 5.5 0 1 1-7.778 7.778 5.5 5.5 0 0 1 7.777-7.777zm0 0L15.5 7.5m0 0l3 3L22 7l-3-3m-3.5 3.5L19 4"></path>
+                </svg>
+                API Field Explorer
+              </div>
+              <div class="api-explorer-status">
+                <span class="api-status-dot" id="api-status-dot"></span>
+                <span id="api-status-text">Ready</span>
+              </div>
+            </div>
+            <div class="api-explorer-content">
+              <div class="api-endpoint-form">
+                <input type="text" class="api-endpoint-input" id="api-endpoint" placeholder="AlertManager API endpoint (auto-detected)" readonly>
+                <button type="button" class="btn btn-primary btn-sm" onclick="ColumnManager.discoverFields()">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path>
+                  </svg>
+                  Discover Fields
+                </button>
+              </div>
+              <div class="api-field-categories" id="api-field-categories">
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Labels</span>
+                    <span class="api-category-count" id="label-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="label-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Annotations</span>
+                    <span class="api-category-count" id="annotation-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="annotation-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+                <div class="api-category">
+                  <div class="api-category-header">
+                    <span class="api-category-title">Core Fields</span>
+                    <span class="api-category-count" id="core-fields-count">0</span>
+                  </div>
+                  <div class="api-fields-grid" id="core-fields-grid">
+                    <div class="api-fields-empty">Click "Discover Fields" to scan for available fields</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Column Preview -->
+          <div class="column-preview">
+            <div class="column-preview-title">Preview</div>
+            <div class="column-preview-table-wrapper">
+              <table class="column-preview-table" id="column-preview-table">
+                <thead>
+                  <tr id="preview-header-row"></tr>
+                </thead>
+                <tbody>
+                  <tr id="preview-sample-row"></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="ColumnManager.resetToDefault()">Reset to Default</button>
+        <div class="modal-footer-actions">
+          <button type="button" class="btn btn-secondary" onclick="ColumnManager.close()">Cancel</button>
+          <button type="button" class="btn btn-primary" onclick="ColumnManager.applyAndClose()">Apply Changes</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Help Modal -->
+  <div class="modal-overlay" id="help-modal">
+    <div class="modal help-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Prometheos Dashboard Guide</h2>
+        <button class="modal-close" onclick="HelpModal.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body help-modal-body">
+        <div class="help-tabs">
+          <button class="help-tab active" data-tab="overview" onclick="HelpModal.showTab('overview')">Overview</button>
+          <button class="help-tab" data-tab="features" onclick="HelpModal.showTab('features')">Features</button>
+          <button class="help-tab" data-tab="incidents" onclick="HelpModal.showTab('incidents')">Incidents</button>
+          <button class="help-tab" data-tab="shortcuts" onclick="HelpModal.showTab('shortcuts')">Shortcuts</button>
+        </div>
+
+        <div class="help-content" id="help-content-overview">
+          <div class="help-section">
+            <h3 class="help-section-title">Welcome to Prometheos v2</h3>
+            <p class="help-text">A modern alert aggregation dashboard for Prometheus Alert Managers with comprehensive monitoring, analytics, and incident management capabilities.</p>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Status Cards</h3>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Active Alerts</span>
+                <span class="help-item-desc">Total alerts requiring attention with trend indicator</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Affected Servers</span>
+                <span class="help-item-desc">Unique servers currently alerting</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Health Score</span>
+                <span class="help-item-desc">0-100 score based on alert count, velocity, and incidents</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Incidents</span>
+                <span class="help-item-desc">Detected groups of time-correlated alerts</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Analytics Sections</h3>
+            <p class="help-text">Click any section header to expand/collapse. Sections auto-collapse by default but remember your preference.</p>
+            <ul class="help-list">
+              <li><strong>Distribution</strong> - Alerts by location, account, and service</li>
+              <li><strong>Metrics</strong> - Alert age, velocity, recurring systems</li>
+              <li><strong>Charts</strong> - Visual alert velocity timeline</li>
+              <li><strong>Incidents</strong> - Auto-detected alert clusters</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="help-content" id="help-content-features" style="display: none;">
+          <div class="help-section">
+            <h3 class="help-section-title">Theme & Display</h3>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Light/Dark Mode</span>
+                <span class="help-item-desc">Press <kbd>T</kbd> or click theme toggle</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">View Density</span>
+                <span class="help-item-desc">Press <kbd>D</kbd> to cycle: Compact, Comfortable, Spacious</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Search & Filtering</h3>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Basic Search</span>
+                <span class="help-item-desc">Type keywords to filter alerts across all columns</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Exclude Search</span>
+                <span class="help-item-desc">Prefix with <code>!</code> to exclude (e.g., <code>!guardian</code>)</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Filters Panel</span>
+                <span class="help-item-desc">Press <kbd>F</kbd> for advanced filters by location, account, service</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Filter Presets</span>
+                <span class="help-item-desc">Save and quick-apply filter combinations</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Column Configuration</h3>
+            <p class="help-text">Press <kbd>C</kbd> to customize table columns:</p>
+            <ul class="help-list">
+              <li><strong>Drag & Drop</strong> - Reorder columns to your preference</li>
+              <li><strong>Toggle Visibility</strong> - Show/hide individual columns</li>
+              <li><strong>Profiles</strong> - Quick presets (Default, Compact, Detailed)</li>
+              <li><strong>API Explorer</strong> - Discover additional AlertManager fields</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Export Options</h3>
+            <ul class="help-list">
+              <li><strong>CSV/JSON</strong> - Export current filtered view</li>
+              <li><strong>With Annotations</strong> - Include notes you've added</li>
+              <li><strong>Incidents</strong> - Export incident groups with notes</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Alert Details Drawer</h3>
+            <p class="help-text">Click any alert row to open a detailed side panel:</p>
+            <ul class="help-list">
+              <li><strong>Full Details</strong> - UID, account, hostname, location, duration</li>
+              <li><strong>Services</strong> - All services displayed as tags</li>
+              <li><strong>Quick Actions</strong> - Silence/unsilence, copy as text or JSON</li>
+              <li><strong>Navigation</strong> - Use <kbd>←</kbd> <kbd>→</kbd> arrows to browse alerts</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Bulk Actions</h3>
+            <p class="help-text">Select multiple alerts using checkboxes to perform bulk operations:</p>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Silence</span>
+                <span class="help-item-desc">Silence all selected alerts at once</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Unsilence</span>
+                <span class="help-item-desc">Remove silence from selected alerts</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Create Incident</span>
+                <span class="help-item-desc">Group selected alerts into an incident</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Copy</span>
+                <span class="help-item-desc">Copy selected alerts to clipboard</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Share & URL State</h3>
+            <p class="help-text">Dashboard state is encoded in the URL for easy sharing:</p>
+            <ul class="help-list">
+              <li><strong>Share Button</strong> - Copies current view URL to clipboard</li>
+              <li><strong>Bookmarkable</strong> - Save filtered views as browser bookmarks</li>
+              <li><strong>Preserved State</strong> - Tab, search, filters, time range in URL</li>
+              <li><strong>Back/Forward</strong> - Browser navigation works with filters</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="help-content" id="help-content-incidents" style="display: none;">
+          <div class="help-section">
+            <h3 class="help-section-title">Incident Detection</h3>
+            <p class="help-text">Prometheos automatically groups alerts that fired within a configurable time window, helping identify related issues.</p>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Time Window</h3>
+            <p class="help-text">Configure the clustering window in the Incidents section header:</p>
+            <ul class="help-list">
+              <li>2 minutes - Very tight correlation</li>
+              <li>5 minutes - Default, good for most cases</li>
+              <li>10-15 minutes - Broader incident scope</li>
+              <li>30 min - 1 hour - Major incident correlation</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Managing Incidents</h3>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Rename</span>
+                <span class="help-item-desc">Click incident name to give it a meaningful title</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Status</span>
+                <span class="help-item-desc">Track progress: Investigating, Identified, Monitoring, Resolved</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Notes</span>
+                <span class="help-item-desc">Add timestamped notes for documentation</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Rescan</span>
+                <span class="help-item-desc">Re-detect incidents (preserves saved ones)</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Saved vs Unsaved</h3>
+            <p class="help-text">When rescanning, incidents are preserved if they have:</p>
+            <ul class="help-list">
+              <li>A custom name (changed from default)</li>
+              <li>Status changed from "Investigating"</li>
+              <li>Any notes attached</li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="help-content" id="help-content-shortcuts" style="display: none;">
+          <div class="help-section">
+            <h3 class="help-section-title">Navigation</h3>
+            <div class="help-shortcuts-grid">
+              <div class="help-shortcut"><kbd>/</kbd><span>Focus search box</span></div>
+              <div class="help-shortcut"><kbd>Esc</kbd><span>Close modal / Blur input</span></div>
+              <div class="help-shortcut"><kbd>Alt</kbd>+<kbd>1</kbd><span>Active alerts tab</span></div>
+              <div class="help-shortcut"><kbd>Alt</kbd>+<kbd>2</kbd><span>Silenced alerts tab</span></div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Display</h3>
+            <div class="help-shortcuts-grid">
+              <div class="help-shortcut"><kbd>T</kbd><span>Toggle light/dark theme</span></div>
+              <div class="help-shortcut"><kbd>D</kbd><span>Cycle view density</span></div>
+              <div class="help-shortcut"><kbd>C</kbd><span>Configure columns</span></div>
+              <div class="help-shortcut"><kbd>F</kbd><span>Toggle filters panel</span></div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Actions</h3>
+            <div class="help-shortcuts-grid">
+              <div class="help-shortcut"><kbd>R</kbd><span>Refresh data</span></div>
+              <div class="help-shortcut"><kbd>Ctrl</kbd>+<kbd>A</kbd><span>Select all visible</span></div>
+              <div class="help-shortcut"><kbd>?</kbd><span>Quick shortcuts modal</span></div>
+              <div class="help-shortcut"><kbd>H</kbd><span>This help guide</span></div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Alert Drawer</h3>
+            <div class="help-shortcuts-grid">
+              <div class="help-shortcut"><kbd>←</kbd><span>Previous alert</span></div>
+              <div class="help-shortcut"><kbd>→</kbd><span>Next alert</span></div>
+              <div class="help-shortcut"><kbd>Esc</kbd><span>Close drawer</span></div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Time Ranges</h3>
+            <p class="help-text">Analytics sections support time range filtering:</p>
+            <ul class="help-list">
+              <li><strong>1H</strong> - Last hour of data</li>
+              <li><strong>6H</strong> - Last 6 hours</li>
+              <li><strong>24H</strong> - Last 24 hours (default)</li>
+              <li><strong>7D</strong> - Last 7 days</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer help-footer">
+        <div class="help-footer-info">
+          <span>Press <kbd>H</kbd> anytime to open this guide</span>
+        </div>
+        <button type="button" class="btn btn-primary" onclick="HelpModal.close()">Got it</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Alert Details Drawer -->
+  <div class="alert-drawer-overlay" id="alert-drawer-overlay">
+    <div class="alert-drawer" id="alert-drawer">
+      <div class="drawer-header">
+        <div class="drawer-title">
+          <span class="status-dot"></span>
+          <span id="drawer-hostname">Alert Details</span>
+        </div>
+        <button class="drawer-close" onclick="AlertDrawer.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="drawer-body">
+        <div class="drawer-section">
+          <div class="drawer-section-title">Basic Information</div>
+          <div class="drawer-info-grid">
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">UID</span>
+              <span class="drawer-info-value mono" id="drawer-uid">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Account</span>
+              <span class="drawer-info-value" id="drawer-account">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Hostname</span>
+              <span class="drawer-info-value" id="drawer-hostname-full">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Location</span>
+              <span class="drawer-info-value" id="drawer-location">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Prom Node</span>
+              <span class="drawer-info-value" id="drawer-prom">—</span>
+            </div>
+            <div class="drawer-info-item">
+              <span class="drawer-info-label">Started</span>
+              <span class="drawer-info-value" id="drawer-time">—</span>
+            </div>
+            <div class="drawer-info-item full-width">
+              <span class="drawer-info-label">Duration</span>
+              <span class="drawer-info-value" id="drawer-duration">—</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="drawer-section-title">Services</div>
+          <div class="drawer-services" id="drawer-services">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="drawer-section" id="drawer-labels-section">
+          <div class="drawer-section-title">Labels</div>
+          <div class="drawer-labels" id="drawer-labels">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="drawer-section">
+          <div class="drawer-section-title">Quick Actions</div>
+          <div class="drawer-actions">
+            <button class="drawer-action-btn danger" id="drawer-silence-btn" onclick="AlertDrawer.silenceAlert()">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+                <line x1="12" y1="2" x2="12" y2="12"></line>
+              </svg>
+              <span id="drawer-silence-text">Silence Alert</span>
+            </button>
+            <div class="drawer-copy-group">
+              <button class="drawer-action-btn secondary" onclick="AlertDrawer.copyAsText()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                  <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+                </svg>
+                Copy Text
+              </button>
+              <button class="drawer-action-btn secondary" onclick="AlertDrawer.copyAsJSON()">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <polyline points="14 2 14 8 20 8"></polyline>
+                </svg>
+                Copy JSON
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="drawer-footer">
+        <div class="drawer-nav">
+          <button class="drawer-nav-btn" id="drawer-prev-btn" onclick="AlertDrawer.previous()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="15 18 9 12 15 6"></polyline>
+            </svg>
+            Previous
+          </button>
+          <span class="drawer-nav-position" id="drawer-position">1 of 10</span>
+          <button class="drawer-nav-btn" id="drawer-next-btn" onclick="AlertDrawer.next()">
+            Next
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="9 18 15 12 9 6"></polyline>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bulk Actions Bar -->
+  <div class="bulk-actions-bar" id="bulk-actions-bar">
+    <div class="bulk-actions-count">
+      <span class="count-badge" id="bulk-count">0</span>
+      <span>alerts selected</span>
+    </div>
+    <div class="bulk-actions-btns">
+      <button class="bulk-action-btn" onclick="BulkActions.silenceSelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
+          <line x1="12" y1="2" x2="12" y2="12"></line>
+        </svg>
+        Silence
+      </button>
+      <button class="bulk-action-btn" onclick="BulkActions.unsilenceSelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10"></circle>
+          <polyline points="12 6 12 12 16 14"></polyline>
+        </svg>
+        Unsilence
+      </button>
+      <button class="bulk-action-btn" onclick="BulkActions.createIncident()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+          <path d="M2 17l10 5 10-5"></path>
+          <path d="M2 12l10 5 10-5"></path>
+        </svg>
+        Create Incident
+      </button>
+      <button class="bulk-action-btn primary" onclick="BulkActions.copySelected()">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+          <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+        </svg>
+        Copy
+      </button>
+    </div>
+    <button class="bulk-actions-close" onclick="BulkActions.clearSelection()">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
+  </div>
+
+  <!-- New Alerts Banner -->
+  <div class="new-alerts-banner" id="new-alerts-banner" onclick="NewAlertsIndicator.scrollToNew()">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+    <span><strong id="new-alerts-count">0</strong> new alerts</span>
+    <button class="new-alerts-dismiss" onclick="event.stopPropagation(); NewAlertsIndicator.dismiss()">
+      <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <line x1="18" y1="6" x2="6" y2="18"></line>
+        <line x1="6" y1="6" x2="18" y2="18"></line>
+      </svg>
+    </button>
   </div>
 
   <!-- Status Overview -->
@@ -3272,12 +5096,23 @@
           <span class="section-badge" id="incidents-badge">0 groups</span>
         </div>
         <div class="section-header-right" onclick="event.stopPropagation()">
-          <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.detectIncidents()">
+          <div class="incident-time-selector">
+            <label class="incident-time-label">Window:</label>
+            <select class="incident-time-select" id="incident-window-select" onchange="IncidentManager.setWindow(this.value)">
+              <option value="2">2 min</option>
+              <option value="5" selected>5 min</option>
+              <option value="10">10 min</option>
+              <option value="15">15 min</option>
+              <option value="30">30 min</option>
+              <option value="60">1 hour</option>
+            </select>
+          </div>
+          <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.rescan()" title="Rescan and clear unsaved incidents">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
               <path d="M21 3v5h-5"></path>
             </svg>
-            Re-detect
+            Rescan
           </button>
         </div>
       </div>
@@ -3308,7 +5143,7 @@
                 <path d="M2 12l10 5 10-5"></path>
               </svg>
             </div>
-            <span class="widget-empty-text">No incidents detected. Alerts within 5 minutes of each other are grouped.</span>
+            <span class="widget-empty-text">No incidents detected. Alerts within the configured time window are grouped.</span>
           </div>
         </div>
       </div>
