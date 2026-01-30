@@ -1216,9 +1216,10 @@
         document.getElementById('oldest-alert-time').textContent = '--';
       }
 
-      // Alert velocity (alerts in last hour)
-      const oneHourAgo = new Date(now - 60 * 60 * 1000);
-      const recentAlerts = alertData.filter(a => a.time >= oneHourAgo).length;
+      // Alert velocity (alerts in selected time range)
+      const rangeMs = TimeRangeManager.getRangeMs();
+      const rangeStart = new Date(now - rangeMs);
+      const recentAlerts = alertData.filter(a => a.time >= rangeStart).length;
       document.getElementById('alert-velocity').textContent = recentAlerts;
 
       // Recurring systems count (systems with 2+ services alerting)
@@ -1233,6 +1234,57 @@
       });
       const recurringCount = Object.values(systemServices).filter(s => s.size >= 2).length;
       document.getElementById('recurring-count').textContent = recurringCount;
+
+      // Health Score
+      const healthScore = calculateHealthScore(alertData);
+      const healthEl = document.getElementById('health-score');
+      if (healthEl) {
+        healthEl.textContent = healthScore;
+        // Color based on score
+        const parentIcon = healthEl.closest('.quick-stat')?.querySelector('.quick-stat-icon');
+        if (parentIcon) {
+          if (healthScore >= 80) {
+            parentIcon.style.background = 'var(--healthy-bg)';
+            parentIcon.style.color = 'var(--healthy)';
+          } else if (healthScore >= 50) {
+            parentIcon.style.background = 'var(--warning-bg)';
+            parentIcon.style.color = 'var(--warning)';
+          } else {
+            parentIcon.style.background = 'var(--critical-bg)';
+            parentIcon.style.color = 'var(--critical)';
+          }
+        }
+      }
+
+      // Alert Trend indicator
+      const trendEl = document.getElementById('alert-trend');
+      if (trendEl) {
+        // Compare current period vs previous period
+        const halfRange = rangeMs / 2;
+        const midPoint = new Date(now - halfRange);
+        const currentPeriod = alertData.filter(a => a.time >= midPoint).length;
+        const previousPeriod = alertData.filter(a => a.time < midPoint && a.time >= rangeStart).length;
+
+        if (previousPeriod === 0) {
+          trendEl.className = 'trend-indicator stable';
+          trendEl.textContent = '—';
+        } else {
+          const changePercent = Math.round(((currentPeriod - previousPeriod) / previousPeriod) * 100);
+          if (changePercent > 10) {
+            trendEl.className = 'trend-indicator up';
+            trendEl.textContent = `↑ ${changePercent}%`;
+          } else if (changePercent < -10) {
+            trendEl.className = 'trend-indicator down';
+            trendEl.textContent = `↓ ${Math.abs(changePercent)}%`;
+          } else {
+            trendEl.className = 'trend-indicator stable';
+            trendEl.textContent = '— stable';
+          }
+        }
+      }
+
+      // Update export counts
+      IncidentManager.updateExportCounts();
     }
 
     function updateOldestAlert(alertData) {
@@ -1260,22 +1312,52 @@
 
     function updateAlertVelocity(alertData, now) {
       const chartContainer = document.getElementById('velocity-chart');
+      const rangeMs = TimeRangeManager.getRangeMs();
+      const range = TimeRangeManager.current;
 
-      // Generate 24 hourly buckets
+      // Determine bucket count and size based on range
+      let bucketCount, bucketMs, labelInterval;
+      if (range === '1h') {
+        bucketCount = 12; // 5-minute buckets
+        bucketMs = 5 * 60 * 1000;
+        labelInterval = 3;
+      } else if (range === '6h') {
+        bucketCount = 12; // 30-minute buckets
+        bucketMs = 30 * 60 * 1000;
+        labelInterval = 2;
+      } else if (range === '7d') {
+        bucketCount = 14; // 12-hour buckets
+        bucketMs = 12 * 60 * 60 * 1000;
+        labelInterval = 2;
+      } else {
+        // 24h default
+        bucketCount = 24; // 1-hour buckets
+        bucketMs = 60 * 60 * 1000;
+        labelInterval = 4;
+      }
+
+      // Generate buckets
       const buckets = [];
-      for (let i = 23; i >= 0; i--) {
-        const bucketStart = new Date(now - (i + 1) * 60 * 60 * 1000);
-        const bucketEnd = new Date(now - i * 60 * 60 * 1000);
+      for (let i = bucketCount - 1; i >= 0; i--) {
+        const bucketStart = new Date(now - (i + 1) * bucketMs);
+        const bucketEnd = new Date(now - i * bucketMs);
         const count = alertData.filter(a => a.time >= bucketStart && a.time < bucketEnd).length;
-        buckets.push({
-          hour: bucketEnd.getHours(),
-          count
-        });
+
+        let label = '';
+        if (i % labelInterval === 0) {
+          if (range === '7d') {
+            label = bucketEnd.toLocaleDateString('en-US', { weekday: 'short' });
+          } else {
+            label = `${bucketEnd.getHours()}:00`;
+          }
+        }
+
+        buckets.push({ label, count });
       }
 
       const maxCount = Math.max(...buckets.map(b => b.count), 1);
       const totalAlerts = buckets.reduce((sum, b) => sum + b.count, 0);
-      const avgAlerts = (totalAlerts / 24).toFixed(1);
+      const avgAlerts = (totalAlerts / bucketCount).toFixed(1);
       const peakAlerts = maxCount;
 
       // Update legend
@@ -1286,11 +1368,10 @@
       // Generate bars
       chartContainer.innerHTML = buckets.map((bucket, i) => {
         const height = (bucket.count / maxCount) * 100;
-        const label = i % 4 === 0 ? `${bucket.hour}:00` : '';
         return `
           <div class="velocity-bar-wrapper">
             <div class="velocity-bar" style="height: ${Math.max(height, 4)}%" data-count="${bucket.count}"></div>
-            <span class="velocity-label">${label}</span>
+            <span class="velocity-label">${bucket.label}</span>
           </div>
         `;
       }).join('');
@@ -1420,8 +1501,8 @@
         return;
       }
 
-      // 24 hour range
-      const rangeMs = 24 * 60 * 60 * 1000;
+      // Use selected time range
+      const rangeMs = TimeRangeManager.getRangeMs();
       const startTime = new Date(now - rangeMs);
 
       const markers = alertData
@@ -1606,6 +1687,672 @@
         showToast(`Switched to ${densities[nextIndex]} view`, 'success');
       }
     });
+
+    // ========================================
+    // SECTION COLLAPSE MANAGER
+    // ========================================
+
+    const SectionManager = {
+      collapsed: {},
+
+      init() {
+        const saved = localStorage.getItem('prometheos-collapsed-sections');
+        this.collapsed = saved ? JSON.parse(saved) : {};
+
+        // Apply saved states
+        Object.keys(this.collapsed).forEach(section => {
+          if (this.collapsed[section]) {
+            this.setCollapsed(section, true, false);
+          }
+        });
+      },
+
+      toggle(section) {
+        const isCollapsed = this.collapsed[section] || false;
+        this.setCollapsed(section, !isCollapsed, true);
+      },
+
+      setCollapsed(section, collapsed, save = true) {
+        const header = document.querySelector(`#${section}-section .section-header`);
+        const content = document.getElementById(`${section}-content`);
+
+        if (header && content) {
+          header.classList.toggle('collapsed', collapsed);
+          content.classList.toggle('collapsed', collapsed);
+        }
+
+        this.collapsed[section] = collapsed;
+
+        if (save) {
+          localStorage.setItem('prometheos-collapsed-sections', JSON.stringify(this.collapsed));
+        }
+      }
+    };
+
+    // ========================================
+    // TIME RANGE MANAGER
+    // ========================================
+
+    const TimeRangeManager = {
+      current: '24h',
+      rangeMs: {
+        '1h': 60 * 60 * 1000,
+        '6h': 6 * 60 * 60 * 1000,
+        '24h': 24 * 60 * 60 * 1000,
+        '7d': 7 * 24 * 60 * 60 * 1000
+      },
+
+      init() {
+        const saved = localStorage.getItem('prometheos-analytics-range');
+        if (saved && this.rangeMs[saved]) {
+          this.current = saved;
+        }
+
+        this.updateUI();
+        this.bindEvents();
+      },
+
+      bindEvents() {
+        document.querySelectorAll('.time-range-btn').forEach(btn => {
+          btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const range = btn.dataset.range;
+            this.setRange(range);
+          });
+        });
+      },
+
+      setRange(range) {
+        this.current = range;
+        localStorage.setItem('prometheos-analytics-range', range);
+        this.updateUI();
+        updateAdvancedAnalytics();
+        showToast(`Analytics range set to ${this.getRangeLabel(range)}`, 'success');
+      },
+
+      updateUI() {
+        document.querySelectorAll('.time-range-btn').forEach(btn => {
+          btn.classList.toggle('active', btn.dataset.range === this.current);
+        });
+
+        // Update labels
+        const velocityLabel = document.getElementById('velocity-range-label');
+        if (velocityLabel) {
+          velocityLabel.textContent = this.getRangeLabel(this.current);
+        }
+
+        const timelineStart = document.getElementById('timeline-start');
+        if (timelineStart) {
+          timelineStart.textContent = this.getRangeLabel(this.current) + ' ago';
+        }
+      },
+
+      getRangeLabel(range) {
+        const labels = { '1h': '1 hour', '6h': '6 hours', '24h': '24 hours', '7d': '7 days' };
+        return labels[range] || range;
+      },
+
+      getRangeMs() {
+        return this.rangeMs[this.current] || this.rangeMs['24h'];
+      }
+    };
+
+    // ========================================
+    // INCIDENT MANAGER
+    // ========================================
+
+    const IncidentManager = {
+      incidents: [],
+      selectedAlerts: new Set(),
+      CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes
+
+      init() {
+        const saved = localStorage.getItem('prometheos-incidents');
+        this.incidents = saved ? JSON.parse(saved) : [];
+        this.detectIncidents();
+        this.render();
+        this.updateExportCounts();
+      },
+
+      detectIncidents() {
+        const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
+        const alerts = [];
+
+        rows.forEach(row => {
+          const timeStr = row.dataset.time;
+          if (timeStr) {
+            alerts.push({
+              id: row.dataset.hostname + '-' + timeStr,
+              hostname: row.querySelector('.hostname')?.textContent.trim() || '',
+              account: row.querySelector('.cell-primary')?.textContent.trim() || '',
+              time: new Date(timeStr.replace(' ', 'T')),
+              timeStr: timeStr,
+              services: row.dataset.services || '',
+              location: row.dataset.location || ''
+            });
+          }
+        });
+
+        // Sort by time
+        alerts.sort((a, b) => a.time - b.time);
+
+        // Cluster alerts within CLUSTER_WINDOW_MS
+        const newIncidents = [];
+        let currentCluster = [];
+
+        alerts.forEach((alert, i) => {
+          if (currentCluster.length === 0) {
+            currentCluster.push(alert);
+          } else {
+            const lastAlert = currentCluster[currentCluster.length - 1];
+            const timeDiff = alert.time - lastAlert.time;
+
+            if (timeDiff <= this.CLUSTER_WINDOW_MS) {
+              currentCluster.push(alert);
+            } else {
+              if (currentCluster.length >= 2) {
+                newIncidents.push(this.createIncidentFromCluster(currentCluster));
+              }
+              currentCluster = [alert];
+            }
+          }
+        });
+
+        // Don't forget the last cluster
+        if (currentCluster.length >= 2) {
+          newIncidents.push(this.createIncidentFromCluster(currentCluster));
+        }
+
+        // Merge with existing incidents (preserve names and notes)
+        this.mergeIncidents(newIncidents);
+        this.save();
+        this.render();
+        this.updateIncidentCounts();
+      },
+
+      createIncidentFromCluster(cluster) {
+        const firstAlert = cluster[0];
+        const lastAlert = cluster[cluster.length - 1];
+
+        return {
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+          name: `Incident ${new Date(firstAlert.time).toLocaleString()}`,
+          status: 'investigating',
+          alerts: cluster,
+          startTime: firstAlert.time.toISOString(),
+          endTime: lastAlert.time.toISOString(),
+          notes: [],
+          createdAt: new Date().toISOString()
+        };
+      },
+
+      mergeIncidents(newIncidents) {
+        // Simple merge: keep existing incident data if alert IDs overlap
+        const existingById = {};
+        this.incidents.forEach(inc => {
+          const alertIds = inc.alerts.map(a => a.id).join(',');
+          existingById[alertIds] = inc;
+        });
+
+        this.incidents = newIncidents.map(newInc => {
+          const alertIds = newInc.alerts.map(a => a.id).join(',');
+          if (existingById[alertIds]) {
+            // Preserve name, status, and notes from existing
+            return {
+              ...newInc,
+              id: existingById[alertIds].id,
+              name: existingById[alertIds].name,
+              status: existingById[alertIds].status,
+              notes: existingById[alertIds].notes
+            };
+          }
+          return newInc;
+        });
+      },
+
+      updateIncidentCounts() {
+        const countEl = document.getElementById('incidents-count');
+        const badgeEl = document.getElementById('incidents-badge');
+
+        if (countEl) countEl.textContent = this.incidents.length;
+        if (badgeEl) badgeEl.textContent = `${this.incidents.length} groups`;
+      },
+
+      updateExportCounts() {
+        const activeRows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
+        const csvCount = document.getElementById('export-csv-count');
+        const jsonCount = document.getElementById('export-json-count');
+        const incidentsCount = document.getElementById('export-incidents-count');
+
+        if (csvCount) csvCount.textContent = `${activeRows.length} rows`;
+        if (jsonCount) jsonCount.textContent = `${activeRows.length} rows`;
+        if (incidentsCount) incidentsCount.textContent = `${this.incidents.length} incidents`;
+      },
+
+      render() {
+        const container = document.getElementById('incidents-list');
+        if (!container) return;
+
+        if (this.incidents.length === 0) {
+          container.innerHTML = `
+            <div class="widget-empty">
+              <div class="widget-empty-icon">
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                  <path d="M2 17l10 5 10-5"></path>
+                  <path d="M2 12l10 5 10-5"></path>
+                </svg>
+              </div>
+              <span class="widget-empty-text">No incidents detected. Alerts within 5 minutes of each other are grouped.</span>
+            </div>
+          `;
+          return;
+        }
+
+        container.innerHTML = this.incidents.map(incident => this.renderIncident(incident)).join('');
+      },
+
+      renderIncident(incident) {
+        const alertCount = incident.alerts.length;
+        const duration = new Date(incident.endTime) - new Date(incident.startTime);
+        const durationStr = formatDuration(duration);
+        const severityClass = alertCount >= 5 ? '' : alertCount >= 3 ? 'warning' : 'info';
+
+        return `
+          <div class="incident-group" id="incident-${incident.id}" data-id="${incident.id}">
+            <div class="incident-header" onclick="IncidentManager.toggleExpand('${incident.id}')">
+              <div class="incident-expand-icon">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="9 18 15 12 9 6"></polyline>
+                </svg>
+              </div>
+              <div class="incident-color-bar ${severityClass}"></div>
+              <div class="incident-info">
+                <div class="incident-name-row">
+                  <span class="incident-name" id="incident-name-${incident.id}">${this.escapeHtml(incident.name)}</span>
+                  <button type="button" class="incident-edit-btn" onclick="event.stopPropagation(); IncidentManager.editName('${incident.id}')" title="Edit name">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
+                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
+                    </svg>
+                  </button>
+                  <span class="incident-status-badge ${incident.status}">${incident.status}</span>
+                </div>
+                <div class="incident-meta">
+                  Started ${new Date(incident.startTime).toLocaleString()} &bull; Span: ${durationStr}
+                </div>
+              </div>
+              <div class="incident-stats">
+                <div class="incident-stat">
+                  <div class="incident-stat-value">${alertCount}</div>
+                  <div class="incident-stat-label">Alerts</div>
+                </div>
+              </div>
+              <div class="incident-actions">
+                <div class="status-selector">
+                  <button type="button" class="incident-action-btn" onclick="event.stopPropagation(); IncidentManager.toggleStatusDropdown('${incident.id}')" title="Change status">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <polyline points="12 6 12 12 16 14"></polyline>
+                    </svg>
+                  </button>
+                  <div class="status-dropdown" id="status-dropdown-${incident.id}">
+                    <div class="status-option" onclick="event.stopPropagation(); IncidentManager.setStatus('${incident.id}', 'investigating')">
+                      <span class="status-dot investigating"></span>
+                      <span>Investigating</span>
+                    </div>
+                    <div class="status-option" onclick="event.stopPropagation(); IncidentManager.setStatus('${incident.id}', 'identified')">
+                      <span class="status-dot identified"></span>
+                      <span>Identified</span>
+                    </div>
+                    <div class="status-option" onclick="event.stopPropagation(); IncidentManager.setStatus('${incident.id}', 'monitoring')">
+                      <span class="status-dot monitoring"></span>
+                      <span>Monitoring</span>
+                    </div>
+                    <div class="status-option" onclick="event.stopPropagation(); IncidentManager.setStatus('${incident.id}', 'resolved')">
+                      <span class="status-dot resolved"></span>
+                      <span>Resolved</span>
+                    </div>
+                  </div>
+                </div>
+                <button type="button" class="incident-action-btn" onclick="event.stopPropagation(); IncidentManager.deleteIncident('${incident.id}')" title="Delete incident">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                  </svg>
+                </button>
+              </div>
+            </div>
+            <div class="incident-body">
+              <div class="incident-alerts">
+                ${incident.alerts.map(alert => `
+                  <div class="incident-alert-item">
+                    <div class="incident-alert-info">
+                      <div class="incident-alert-hostname">${this.escapeHtml(alert.hostname)}</div>
+                      <div class="incident-alert-meta">${this.escapeHtml(alert.account)} &bull; ${this.escapeHtml(alert.services.split(',').slice(0, 2).join(', '))}</div>
+                    </div>
+                    <div class="incident-alert-time">${alert.timeStr}</div>
+                  </div>
+                `).join('')}
+              </div>
+              <div class="incident-notes">
+                <div class="incident-notes-header">
+                  <span class="incident-notes-title">Notes & Annotations</span>
+                </div>
+                <div class="incident-notes-list" id="notes-list-${incident.id}">
+                  ${incident.notes.length === 0 ? '' : incident.notes.map(note => `
+                    <div class="incident-note">
+                      <div class="incident-note-header">
+                        <span class="incident-note-author">${this.escapeHtml(note.author || 'User')}</span>
+                        <span class="incident-note-time">${new Date(note.createdAt).toLocaleString()}</span>
+                      </div>
+                      <div class="incident-note-text">${this.escapeHtml(note.text)}</div>
+                    </div>
+                  `).join('')}
+                </div>
+                <div class="incident-note-input">
+                  <textarea class="incident-note-textarea" id="note-input-${incident.id}" placeholder="Add a note about this incident..."></textarea>
+                  <button type="button" class="btn btn-sm btn-primary" onclick="IncidentManager.addNote('${incident.id}')">Add</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      },
+
+      toggleExpand(id) {
+        const el = document.getElementById(`incident-${id}`);
+        if (el) {
+          el.classList.toggle('expanded');
+        }
+      },
+
+      toggleStatusDropdown(id) {
+        // Close all other dropdowns first
+        document.querySelectorAll('.status-dropdown.show').forEach(d => d.classList.remove('show'));
+
+        const dropdown = document.getElementById(`status-dropdown-${id}`);
+        if (dropdown) {
+          dropdown.classList.toggle('show');
+        }
+      },
+
+      setStatus(id, status) {
+        const incident = this.incidents.find(i => i.id === id);
+        if (incident) {
+          incident.status = status;
+          this.save();
+          this.render();
+          showToast(`Incident status set to ${status}`, 'success');
+        }
+      },
+
+      editName(id) {
+        const nameEl = document.getElementById(`incident-name-${id}`);
+        if (!nameEl) return;
+
+        const currentName = nameEl.textContent;
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = 'incident-name-input';
+        input.value = currentName;
+
+        const saveName = () => {
+          const newName = input.value.trim() || currentName;
+          const incident = this.incidents.find(i => i.id === id);
+          if (incident) {
+            incident.name = newName;
+            this.save();
+            this.render();
+          }
+        };
+
+        input.addEventListener('blur', saveName);
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            saveName();
+          }
+        });
+
+        nameEl.replaceWith(input);
+        input.focus();
+        input.select();
+      },
+
+      addNote(id) {
+        const input = document.getElementById(`note-input-${id}`);
+        if (!input || !input.value.trim()) return;
+
+        const incident = this.incidents.find(i => i.id === id);
+        if (incident) {
+          incident.notes.push({
+            id: Date.now(),
+            text: input.value.trim(),
+            author: 'User',
+            createdAt: new Date().toISOString()
+          });
+          this.save();
+          this.render();
+          showToast('Note added', 'success');
+
+          // Re-expand the incident
+          setTimeout(() => {
+            const el = document.getElementById(`incident-${id}`);
+            if (el) el.classList.add('expanded');
+          }, 10);
+        }
+      },
+
+      deleteIncident(id) {
+        if (!confirm('Delete this incident grouping? The alerts will remain but the grouping and notes will be lost.')) {
+          return;
+        }
+
+        this.incidents = this.incidents.filter(i => i.id !== id);
+        this.save();
+        this.render();
+        this.updateIncidentCounts();
+        showToast('Incident deleted', 'success');
+      },
+
+      save() {
+        localStorage.setItem('prometheos-incidents', JSON.stringify(this.incidents));
+      },
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      },
+
+      // Selection for manual incident creation
+      toggleAlertSelection(alertId) {
+        if (this.selectedAlerts.has(alertId)) {
+          this.selectedAlerts.delete(alertId);
+        } else {
+          this.selectedAlerts.add(alertId);
+        }
+        this.updateSelectionUI();
+      },
+
+      updateSelectionUI() {
+        const bar = document.getElementById('create-incident-bar');
+        const countEl = document.getElementById('selected-for-incident');
+
+        if (this.selectedAlerts.size > 0) {
+          bar.classList.add('show');
+          countEl.textContent = this.selectedAlerts.size;
+        } else {
+          bar.classList.remove('show');
+        }
+      },
+
+      clearSelection() {
+        this.selectedAlerts.clear();
+        this.updateSelectionUI();
+      },
+
+      createFromSelection() {
+        // Implementation for manual incident creation from selected alerts
+        showToast('Manual incident creation - select alerts from the table first', 'info');
+      }
+    };
+
+    // ========================================
+    // ENHANCED EXPORT MANAGER
+    // ========================================
+
+    const ExportManagerEnhanced = {
+      exportWithAnnotations(format) {
+        const activePanel = document.querySelector('.tab-panel[style*="block"]') || document.getElementById('active');
+        const table = activePanel.querySelector('.data-table');
+
+        if (!table) return;
+
+        const rows = table.querySelectorAll('tbody tr:not(.filtered-out)');
+        const data = [];
+
+        rows.forEach(row => {
+          const cells = row.querySelectorAll('td');
+          const hostname = cells[3]?.textContent.trim() || '';
+
+          // Find if this alert is part of any incident
+          let incidentName = '';
+          let incidentStatus = '';
+          let incidentNotes = [];
+
+          IncidentManager.incidents.forEach(incident => {
+            incident.alerts.forEach(alert => {
+              if (alert.hostname === hostname) {
+                incidentName = incident.name;
+                incidentStatus = incident.status;
+                incidentNotes = incident.notes.map(n => n.text);
+              }
+            });
+          });
+
+          data.push({
+            uid: cells[1]?.textContent.trim() || '',
+            account: cells[2]?.textContent.trim() || '',
+            hostname: hostname,
+            location: cells[4]?.textContent.trim() || '',
+            promNode: cells[5]?.textContent.trim() || '',
+            startTime: cells[6]?.textContent.trim() || '',
+            services: Array.from(cells[7]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim()),
+            incidentName: incidentName,
+            incidentStatus: incidentStatus,
+            notes: incidentNotes
+          });
+        });
+
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          downloadBlob(blob, `prometheos-alerts-annotated-${new Date().toISOString().slice(0, 10)}.json`);
+          showToast('Exported with annotations as JSON', 'success');
+        } else if (format === 'csv') {
+          let csv = 'UID,Account,Hostname,Location,Prom Node,Start Time,Services,Incident,Status,Notes\n';
+          data.forEach(row => {
+            csv += `"${row.uid}","${row.account}","${row.hostname}","${row.location}","${row.promNode}","${row.startTime}","${row.services.join('; ')}","${row.incidentName}","${row.incidentStatus}","${row.notes.join(' | ')}"\n`;
+          });
+          const blob = new Blob([csv], { type: 'text/csv' });
+          downloadBlob(blob, `prometheos-alerts-annotated-${new Date().toISOString().slice(0, 10)}.csv`);
+          showToast('Exported with annotations as CSV', 'success');
+        }
+
+        document.getElementById('export-menu').classList.remove('show');
+      },
+
+      exportIncidents(format) {
+        const incidents = IncidentManager.incidents;
+
+        if (incidents.length === 0) {
+          showToast('No incidents to export', 'error');
+          return;
+        }
+
+        const data = incidents.map(incident => ({
+          id: incident.id,
+          name: incident.name,
+          status: incident.status,
+          startTime: incident.startTime,
+          endTime: incident.endTime,
+          alertCount: incident.alerts.length,
+          alerts: incident.alerts.map(a => ({
+            hostname: a.hostname,
+            account: a.account,
+            time: a.timeStr,
+            services: a.services
+          })),
+          notes: incident.notes.map(n => ({
+            text: n.text,
+            author: n.author,
+            time: n.createdAt
+          })),
+          createdAt: incident.createdAt
+        }));
+
+        if (format === 'json') {
+          const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+          downloadBlob(blob, `prometheos-incidents-${new Date().toISOString().slice(0, 10)}.json`);
+          showToast('Incidents exported as JSON', 'success');
+        } else if (format === 'csv') {
+          let csv = 'Incident ID,Name,Status,Start Time,End Time,Alert Count,Hostnames,Notes\n';
+          data.forEach(inc => {
+            const hostnames = inc.alerts.map(a => a.hostname).join('; ');
+            const notes = inc.notes.map(n => n.text).join(' | ');
+            csv += `"${inc.id}","${inc.name}","${inc.status}","${inc.startTime}","${inc.endTime}","${inc.alertCount}","${hostnames}","${notes}"\n`;
+          });
+          const blob = new Blob([csv], { type: 'text/csv' });
+          downloadBlob(blob, `prometheos-incidents-${new Date().toISOString().slice(0, 10)}.csv`);
+          showToast('Incidents exported as CSV', 'success');
+        }
+
+        document.getElementById('export-menu').classList.remove('show');
+      }
+    };
+
+    // Attach to ExportManager for button onclick handlers
+    if (typeof ExportManager !== 'undefined') {
+      ExportManager.exportWithAnnotations = ExportManagerEnhanced.exportWithAnnotations;
+      ExportManager.exportIncidents = ExportManagerEnhanced.exportIncidents;
+    }
+
+    // ========================================
+    // HEALTH SCORE CALCULATOR
+    // ========================================
+
+    function calculateHealthScore(alertData) {
+      if (alertData.length === 0) return 100;
+
+      const now = new Date();
+      let score = 100;
+
+      // Deduct points based on various factors
+      // Alert count penalty (max -30)
+      score -= Math.min(alertData.length * 2, 30);
+
+      // Long-running alerts penalty (max -20)
+      const longRunning = alertData.filter(a => a.duration > 60 * 60 * 1000).length;
+      score -= Math.min(longRunning * 5, 20);
+
+      // Recurring systems penalty (max -20)
+      const systemCounts = {};
+      alertData.forEach(a => {
+        systemCounts[a.hostname] = (systemCounts[a.hostname] || 0) + 1;
+      });
+      const recurringCount = Object.values(systemCounts).filter(c => c >= 2).length;
+      score -= Math.min(recurringCount * 5, 20);
+
+      // Recent velocity penalty (max -15)
+      const oneHourAgo = new Date(now - 60 * 60 * 1000);
+      const recentAlerts = alertData.filter(a => a.time >= oneHourAgo).length;
+      score -= Math.min(recentAlerts * 3, 15);
+
+      // Incident count penalty (max -15)
+      score -= Math.min(IncidentManager.incidents.length * 3, 15);
+
+      return Math.max(0, Math.round(score));
+    }
 
     // ========================================
     // DENSITY/VIEW MODE MANAGER
@@ -1867,6 +2614,17 @@
       ExportManager.init();
       DensityManager.init();
       PresetsManager.init();
+      SectionManager.init();
+      TimeRangeManager.init();
+      IncidentManager.init();
+
+      // Close status dropdowns on outside click
+      document.addEventListener('click', (e) => {
+        if (!e.target.closest('.status-selector')) {
+          document.querySelectorAll('.status-dropdown.show').forEach(d => d.classList.remove('show'));
+        }
+      });
+
       updateCounts();
     });
   </script>

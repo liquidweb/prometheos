@@ -1712,6 +1712,689 @@
     }
 
     /* ========================================
+       COLLAPSIBLE SECTIONS
+       ======================================== */
+
+    .analytics-section {
+      margin-bottom: 24px;
+    }
+
+    .section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      user-select: none;
+    }
+
+    .section-header:hover {
+      border-color: var(--border-default);
+      background: var(--bg-tertiary);
+    }
+
+    .section-header-left {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .section-collapse-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .section-header.collapsed .section-collapse-icon {
+      transform: rotate(-90deg);
+    }
+
+    .section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .section-badge {
+      padding: 2px 8px;
+      background: var(--bg-tertiary);
+      border-radius: 10px;
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-muted);
+    }
+
+    .section-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .section-content {
+      transition: all 0.2s ease;
+    }
+
+    .section-content.collapsed {
+      display: none;
+    }
+
+    /* Time Range Selector */
+    .time-range-selector {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      padding: 4px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+    }
+
+    .time-range-btn {
+      padding: 4px 10px;
+      font-size: 11px;
+      font-weight: 500;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .time-range-btn:hover {
+      color: var(--text-primary);
+    }
+
+    .time-range-btn.active {
+      background: var(--accent);
+      color: white;
+    }
+
+    /* ========================================
+       TOOLTIPS
+       ======================================== */
+
+    .has-tooltip {
+      position: relative;
+      cursor: help;
+    }
+
+    .tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 12px;
+      font-weight: 400;
+      color: var(--text-secondary);
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity 0.15s ease, visibility 0.15s ease;
+      z-index: 1000;
+      margin-bottom: 8px;
+    }
+
+    .tooltip::after {
+      content: '';
+      position: absolute;
+      top: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      border: 6px solid transparent;
+      border-top-color: var(--bg-elevated);
+    }
+
+    .has-tooltip:hover .tooltip {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .tooltip-wide {
+      white-space: normal;
+      width: 200px;
+      text-align: center;
+    }
+
+    /* ========================================
+       INCIDENT GROUPING
+       ======================================== */
+
+    .incidents-section {
+      margin-bottom: 24px;
+    }
+
+    .incident-group {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      margin-bottom: 12px;
+      overflow: hidden;
+      transition: all 0.2s ease;
+    }
+
+    .incident-group:hover {
+      border-color: var(--border-default);
+    }
+
+    .incident-group.expanded {
+      border-color: var(--accent);
+    }
+
+    .incident-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .incident-header:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .incident-expand-icon {
+      width: 20px;
+      height: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .incident-group.expanded .incident-expand-icon {
+      transform: rotate(90deg);
+    }
+
+    .incident-color-bar {
+      width: 4px;
+      height: 36px;
+      border-radius: 2px;
+      background: var(--critical);
+      flex-shrink: 0;
+    }
+
+    .incident-color-bar.warning { background: var(--warning); }
+    .incident-color-bar.info { background: var(--info); }
+
+    .incident-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .incident-name-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .incident-name {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .incident-name-input {
+      padding: 4px 8px;
+      font-family: var(--font-sans);
+      font-size: 14px;
+      font-weight: 600;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-sm);
+      color: var(--text-primary);
+      width: 200px;
+    }
+
+    .incident-name-input:focus {
+      outline: none;
+      box-shadow: 0 0 0 2px var(--accent-bg);
+    }
+
+    .incident-edit-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: transparent;
+      border: none;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.15s ease;
+    }
+
+    .incident-header:hover .incident-edit-btn {
+      opacity: 1;
+    }
+
+    .incident-edit-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .incident-status-badge {
+      padding: 2px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      border-radius: 10px;
+    }
+
+    .incident-status-badge.investigating {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .incident-status-badge.identified {
+      background: var(--info-bg);
+      color: var(--info);
+    }
+
+    .incident-status-badge.monitoring {
+      background: var(--silenced-bg);
+      color: var(--silenced);
+    }
+
+    .incident-status-badge.resolved {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+    }
+
+    .incident-meta {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .incident-stats {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .incident-stat {
+      text-align: center;
+    }
+
+    .incident-stat-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .incident-stat-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      color: var(--text-muted);
+    }
+
+    .incident-actions {
+      display: flex;
+      gap: 8px;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .incident-header:hover .incident-actions {
+      opacity: 1;
+    }
+
+    .incident-action-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .incident-action-btn:hover {
+      background: var(--bg-elevated);
+      color: var(--text-primary);
+    }
+
+    .incident-body {
+      display: none;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .incident-group.expanded .incident-body {
+      display: block;
+    }
+
+    .incident-alerts {
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+    }
+
+    .incident-alert-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-md);
+      margin-bottom: 8px;
+    }
+
+    .incident-alert-item:last-child {
+      margin-bottom: 0;
+    }
+
+    .incident-alert-checkbox {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--accent);
+    }
+
+    .incident-alert-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .incident-alert-hostname {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .incident-alert-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .incident-alert-time {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    /* Incident Notes */
+    .incident-notes {
+      padding: 16px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .incident-notes-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .incident-notes-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .incident-notes-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .incident-note {
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--accent);
+    }
+
+    .incident-note-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 4px;
+    }
+
+    .incident-note-author {
+      font-size: 11px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .incident-note-time {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .incident-note-text {
+      font-size: 13px;
+      color: var(--text-primary);
+      line-height: 1.5;
+    }
+
+    .incident-note-input {
+      display: flex;
+      gap: 8px;
+    }
+
+    .incident-note-textarea {
+      flex: 1;
+      padding: 10px 12px;
+      font-family: var(--font-sans);
+      font-size: 13px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      color: var(--text-primary);
+      resize: none;
+      min-height: 60px;
+    }
+
+    .incident-note-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    .incident-note-textarea::placeholder {
+      color: var(--text-muted);
+    }
+
+    /* Status Selector Dropdown */
+    .status-selector {
+      position: relative;
+    }
+
+    .status-dropdown {
+      position: absolute;
+      top: 100%;
+      right: 0;
+      margin-top: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      padding: 4px 0;
+      min-width: 140px;
+      display: none;
+      z-index: 100;
+    }
+
+    .status-dropdown.show {
+      display: block;
+    }
+
+    .status-option {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 8px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.1s ease;
+    }
+
+    .status-option:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+
+    .status-dot.investigating { background: var(--warning); }
+    .status-dot.identified { background: var(--info); }
+    .status-dot.monitoring { background: var(--silenced); }
+    .status-dot.resolved { background: var(--healthy); }
+
+    /* Incident Creation */
+    .create-incident-bar {
+      display: none;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--accent-bg);
+      border: 1px solid var(--accent);
+      border-radius: var(--radius-lg);
+      margin-bottom: 16px;
+    }
+
+    .create-incident-bar.show {
+      display: flex;
+    }
+
+    .create-incident-info {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      color: var(--accent);
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .create-incident-actions {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    /* ========================================
+       ENHANCED EXPORT MENU
+       ======================================== */
+
+    .export-menu-enhanced {
+      min-width: 220px;
+    }
+
+    .export-section {
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .export-section:last-child {
+      border-bottom: none;
+    }
+
+    .export-section-title {
+      padding: 4px 16px 8px;
+      font-size: 10px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .export-option-enhanced {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.1s ease;
+      border: none;
+      background: none;
+      width: 100%;
+      text-align: left;
+    }
+
+    .export-option-enhanced:hover {
+      background: var(--bg-tertiary);
+      color: var(--text-primary);
+    }
+
+    .export-option-enhanced .export-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-muted);
+    }
+
+    .export-option-enhanced:hover .export-icon {
+      color: var(--text-primary);
+    }
+
+    .export-option-meta {
+      font-size: 10px;
+      color: var(--text-muted);
+      margin-left: auto;
+    }
+
+    /* ========================================
+       TREND INDICATORS
+       ======================================== */
+
+    .trend-indicator {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 2px 6px;
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .trend-indicator.up {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .trend-indicator.down {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+    }
+
+    .trend-indicator.stable {
+      background: var(--bg-tertiary);
+      color: var(--text-muted);
+    }
+
+    /* ========================================
        TABS
        ======================================== */
 
@@ -2152,8 +2835,10 @@
 
   <!-- Status Overview -->
   <section class="status-overview">
+    <!-- Primary Status Cards - Always Visible -->
     <div class="status-grid">
-      <div class="status-card critical">
+      <div class="status-card critical has-tooltip">
+        <div class="tooltip">Total active alerts requiring attention</div>
         <div class="status-card-header">
           <span class="status-card-label">Active Alerts</span>
           <div class="status-card-icon">
@@ -2165,10 +2850,14 @@
           </div>
         </div>
         <div class="status-card-value">{{.AlertCount}}</div>
-        <div class="status-card-detail">Across {{.ServerCount}} servers</div>
+        <div class="status-card-detail">
+          <span id="alert-trend" class="trend-indicator stable">--</span>
+          vs last period
+        </div>
       </div>
 
-      <div class="status-card info">
+      <div class="status-card info has-tooltip">
+        <div class="tooltip">Unique servers with active alerts</div>
         <div class="status-card-header">
           <span class="status-card-label">Affected Servers</span>
           <div class="status-card-icon">
@@ -2184,7 +2873,24 @@
         <div class="status-card-detail">Unique hosts</div>
       </div>
 
-      <div class="status-card silenced" id="silenced-card">
+      <div class="status-card warning has-tooltip" id="incidents-card">
+        <div class="tooltip tooltip-wide">Detected incidents - alerts grouped by time correlation</div>
+        <div class="status-card-header">
+          <span class="status-card-label">Incidents</span>
+          <div class="status-card-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+          </div>
+        </div>
+        <div class="status-card-value" id="incidents-count">0</div>
+        <div class="status-card-detail">Auto-detected groups</div>
+      </div>
+
+      <div class="status-card silenced has-tooltip" id="silenced-card">
+        <div class="tooltip">Alerts currently muted/silenced</div>
         <div class="status-card-header">
           <span class="status-card-label">Silenced</span>
           <div class="status-card-icon">
@@ -2198,7 +2904,8 @@
         <div class="status-card-detail">Muted alerts</div>
       </div>
 
-      <div class="status-card healthy">
+      <div class="status-card healthy has-tooltip">
+        <div class="tooltip">Alert manager sources being monitored</div>
         <div class="status-card-header">
           <span class="status-card-label">Alert Managers</span>
           <div class="status-card-icon">
@@ -2213,248 +2920,395 @@
       </div>
     </div>
 
-    <!-- Dashboard Widgets -->
-    <div class="widgets-grid">
-      <!-- Severity Distribution Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Alert Severity Distribution</div>
-            <div class="widget-subtitle">Based on active alerts</div>
+    <!-- Distribution Widgets Section - Collapsible -->
+    <div class="analytics-section" id="distribution-section">
+      <div class="section-header" onclick="SectionManager.toggle('distribution')">
+        <div class="section-header-left">
+          <div class="section-collapse-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
-        </div>
-        <div class="severity-bars" id="severity-bars">
-          <div class="severity-bar-row">
-            <span class="severity-label">Critical</span>
-            <div class="severity-bar-container">
-              <div class="severity-bar critical" id="severity-critical" style="width: 0%"></div>
-            </div>
-            <span class="severity-count" id="severity-critical-count">0</span>
-          </div>
-          <div class="severity-bar-row">
-            <span class="severity-label">Warning</span>
-            <div class="severity-bar-container">
-              <div class="severity-bar warning" id="severity-warning" style="width: 0%"></div>
-            </div>
-            <span class="severity-count" id="severity-warning-count">0</span>
-          </div>
-          <div class="severity-bar-row">
-            <span class="severity-label">Info</span>
-            <div class="severity-bar-container">
-              <div class="severity-bar info" id="severity-info" style="width: 0%"></div>
-            </div>
-            <span class="severity-count" id="severity-info-count">0</span>
-          </div>
+          <span class="section-title">Distribution Overview</span>
+          <span class="section-badge">3 widgets</span>
         </div>
       </div>
+      <div class="section-content" id="distribution-content">
+        <div class="widgets-grid">
+          <!-- Severity Distribution Widget -->
+          <div class="widget">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Alert Severity Distribution
+                  <div class="tooltip tooltip-wide">Categorized by service keywords: critical, warning, info</div>
+                </div>
+                <div class="widget-subtitle">Based on active alerts</div>
+              </div>
+            </div>
+            <div class="severity-bars" id="severity-bars">
+              <div class="severity-bar-row has-tooltip">
+                <div class="tooltip">Services containing: critical, down, fail</div>
+                <span class="severity-label">Critical</span>
+                <div class="severity-bar-container">
+                  <div class="severity-bar critical" id="severity-critical" style="width: 0%"></div>
+                </div>
+                <span class="severity-count" id="severity-critical-count">0</span>
+              </div>
+              <div class="severity-bar-row has-tooltip">
+                <div class="tooltip">Services containing: warn, high, load</div>
+                <span class="severity-label">Warning</span>
+                <div class="severity-bar-container">
+                  <div class="severity-bar warning" id="severity-warning" style="width: 0%"></div>
+                </div>
+                <span class="severity-count" id="severity-warning-count">0</span>
+              </div>
+              <div class="severity-bar-row has-tooltip">
+                <div class="tooltip">All other services</div>
+                <span class="severity-label">Info</span>
+                <div class="severity-bar-container">
+                  <div class="severity-bar info" id="severity-info" style="width: 0%"></div>
+                </div>
+                <span class="severity-count" id="severity-info-count">0</span>
+              </div>
+            </div>
+          </div>
 
-      <!-- Top Services Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Top Affected Services</div>
-            <div class="widget-subtitle">Most frequent alerts</div>
+          <!-- Top Services Widget -->
+          <div class="widget">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title">Top Affected Services</div>
+                <div class="widget-subtitle">Most frequent alerts</div>
+              </div>
+            </div>
+            <div class="services-list" id="top-services">
+              <div class="service-row">
+                <span class="service-name">Loading...</span>
+                <span class="service-count-badge">-</span>
+              </div>
+            </div>
           </div>
-        </div>
-        <div class="services-list" id="top-services">
-          <div class="service-row">
-            <span class="service-name">Loading...</span>
-            <span class="service-count-badge">-</span>
-          </div>
-        </div>
-      </div>
 
-      <!-- Top Locations Widget -->
-      <div class="widget">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Alerts by Location</div>
-            <div class="widget-subtitle">Geographic distribution</div>
-          </div>
-        </div>
-        <div class="locations-list" id="top-locations">
-          <div class="location-row">
-            <span class="location-name">Loading...</span>
-            <span class="location-count-badge">-</span>
+          <!-- Top Locations Widget -->
+          <div class="widget">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title">Alerts by Location</div>
+                <div class="widget-subtitle">Click to filter by location</div>
+              </div>
+            </div>
+            <div class="locations-list" id="top-locations">
+              <div class="location-row">
+                <span class="location-name">Loading...</span>
+                <span class="location-count-badge">-</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
     </div>
 
-    <!-- Quick Stats Bar -->
-    <div class="quick-stats" id="quick-stats">
-      <div class="quick-stat">
-        <div class="quick-stat-icon time">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
+    <!-- Key Metrics Section - Collapsible -->
+    <div class="analytics-section" id="metrics-section">
+      <div class="section-header" onclick="SectionManager.toggle('metrics')">
+        <div class="section-header-left">
+          <div class="section-collapse-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <span class="section-title">Key Metrics</span>
+          <span class="section-badge">Time-based stats</span>
         </div>
-        <div class="quick-stat-content">
-          <div class="quick-stat-value" id="avg-alert-time">--</div>
-          <div class="quick-stat-label">Avg Time Open</div>
-        </div>
-      </div>
-
-      <div class="quick-stat">
-        <div class="quick-stat-icon oldest">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-            <line x1="12" y1="9" x2="12" y2="13"></line>
-            <line x1="12" y1="17" x2="12.01" y2="17"></line>
-          </svg>
-        </div>
-        <div class="quick-stat-content">
-          <div class="quick-stat-value" id="oldest-alert-time">--</div>
-          <div class="quick-stat-label">Oldest Alert</div>
+        <div class="section-header-right" onclick="event.stopPropagation()">
+          <div class="time-range-selector" id="analytics-time-range">
+            <button type="button" class="time-range-btn" data-range="1h">1H</button>
+            <button type="button" class="time-range-btn" data-range="6h">6H</button>
+            <button type="button" class="time-range-btn active" data-range="24h">24H</button>
+            <button type="button" class="time-range-btn" data-range="7d">7D</button>
+          </div>
         </div>
       </div>
+      <div class="section-content" id="metrics-content">
+        <!-- Quick Stats Bar with Tooltips -->
+        <div class="quick-stats" id="quick-stats">
+          <div class="quick-stat has-tooltip">
+            <div class="tooltip tooltip-wide">Average time alerts have been open (all active alerts)</div>
+            <div class="quick-stat-icon time">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+            </div>
+            <div class="quick-stat-content">
+              <div class="quick-stat-value" id="avg-alert-time">--</div>
+              <div class="quick-stat-label">Avg Time Open</div>
+            </div>
+          </div>
 
-      <div class="quick-stat">
-        <div class="quick-stat-icon velocity">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
-          </svg>
-        </div>
-        <div class="quick-stat-content">
-          <div class="quick-stat-value" id="alert-velocity">--</div>
-          <div class="quick-stat-label">Alerts/Hour</div>
-        </div>
-      </div>
+          <div class="quick-stat has-tooltip">
+            <div class="tooltip tooltip-wide">The longest-running active alert</div>
+            <div class="quick-stat-icon oldest">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                <line x1="12" y1="9" x2="12" y2="13"></line>
+                <line x1="12" y1="17" x2="12.01" y2="17"></line>
+              </svg>
+            </div>
+            <div class="quick-stat-content">
+              <div class="quick-stat-value" id="oldest-alert-time">--</div>
+              <div class="quick-stat-label">Oldest Alert</div>
+            </div>
+          </div>
 
-      <div class="quick-stat">
-        <div class="quick-stat-icon recurring">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M17 2.1l4 4-4 4"></path>
-            <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"></path>
-            <path d="M7 21.9l-4-4 4-4"></path>
-            <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path>
-          </svg>
+          <div class="quick-stat has-tooltip">
+            <div class="tooltip tooltip-wide">New alerts in the selected time range</div>
+            <div class="quick-stat-icon velocity">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+              </svg>
+            </div>
+            <div class="quick-stat-content">
+              <div class="quick-stat-value" id="alert-velocity">--</div>
+              <div class="quick-stat-label">Alerts in Period</div>
+            </div>
+          </div>
+
+          <div class="quick-stat has-tooltip">
+            <div class="tooltip tooltip-wide">Hosts with 2+ different services alerting</div>
+            <div class="quick-stat-icon recurring">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M17 2.1l4 4-4 4"></path>
+                <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"></path>
+                <path d="M7 21.9l-4-4 4-4"></path>
+                <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path>
+              </svg>
+            </div>
+            <div class="quick-stat-content">
+              <div class="quick-stat-value" id="recurring-count">--</div>
+              <div class="quick-stat-label">Recurring Systems</div>
+            </div>
+          </div>
+
+          <div class="quick-stat has-tooltip">
+            <div class="tooltip tooltip-wide">Overall system health score (0-100)</div>
+            <div class="quick-stat-icon" style="background: var(--healthy-bg); color: var(--healthy);">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+              </svg>
+            </div>
+            <div class="quick-stat-content">
+              <div class="quick-stat-value" id="health-score">--</div>
+              <div class="quick-stat-label">Health Score</div>
+            </div>
+          </div>
         </div>
-        <div class="quick-stat-content">
-          <div class="quick-stat-value" id="recurring-count">--</div>
-          <div class="quick-stat-label">Recurring Systems</div>
+
+        <!-- Oldest Alert Highlight Card -->
+        <div class="oldest-alert-card" id="oldest-alert-card">
+          <div class="oldest-alert-header">
+            <span class="oldest-alert-badge">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Oldest Active Alert
+            </span>
+          </div>
+          <div class="oldest-alert-content">
+            <div class="oldest-alert-field">
+              <span class="oldest-alert-label">Hostname</span>
+              <span class="oldest-alert-value" id="oldest-hostname">--</span>
+            </div>
+            <div class="oldest-alert-field">
+              <span class="oldest-alert-label">Account</span>
+              <span class="oldest-alert-value" id="oldest-account">--</span>
+            </div>
+            <div class="oldest-alert-field">
+              <span class="oldest-alert-label">Started</span>
+              <span class="oldest-alert-value" id="oldest-started">--</span>
+            </div>
+            <div class="oldest-alert-field">
+              <span class="oldest-alert-label">Duration</span>
+              <span class="oldest-alert-duration" id="oldest-duration">--</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Oldest Alert Highlight Card -->
-    <div class="oldest-alert-card" id="oldest-alert-card">
-      <div class="oldest-alert-header">
-        <span class="oldest-alert-badge">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
-          Oldest Active Alert
-        </span>
+    <!-- Analytics Charts Section - Collapsible -->
+    <div class="analytics-section" id="charts-section">
+      <div class="section-header" onclick="SectionManager.toggle('charts')">
+        <div class="section-header-left">
+          <div class="section-collapse-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </div>
+          <span class="section-title">Velocity & Patterns</span>
+          <span class="section-badge">4 charts</span>
+        </div>
       </div>
-      <div class="oldest-alert-content">
-        <div class="oldest-alert-field">
-          <span class="oldest-alert-label">Hostname</span>
-          <span class="oldest-alert-value" id="oldest-hostname">--</span>
-        </div>
-        <div class="oldest-alert-field">
-          <span class="oldest-alert-label">Account</span>
-          <span class="oldest-alert-value" id="oldest-account">--</span>
-        </div>
-        <div class="oldest-alert-field">
-          <span class="oldest-alert-label">Started</span>
-          <span class="oldest-alert-value" id="oldest-started">--</span>
-        </div>
-        <div class="oldest-alert-field">
-          <span class="oldest-alert-label">Duration</span>
-          <span class="oldest-alert-duration" id="oldest-duration">--</span>
+      <div class="section-content" id="charts-content">
+        <div class="analytics-grid">
+          <!-- Alert Velocity Chart -->
+          <div class="widget-lg">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Alert Velocity
+                  <div class="tooltip tooltip-wide">Hourly breakdown of when alerts were triggered</div>
+                </div>
+                <div class="widget-subtitle">Alerts triggered over time (<span id="velocity-range-label">24h</span>)</div>
+              </div>
+            </div>
+            <div class="velocity-chart" id="velocity-chart">
+              <!-- Bars will be generated by JS -->
+            </div>
+            <div class="velocity-legend">
+              <div class="velocity-stat has-tooltip">
+                <div class="tooltip">Most alerts in a single hour</div>
+                <div class="velocity-stat-value" id="velocity-peak">0</div>
+                <div class="velocity-stat-label">Peak/Hour</div>
+              </div>
+              <div class="velocity-stat has-tooltip">
+                <div class="tooltip">Average alerts per hour</div>
+                <div class="velocity-stat-value" id="velocity-avg">0</div>
+                <div class="velocity-stat-label">Avg/Hour</div>
+              </div>
+              <div class="velocity-stat has-tooltip">
+                <div class="tooltip">Total alerts in selected period</div>
+                <div class="velocity-stat-value" id="velocity-total">0</div>
+                <div class="velocity-stat-label">Total</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recurring System Alerts -->
+          <div class="widget-lg">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Recurring System Alerts
+                  <div class="tooltip tooltip-wide">Systems with multiple services alerting - potential systemic issues</div>
+                </div>
+                <div class="widget-subtitle">Click to filter by hostname</div>
+              </div>
+            </div>
+            <div class="recurring-list" id="recurring-systems">
+              <div class="widget-empty">
+                <div class="widget-empty-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <span class="widget-empty-text">No recurring patterns detected</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recurring Account Alerts -->
+          <div class="widget-lg">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Recurring Account Alerts
+                  <div class="tooltip tooltip-wide">Accounts with multiple hosts affected - potential account-wide issues</div>
+                </div>
+                <div class="widget-subtitle">Click to filter by account</div>
+              </div>
+            </div>
+            <div class="recurring-list" id="recurring-accounts">
+              <div class="widget-empty">
+                <div class="widget-empty-icon">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                </div>
+                <span class="widget-empty-text">No recurring patterns detected</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Alert Timeline -->
+          <div class="widget-lg">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Alert Timeline
+                  <div class="tooltip tooltip-wide">Hover over markers to see alert details</div>
+                </div>
+                <div class="widget-subtitle">Visual distribution of alert start times</div>
+              </div>
+            </div>
+            <div class="timeline-container">
+              <div class="timeline" id="alert-timeline">
+                <!-- Markers will be generated by JS -->
+              </div>
+              <div class="timeline-labels">
+                <span id="timeline-start">24h ago</span>
+                <span id="timeline-end">Now</span>
+              </div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
 
-    <!-- Analytics Grid -->
-    <div class="analytics-grid">
-      <!-- Alert Velocity Chart -->
-      <div class="widget-lg">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Alert Velocity</div>
-            <div class="widget-subtitle">Alerts triggered over time (24h)</div>
+    <!-- Incidents Section -->
+    <div class="analytics-section" id="incidents-section">
+      <div class="section-header" onclick="SectionManager.toggle('incidents')">
+        <div class="section-header-left">
+          <div class="section-collapse-icon">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
           </div>
+          <span class="section-title">Detected Incidents</span>
+          <span class="section-badge" id="incidents-badge">0 groups</span>
         </div>
-        <div class="velocity-chart" id="velocity-chart">
-          <!-- Bars will be generated by JS -->
-        </div>
-        <div class="velocity-legend">
-          <div class="velocity-stat">
-            <div class="velocity-stat-value" id="velocity-peak">0</div>
-            <div class="velocity-stat-label">Peak/Hour</div>
-          </div>
-          <div class="velocity-stat">
-            <div class="velocity-stat-value" id="velocity-avg">0</div>
-            <div class="velocity-stat-label">Avg/Hour</div>
-          </div>
-          <div class="velocity-stat">
-            <div class="velocity-stat-value" id="velocity-total">0</div>
-            <div class="velocity-stat-label">Total (24h)</div>
-          </div>
+        <div class="section-header-right" onclick="event.stopPropagation()">
+          <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.detectIncidents()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
+              <path d="M21 3v5h-5"></path>
+            </svg>
+            Re-detect
+          </button>
         </div>
       </div>
-
-      <!-- Recurring System Alerts -->
-      <div class="widget-lg">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Recurring System Alerts</div>
-            <div class="widget-subtitle">Systems with repeated issues</div>
+      <div class="section-content" id="incidents-content">
+        <!-- Create Incident Bar (shows when alerts are selected) -->
+        <div class="create-incident-bar" id="create-incident-bar">
+          <div class="create-incident-info">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+              <path d="M2 17l10 5 10-5"></path>
+              <path d="M2 12l10 5 10-5"></path>
+            </svg>
+            <span><strong id="selected-for-incident">0</strong> alerts selected</span>
+          </div>
+          <div class="create-incident-actions">
+            <button type="button" class="btn btn-sm btn-ghost" onclick="IncidentManager.clearSelection()">Cancel</button>
+            <button type="button" class="btn btn-sm btn-primary" onclick="IncidentManager.createFromSelection()">Create Incident</button>
           </div>
         </div>
-        <div class="recurring-list" id="recurring-systems">
+
+        <!-- Incidents List -->
+        <div class="incidents-list" id="incidents-list">
           <div class="widget-empty">
             <div class="widget-empty-icon">
               <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                <path d="M12 2L2 7l10 5 10-5-10-5z"></path>
+                <path d="M2 17l10 5 10-5"></path>
+                <path d="M2 12l10 5 10-5"></path>
               </svg>
             </div>
-            <span class="widget-empty-text">No recurring patterns detected</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Recurring Account Alerts -->
-      <div class="widget-lg">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Recurring Account Alerts</div>
-            <div class="widget-subtitle">Accounts with multiple issues</div>
-          </div>
-        </div>
-        <div class="recurring-list" id="recurring-accounts">
-          <div class="widget-empty">
-            <div class="widget-empty-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <span class="widget-empty-text">No recurring patterns detected</span>
-          </div>
-        </div>
-      </div>
-
-      <!-- Alert Timeline -->
-      <div class="widget-lg">
-        <div class="widget-header">
-          <div>
-            <div class="widget-title">Alert Timeline</div>
-            <div class="widget-subtitle">Visual distribution of alert start times</div>
-          </div>
-        </div>
-        <div class="timeline-container">
-          <div class="timeline" id="alert-timeline">
-            <!-- Markers will be generated by JS -->
-          </div>
-          <div class="timeline-labels">
-            <span id="timeline-start">24h ago</span>
-            <span id="timeline-end">Now</span>
+            <span class="widget-empty-text">No incidents detected. Alerts within 5 minutes of each other are grouped.</span>
           </div>
         </div>
       </div>
