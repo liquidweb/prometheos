@@ -1595,7 +1595,265 @@
           headerCheckbox.dispatchEvent(new Event('change'));
         }
       }
+
+      // D to cycle through density modes
+      if (e.key === 'd' || e.key === 'D') {
+        e.preventDefault();
+        const densities = ['compact', 'comfortable', 'spacious'];
+        const currentIndex = densities.indexOf(DensityManager.current);
+        const nextIndex = (currentIndex + 1) % densities.length;
+        DensityManager.setDensity(densities[nextIndex]);
+        showToast(`Switched to ${densities[nextIndex]} view`, 'success');
+      }
     });
+
+    // ========================================
+    // DENSITY/VIEW MODE MANAGER
+    // ========================================
+
+    const DensityManager = {
+      current: 'comfortable',
+
+      init() {
+        // Load saved density preference
+        const savedDensity = localStorage.getItem('prometheos-density') || 'comfortable';
+        this.setDensity(savedDensity);
+
+        // Toggle dropdown
+        const toggleBtn = document.getElementById('view-toggle-btn');
+        const dropdown = document.getElementById('view-dropdown');
+
+        if (toggleBtn && dropdown) {
+          toggleBtn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            dropdown.classList.toggle('show');
+          });
+
+          // Option selection
+          document.querySelectorAll('.view-option').forEach(option => {
+            option.addEventListener('click', () => {
+              const density = option.dataset.density;
+              this.setDensity(density);
+              dropdown.classList.remove('show');
+              showToast(`Switched to ${density} view`, 'success');
+            });
+          });
+
+          // Close on outside click
+          document.addEventListener('click', () => {
+            dropdown.classList.remove('show');
+          });
+        }
+      },
+
+      setDensity(density) {
+        this.current = density;
+        document.documentElement.setAttribute('data-density', density);
+        localStorage.setItem('prometheos-density', density);
+
+        // Update UI
+        document.querySelectorAll('.view-option').forEach(option => {
+          option.classList.toggle('selected', option.dataset.density === density);
+        });
+      }
+    };
+
+    // ========================================
+    // SAVED FILTER PRESETS MANAGER
+    // ========================================
+
+    const PresetsManager = {
+      presets: [],
+
+      init() {
+        // Load saved presets from localStorage
+        const saved = localStorage.getItem('prometheos-filter-presets');
+        this.presets = saved ? JSON.parse(saved) : [];
+
+        this.render();
+        this.bindEvents();
+      },
+
+      bindEvents() {
+        const presetsBtn = document.getElementById('presets-btn');
+        const presetsDropdown = document.getElementById('presets-dropdown');
+        const presetNameInput = document.getElementById('preset-name-input');
+        const savePresetBtn = document.getElementById('save-preset-btn');
+
+        if (!presetsBtn || !presetsDropdown) return;
+
+        // Toggle dropdown
+        presetsBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          presetsDropdown.classList.toggle('show');
+        });
+
+        // Close on outside click
+        document.addEventListener('click', (e) => {
+          if (!presetsDropdown.contains(e.target)) {
+            presetsDropdown.classList.remove('show');
+          }
+        });
+
+        // Prevent dropdown from closing when clicking inside
+        presetsDropdown.addEventListener('click', (e) => {
+          e.stopPropagation();
+        });
+
+        // Enable/disable save button based on input
+        if (presetNameInput && savePresetBtn) {
+          presetNameInput.addEventListener('input', () => {
+            const hasFilters = this.hasActiveFilters();
+            const hasName = presetNameInput.value.trim().length > 0;
+            savePresetBtn.disabled = !(hasFilters && hasName);
+          });
+
+          // Save preset on button click
+          savePresetBtn.addEventListener('click', () => {
+            this.saveCurrentFilters(presetNameInput.value.trim());
+            presetNameInput.value = '';
+            savePresetBtn.disabled = true;
+          });
+
+          // Save on Enter key
+          presetNameInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !savePresetBtn.disabled) {
+              this.saveCurrentFilters(presetNameInput.value.trim());
+              presetNameInput.value = '';
+              savePresetBtn.disabled = true;
+            }
+          });
+        }
+      },
+
+      hasActiveFilters() {
+        const location = document.getElementById('filter-location')?.value || '';
+        const prom = document.getElementById('filter-prom')?.value || '';
+        const time = document.getElementById('filter-time')?.value || '';
+        const service = document.getElementById('filter-service')?.value || '';
+        const search = document.getElementById('search-box')?.value || '';
+
+        return location || prom || time || service || search;
+      },
+
+      getCurrentFilters() {
+        return {
+          location: document.getElementById('filter-location')?.value || '',
+          prom: document.getElementById('filter-prom')?.value || '',
+          time: document.getElementById('filter-time')?.value || '',
+          service: document.getElementById('filter-service')?.value || '',
+          search: document.getElementById('search-box')?.value || ''
+        };
+      },
+
+      saveCurrentFilters(name) {
+        if (!name || !this.hasActiveFilters()) return;
+
+        const preset = {
+          id: Date.now(),
+          name: name,
+          filters: this.getCurrentFilters(),
+          createdAt: new Date().toISOString()
+        };
+
+        this.presets.unshift(preset);
+
+        // Limit to 10 presets
+        if (this.presets.length > 10) {
+          this.presets = this.presets.slice(0, 10);
+        }
+
+        this.save();
+        this.render();
+        showToast(`Saved preset: ${name}`, 'success');
+      },
+
+      applyPreset(id) {
+        const preset = this.presets.find(p => p.id === id);
+        if (!preset) return;
+
+        const filters = preset.filters;
+
+        // Apply filter values
+        if (document.getElementById('filter-location')) {
+          document.getElementById('filter-location').value = filters.location || '';
+        }
+        if (document.getElementById('filter-prom')) {
+          document.getElementById('filter-prom').value = filters.prom || '';
+        }
+        if (document.getElementById('filter-time')) {
+          document.getElementById('filter-time').value = filters.time || '';
+        }
+        if (document.getElementById('filter-service')) {
+          document.getElementById('filter-service').value = filters.service || '';
+        }
+        if (document.getElementById('search-box') && filters.search) {
+          document.getElementById('search-box').value = filters.search;
+        }
+
+        // Apply the filters
+        FilterManager.apply();
+
+        // Close dropdown
+        document.getElementById('presets-dropdown').classList.remove('show');
+
+        showToast(`Applied preset: ${preset.name}`, 'success');
+      },
+
+      deletePreset(id) {
+        this.presets = this.presets.filter(p => p.id !== id);
+        this.save();
+        this.render();
+        showToast('Preset deleted', 'success');
+      },
+
+      save() {
+        localStorage.setItem('prometheos-filter-presets', JSON.stringify(this.presets));
+      },
+
+      getFilterSummary(filters) {
+        const parts = [];
+        if (filters.location) parts.push(`Location: ${filters.location}`);
+        if (filters.prom) parts.push(`Node: ${filters.prom}`);
+        if (filters.time) parts.push(`Time: ${filters.time}`);
+        if (filters.service) parts.push(`Service: ${filters.service}`);
+        if (filters.search) parts.push(`Search: "${filters.search}"`);
+        return parts.join(' | ') || 'No filters';
+      },
+
+      render() {
+        const list = document.getElementById('presets-list');
+        if (!list) return;
+
+        if (this.presets.length === 0) {
+          list.innerHTML = '<div class="presets-empty">No saved presets yet</div>';
+          return;
+        }
+
+        list.innerHTML = this.presets.map(preset => `
+          <div class="preset-item" data-id="${preset.id}">
+            <div class="preset-info" onclick="PresetsManager.applyPreset(${preset.id})">
+              <div class="preset-name">${this.escapeHtml(preset.name)}</div>
+              <div class="preset-filters">${this.escapeHtml(this.getFilterSummary(preset.filters))}</div>
+            </div>
+            <div class="preset-actions">
+              <button type="button" class="preset-action-btn delete" onclick="PresetsManager.deletePreset(${preset.id})" title="Delete preset">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        `).join('');
+      },
+
+      escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+      }
+    };
 
     // ========================================
     // INITIALIZATION
@@ -1607,6 +1865,8 @@
       ShortcutsModal.init();
       FilterManager.init();
       ExportManager.init();
+      DensityManager.init();
+      PresetsManager.init();
       updateCounts();
     });
   </script>
