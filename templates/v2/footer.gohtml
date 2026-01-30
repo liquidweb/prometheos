@@ -1117,6 +1117,9 @@
           </div>
         `;
       }
+
+      // Update advanced analytics
+      updateAdvancedAnalytics();
     }
 
     function filterByLocation(location) {
@@ -1130,6 +1133,323 @@
       }
 
       showToast(`Filtered by location: ${location}`, 'success');
+    }
+
+    // ========================================
+    // ADVANCED ANALYTICS
+    // ========================================
+
+    function updateAdvancedAnalytics() {
+      const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
+      const now = new Date();
+
+      // Collect alert data
+      const alertData = [];
+      rows.forEach(row => {
+        const timeStr = row.dataset.time;
+        if (timeStr) {
+          const alertTime = new Date(timeStr.replace(' ', 'T'));
+          const hostname = row.querySelector('.hostname')?.textContent.trim() || '';
+          const account = row.querySelector('.cell-primary')?.textContent.trim() || '';
+          const services = row.dataset.services || '';
+
+          alertData.push({
+            time: alertTime,
+            hostname,
+            account,
+            services,
+            duration: now - alertTime
+          });
+        }
+      });
+
+      // Update Quick Stats
+      updateQuickStats(alertData, now);
+
+      // Update Oldest Alert
+      updateOldestAlert(alertData);
+
+      // Update Alert Velocity
+      updateAlertVelocity(alertData, now);
+
+      // Update Recurring Systems
+      updateRecurringSystems(alertData);
+
+      // Update Recurring Accounts
+      updateRecurringAccounts(alertData);
+
+      // Update Timeline
+      updateAlertTimeline(alertData, now);
+    }
+
+    function formatDuration(ms) {
+      const seconds = Math.floor(ms / 1000);
+      const minutes = Math.floor(seconds / 60);
+      const hours = Math.floor(minutes / 60);
+      const days = Math.floor(hours / 24);
+
+      if (days > 0) {
+        return `${days}d ${hours % 24}h`;
+      } else if (hours > 0) {
+        return `${hours}h ${minutes % 60}m`;
+      } else if (minutes > 0) {
+        return `${minutes}m`;
+      } else {
+        return `${seconds}s`;
+      }
+    }
+
+    function updateQuickStats(alertData, now) {
+      // Average time open
+      if (alertData.length > 0) {
+        const avgDuration = alertData.reduce((sum, a) => sum + a.duration, 0) / alertData.length;
+        document.getElementById('avg-alert-time').textContent = formatDuration(avgDuration);
+      } else {
+        document.getElementById('avg-alert-time').textContent = '--';
+      }
+
+      // Oldest alert time
+      if (alertData.length > 0) {
+        const oldest = alertData.reduce((max, a) => a.duration > max.duration ? a : max);
+        document.getElementById('oldest-alert-time').textContent = formatDuration(oldest.duration);
+      } else {
+        document.getElementById('oldest-alert-time').textContent = '--';
+      }
+
+      // Alert velocity (alerts in last hour)
+      const oneHourAgo = new Date(now - 60 * 60 * 1000);
+      const recentAlerts = alertData.filter(a => a.time >= oneHourAgo).length;
+      document.getElementById('alert-velocity').textContent = recentAlerts;
+
+      // Recurring systems count (systems with 2+ services alerting)
+      const systemServices = {};
+      alertData.forEach(a => {
+        if (!systemServices[a.hostname]) {
+          systemServices[a.hostname] = new Set();
+        }
+        a.services.split(',').forEach(s => {
+          if (s.trim()) systemServices[a.hostname].add(s.trim());
+        });
+      });
+      const recurringCount = Object.values(systemServices).filter(s => s.size >= 2).length;
+      document.getElementById('recurring-count').textContent = recurringCount;
+    }
+
+    function updateOldestAlert(alertData) {
+      const card = document.getElementById('oldest-alert-card');
+
+      if (alertData.length === 0) {
+        card.classList.remove('show');
+        return;
+      }
+
+      const oldest = alertData.reduce((max, a) => a.duration > max.duration ? a : max);
+
+      // Only show if older than 1 hour
+      if (oldest.duration < 60 * 60 * 1000) {
+        card.classList.remove('show');
+        return;
+      }
+
+      card.classList.add('show');
+      document.getElementById('oldest-hostname').textContent = oldest.hostname;
+      document.getElementById('oldest-account').textContent = oldest.account;
+      document.getElementById('oldest-started').textContent = oldest.time.toLocaleString();
+      document.getElementById('oldest-duration').textContent = formatDuration(oldest.duration);
+    }
+
+    function updateAlertVelocity(alertData, now) {
+      const chartContainer = document.getElementById('velocity-chart');
+
+      // Generate 24 hourly buckets
+      const buckets = [];
+      for (let i = 23; i >= 0; i--) {
+        const bucketStart = new Date(now - (i + 1) * 60 * 60 * 1000);
+        const bucketEnd = new Date(now - i * 60 * 60 * 1000);
+        const count = alertData.filter(a => a.time >= bucketStart && a.time < bucketEnd).length;
+        buckets.push({
+          hour: bucketEnd.getHours(),
+          count
+        });
+      }
+
+      const maxCount = Math.max(...buckets.map(b => b.count), 1);
+      const totalAlerts = buckets.reduce((sum, b) => sum + b.count, 0);
+      const avgAlerts = (totalAlerts / 24).toFixed(1);
+      const peakAlerts = maxCount;
+
+      // Update legend
+      document.getElementById('velocity-peak').textContent = peakAlerts;
+      document.getElementById('velocity-avg').textContent = avgAlerts;
+      document.getElementById('velocity-total').textContent = totalAlerts;
+
+      // Generate bars
+      chartContainer.innerHTML = buckets.map((bucket, i) => {
+        const height = (bucket.count / maxCount) * 100;
+        const label = i % 4 === 0 ? `${bucket.hour}:00` : '';
+        return `
+          <div class="velocity-bar-wrapper">
+            <div class="velocity-bar" style="height: ${Math.max(height, 4)}%" data-count="${bucket.count}"></div>
+            <span class="velocity-label">${label}</span>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateRecurringSystems(alertData) {
+      const container = document.getElementById('recurring-systems');
+
+      // Count services per system
+      const systemData = {};
+      alertData.forEach(a => {
+        if (!systemData[a.hostname]) {
+          systemData[a.hostname] = {
+            hostname: a.hostname,
+            account: a.account,
+            services: new Set(),
+            alertCount: 0
+          };
+        }
+        systemData[a.hostname].alertCount++;
+        a.services.split(',').forEach(s => {
+          if (s.trim()) systemData[a.hostname].services.add(s.trim());
+        });
+      });
+
+      // Filter to recurring (2+ services) and sort
+      const recurring = Object.values(systemData)
+        .filter(s => s.services.size >= 2)
+        .sort((a, b) => b.services.size - a.services.size)
+        .slice(0, 5);
+
+      if (recurring.length === 0) {
+        container.innerHTML = `
+          <div class="widget-empty">
+            <div class="widget-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="widget-empty-text">No recurring patterns detected</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recurring.map((sys, i) => {
+        const severity = sys.services.size >= 4 ? '' : sys.services.size >= 3 ? 'warning' : 'info';
+        return `
+          <div class="recurring-item ${severity}" onclick="filterByHostname('${sys.hostname}')">
+            <span class="recurring-rank">${i + 1}</span>
+            <div class="recurring-info">
+              <div class="recurring-name">${sys.hostname}</div>
+              <div class="recurring-meta">${sys.account}</div>
+            </div>
+            <div class="recurring-count">
+              <span class="recurring-count-value">${sys.services.size}</span>
+              <span class="recurring-count-label">services</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateRecurringAccounts(alertData) {
+      const container = document.getElementById('recurring-accounts');
+
+      // Count alerts per account
+      const accountData = {};
+      alertData.forEach(a => {
+        if (!accountData[a.account]) {
+          accountData[a.account] = {
+            account: a.account,
+            hosts: new Set(),
+            alertCount: 0
+          };
+        }
+        accountData[a.account].alertCount++;
+        accountData[a.account].hosts.add(a.hostname);
+      });
+
+      // Filter to accounts with 2+ hosts and sort
+      const recurring = Object.values(accountData)
+        .filter(a => a.hosts.size >= 2)
+        .sort((a, b) => b.hosts.size - a.hosts.size)
+        .slice(0, 5);
+
+      if (recurring.length === 0) {
+        container.innerHTML = `
+          <div class="widget-empty">
+            <div class="widget-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="widget-empty-text">No recurring patterns detected</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = recurring.map((acct, i) => {
+        const severity = acct.hosts.size >= 5 ? '' : acct.hosts.size >= 3 ? 'warning' : 'info';
+        return `
+          <div class="recurring-item ${severity}" onclick="filterByAccount('${acct.account}')">
+            <span class="recurring-rank">${i + 1}</span>
+            <div class="recurring-info">
+              <div class="recurring-name">${acct.account}</div>
+              <div class="recurring-meta">${acct.alertCount} total alerts</div>
+            </div>
+            <div class="recurring-count">
+              <span class="recurring-count-value">${acct.hosts.size}</span>
+              <span class="recurring-count-label">hosts</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateAlertTimeline(alertData, now) {
+      const timeline = document.getElementById('alert-timeline');
+      const timelineWidth = timeline.offsetWidth;
+
+      if (alertData.length === 0) {
+        timeline.innerHTML = '';
+        return;
+      }
+
+      // 24 hour range
+      const rangeMs = 24 * 60 * 60 * 1000;
+      const startTime = new Date(now - rangeMs);
+
+      const markers = alertData
+        .filter(a => a.time >= startTime)
+        .map(a => {
+          const position = ((a.time - startTime) / rangeMs) * 100;
+          return `
+            <div class="timeline-marker" style="left: ${position}%">
+              <div class="timeline-tooltip">
+                <strong>${a.hostname}</strong><br>
+                ${a.time.toLocaleTimeString()}<br>
+                ${a.services.split(',').slice(0, 2).join(', ')}
+              </div>
+            </div>
+          `;
+        }).join('');
+
+      timeline.innerHTML = markers;
+    }
+
+    function filterByHostname(hostname) {
+      document.getElementById('search-box').value = hostname;
+      document.getElementById('search-form').submit();
+    }
+
+    function filterByAccount(account) {
+      document.getElementById('search-box').value = account;
+      document.getElementById('search-form').submit();
     }
 
     // ========================================
