@@ -606,6 +606,67 @@
     };
 
     // ========================================
+    // HELP MODAL
+    // ========================================
+
+    const HelpModal = {
+      modal: null,
+      currentTab: 'overview',
+
+      init() {
+        this.modal = document.getElementById('help-modal');
+        const openBtn = document.getElementById('help-btn');
+
+        if (openBtn) {
+          openBtn.addEventListener('click', () => this.open());
+        }
+
+        if (this.modal) {
+          this.modal.addEventListener('click', (e) => {
+            if (e.target === this.modal) this.close();
+          });
+        }
+      },
+
+      open() {
+        if (this.modal) {
+          this.modal.classList.add('show');
+        }
+      },
+
+      close() {
+        if (this.modal) {
+          this.modal.classList.remove('show');
+        }
+      },
+
+      toggle() {
+        if (this.modal) {
+          this.modal.classList.toggle('show');
+        }
+      },
+
+      showTab(tabName) {
+        this.currentTab = tabName;
+
+        // Update tab buttons
+        document.querySelectorAll('.help-tab').forEach(tab => {
+          tab.classList.toggle('active', tab.dataset.tab === tabName);
+        });
+
+        // Update content visibility
+        document.querySelectorAll('.help-content').forEach(content => {
+          content.style.display = 'none';
+        });
+
+        const activeContent = document.getElementById(`help-content-${tabName}`);
+        if (activeContent) {
+          activeContent.style.display = 'block';
+        }
+      }
+    };
+
+    // ========================================
     // TAB SWITCHING
     // ========================================
 
@@ -1661,6 +1722,8 @@
       // Escape to close modals
       if (e.key === 'Escape') {
         ShortcutsModal.close();
+        HelpModal.close();
+        ColumnManager.close();
         document.getElementById('filters-panel').classList.remove('show');
         document.getElementById('refresh-dropdown').classList.remove('show');
         document.getElementById('export-menu').classList.remove('show');
@@ -1691,6 +1754,12 @@
       if (e.key === 'c' || e.key === 'C') {
         e.preventDefault();
         ColumnManager.open();
+      }
+
+      // H to open help
+      if (e.key === 'h' || e.key === 'H') {
+        e.preventDefault();
+        HelpModal.toggle();
       }
     });
 
@@ -3179,6 +3248,7 @@
       TimeRangeManager.init();
       IncidentManager.init();
       ColumnManager.init();
+      HelpModal.init();
 
       // Close status dropdowns on outside click
       document.addEventListener('click', (e) => {
