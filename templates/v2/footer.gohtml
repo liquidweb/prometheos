@@ -1058,18 +1058,67 @@ Services: ${this.currentAlert.services}`;
       banner: null,
       knownAlerts: new Set(),
       newAlerts: [],
+      storageKey: 'prometheos-known-alerts',
 
       init() {
         this.banner = document.getElementById('new-alerts-banner');
 
-        // Build initial known alerts set
+        // Load known alerts from localStorage
+        this.loadKnownAlerts();
+
+        // Check for new alerts on page load
+        this.checkForNewAlerts();
+
+        // Save current alerts before page unload
+        window.addEventListener('beforeunload', () => this.saveKnownAlerts());
+      },
+
+      loadKnownAlerts() {
+        try {
+          const saved = localStorage.getItem(this.storageKey);
+          if (saved) {
+            const data = JSON.parse(saved);
+            // Only use saved data if it's less than 1 hour old
+            if (data.timestamp && (Date.now() - data.timestamp) < 3600000) {
+              this.knownAlerts = new Set(data.alerts || []);
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('Failed to load known alerts:', e);
+        }
+
+        // If no valid saved data, initialize from current alerts (first load)
+        this.initializeFromCurrentAlerts();
+      },
+
+      initializeFromCurrentAlerts() {
         document.querySelectorAll('#active-table tbody tr').forEach(row => {
           const id = this.getAlertId(row);
           if (id) this.knownAlerts.add(id);
         });
+        this.saveKnownAlerts();
+      },
 
-        // Check for new alerts on refresh
-        this.startPolling();
+      saveKnownAlerts() {
+        try {
+          // Keep only alerts that still exist in the DOM plus new ones
+          const currentIds = new Set();
+          document.querySelectorAll('#active-table tbody tr').forEach(row => {
+            const id = this.getAlertId(row);
+            if (id) currentIds.add(id);
+          });
+
+          // Merge with known (in case some alerts were dismissed but still exist)
+          const toSave = [...currentIds];
+
+          localStorage.setItem(this.storageKey, JSON.stringify({
+            alerts: toSave,
+            timestamp: Date.now()
+          }));
+        } catch (e) {
+          console.warn('Failed to save known alerts:', e);
+        }
       },
 
       getAlertId(row) {
@@ -1078,28 +1127,14 @@ Services: ${this.currentAlert.services}`;
         return hostname && time ? `${hostname}-${time}` : null;
       },
 
-      startPolling() {
-        // Check every refresh cycle if there are new alerts
-        // This integrates with the existing RefreshManager
-        const originalRefresh = RefreshManager.refresh.bind(RefreshManager);
-        RefreshManager.refresh = () => {
-          this.checkForNewAlerts();
-          originalRefresh();
-        };
-      },
-
       checkForNewAlerts() {
-        // After page refresh, this will run on the new page
-        // For now, we detect new alerts client-side by comparing DOM
-        const currentAlerts = new Set();
+        this.newAlerts = [];
+
         document.querySelectorAll('#active-table tbody tr').forEach(row => {
           const id = this.getAlertId(row);
-          if (id) {
-            currentAlerts.add(id);
-            if (!this.knownAlerts.has(id)) {
-              this.newAlerts.push(row);
-              row.classList.add('new-alert');
-            }
+          if (id && !this.knownAlerts.has(id)) {
+            this.newAlerts.push(row);
+            row.classList.add('new-alert');
           }
         });
 
@@ -1125,6 +1160,7 @@ Services: ${this.currentAlert.services}`;
             row.classList.remove('new-alert');
           });
           this.newAlerts = [];
+          this.saveKnownAlerts();
         }
       },
 

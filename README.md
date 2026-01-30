@@ -150,23 +150,75 @@ Enhanced export menu with multiple formats:
 - **Incidents CSV** - Export incident groups
 - **Incidents JSON** - Full incident data with notes
 
+### Alert Details Drawer
+
+Click any alert row to open a detailed slide-out panel:
+
+- **Full Information** - UID, account, hostname, location, Prom node, start time
+- **Duration** - Calculated time since alert started
+- **Services** - All services displayed as tags
+- **Labels** - Additional data attributes shown
+- **Quick Actions**:
+  - Silence/Unsilence the alert
+  - Copy as formatted text
+  - Copy as JSON
+- **Navigation** - Use `←` `→` arrow keys to browse through alerts
+- **Position Indicator** - Shows "1 of N" for current position
+
+### Bulk Actions
+
+Select multiple alerts using checkboxes to perform operations on all at once:
+
+| Action | Description |
+|--------|-------------|
+| **Silence** | Silence all selected alerts |
+| **Unsilence** | Remove silence from all selected |
+| **Create Incident** | Group selected alerts into an incident |
+| **Copy** | Copy all selected to clipboard |
+
+The bulk actions bar appears at the bottom of the screen when alerts are selected.
+
+### New Alerts Indicator
+
+Visual notification when new alerts appear:
+
+- **Banner** appears at top when new alerts are detected
+- **Count badge** shows number of new alerts
+- **Click to scroll** - Jumps to first new alert
+- **Green highlight** on new alert rows
+- **Persisted state** - Tracks seen alerts across page refreshes
+
+### Shareable URLs
+
+Dashboard state is preserved in the URL for sharing:
+
+- **Share Button** - Copies current view URL to clipboard
+- **Encoded State** - Tab, search query, filters, time range
+- **Bookmarkable** - Save filtered views as browser bookmarks
+- **Back/Forward** - Browser navigation works with dashboard state
+
+Example URL: `/v2?tab=silenced&q=nginx&location=dc1&range=1h`
+
 ### Keyboard Shortcuts
 
-Press `?` to view all shortcuts.
+Press `?` to view all shortcuts, or `H` for the full help guide.
 
 | Key | Action |
 |-----|--------|
 | `/` | Focus search box |
-| `Esc` | Close modals / Blur inputs |
+| `Esc` | Close modals / Blur inputs / Close drawer |
 | `Alt+1` | Switch to Active tab |
 | `Alt+2` | Switch to Silenced tab |
 | `F` | Toggle filters panel |
 | `T` | Toggle light/dark theme |
 | `D` | Cycle view density |
 | `C` | Open column configuration |
+| `H` | Open help guide |
 | `R` | Refresh data |
 | `?` | Show keyboard shortcuts |
 | `Ctrl+A` | Select all visible alerts |
+| `←` | Previous alert (in drawer) |
+| `→` | Next alert (in drawer) |
 
 ### Auto-Refresh
 
@@ -281,6 +333,7 @@ The v2 interface stores user preferences in localStorage:
 | `prometheos-incident-window` | Incident clustering window |
 | `prometheos_column_config` | Column visibility and order |
 | `prometheos-filter-presets` | Saved filter presets |
+| `prometheos-known-alerts` | Tracks seen alerts for new alert detection |
 
 ---
 

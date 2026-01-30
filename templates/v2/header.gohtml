@@ -2884,6 +2884,31 @@
       background: var(--accent-bg);
     }
 
+    .alert-row.new-alert {
+      background: var(--success-bg, rgba(34, 197, 94, 0.1));
+      animation: newAlertPulse 2s ease-in-out;
+    }
+
+    .alert-row.new-alert td:first-child {
+      position: relative;
+    }
+
+    .alert-row.new-alert td:first-child::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: var(--success, #22c55e);
+    }
+
+    @keyframes newAlertPulse {
+      0% { background: var(--success-bg, rgba(34, 197, 94, 0.2)); }
+      50% { background: var(--success-bg, rgba(34, 197, 94, 0.1)); }
+      100% { background: transparent; }
+    }
+
     /* ========================================
        COLLAPSIBLE SECTIONS
        ======================================== */
@@ -4046,6 +4071,21 @@
               <span class="shortcut-description">Configure columns</span>
               <div class="shortcut-keys"><span class="key">C</span></div>
             </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Help guide</span>
+              <div class="shortcut-keys"><span class="key">H</span></div>
+            </div>
+          </div>
+          <div class="shortcut-category">
+            <div class="shortcut-category-title">Alert Drawer</div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Previous alert</span>
+              <div class="shortcut-keys"><span class="key">←</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Next alert</span>
+              <div class="shortcut-keys"><span class="key">→</span></div>
+            </div>
           </div>
         </div>
       </div>
@@ -4287,6 +4327,51 @@
               <li><strong>Incidents</strong> - Export incident groups with notes</li>
             </ul>
           </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Alert Details Drawer</h3>
+            <p class="help-text">Click any alert row to open a detailed side panel:</p>
+            <ul class="help-list">
+              <li><strong>Full Details</strong> - UID, account, hostname, location, duration</li>
+              <li><strong>Services</strong> - All services displayed as tags</li>
+              <li><strong>Quick Actions</strong> - Silence/unsilence, copy as text or JSON</li>
+              <li><strong>Navigation</strong> - Use <kbd>←</kbd> <kbd>→</kbd> arrows to browse alerts</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Bulk Actions</h3>
+            <p class="help-text">Select multiple alerts using checkboxes to perform bulk operations:</p>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Silence</span>
+                <span class="help-item-desc">Silence all selected alerts at once</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Unsilence</span>
+                <span class="help-item-desc">Remove silence from selected alerts</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Create Incident</span>
+                <span class="help-item-desc">Group selected alerts into an incident</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Copy</span>
+                <span class="help-item-desc">Copy selected alerts to clipboard</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Share & URL State</h3>
+            <p class="help-text">Dashboard state is encoded in the URL for easy sharing:</p>
+            <ul class="help-list">
+              <li><strong>Share Button</strong> - Copies current view URL to clipboard</li>
+              <li><strong>Bookmarkable</strong> - Save filtered views as browser bookmarks</li>
+              <li><strong>Preserved State</strong> - Tab, search, filters, time range in URL</li>
+              <li><strong>Back/Forward</strong> - Browser navigation works with filters</li>
+            </ul>
+          </div>
         </div>
 
         <div class="help-content" id="help-content-incidents" style="display: none;">
@@ -4367,6 +4452,15 @@
               <div class="help-shortcut"><kbd>Ctrl</kbd>+<kbd>A</kbd><span>Select all visible</span></div>
               <div class="help-shortcut"><kbd>?</kbd><span>Quick shortcuts modal</span></div>
               <div class="help-shortcut"><kbd>H</kbd><span>This help guide</span></div>
+            </div>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Alert Drawer</h3>
+            <div class="help-shortcuts-grid">
+              <div class="help-shortcut"><kbd>←</kbd><span>Previous alert</span></div>
+              <div class="help-shortcut"><kbd>→</kbd><span>Next alert</span></div>
+              <div class="help-shortcut"><kbd>Esc</kbd><span>Close drawer</span></div>
             </div>
           </div>
 
