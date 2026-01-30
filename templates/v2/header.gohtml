@@ -584,6 +584,403 @@
     }
 
     /* ========================================
+       QUICK STATS BAR
+       ======================================== */
+
+    .quick-stats {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 12px;
+      margin-bottom: 24px;
+      padding: 16px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+    }
+
+    .quick-stat {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+    }
+
+    .quick-stat:hover {
+      background: var(--bg-elevated);
+    }
+
+    .quick-stat-icon {
+      width: 40px;
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+      flex-shrink: 0;
+    }
+
+    .quick-stat-icon.time { background: var(--warning-bg); color: var(--warning); }
+    .quick-stat-icon.oldest { background: var(--critical-bg); color: var(--critical); }
+    .quick-stat-icon.velocity { background: var(--info-bg); color: var(--info); }
+    .quick-stat-icon.recurring { background: var(--silenced-bg); color: var(--silenced); }
+
+    .quick-stat-content {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .quick-stat-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .quick-stat-label {
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    /* ========================================
+       ANALYTICS WIDGETS (Extended)
+       ======================================== */
+
+    .analytics-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 16px;
+      margin-bottom: 24px;
+    }
+
+    .widget-lg {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-lg);
+      padding: 20px;
+    }
+
+    /* Alert Velocity Chart */
+    .velocity-chart {
+      height: 120px;
+      display: flex;
+      align-items: flex-end;
+      gap: 4px;
+      padding-top: 20px;
+    }
+
+    .velocity-bar-wrapper {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .velocity-bar {
+      width: 100%;
+      background: var(--accent);
+      border-radius: 2px 2px 0 0;
+      min-height: 4px;
+      transition: height 0.3s ease;
+      position: relative;
+    }
+
+    .velocity-bar:hover {
+      background: var(--accent-hover);
+    }
+
+    .velocity-bar::after {
+      content: attr(data-count);
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: 10px;
+      font-family: var(--font-mono);
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      padding-bottom: 2px;
+    }
+
+    .velocity-bar:hover::after {
+      opacity: 1;
+    }
+
+    .velocity-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .velocity-legend {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .velocity-stat {
+      text-align: center;
+    }
+
+    .velocity-stat-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .velocity-stat-label {
+      font-size: 10px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Recurring Alerts Widget */
+    .recurring-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .recurring-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      border-left: 3px solid var(--critical);
+      transition: all 0.15s ease;
+    }
+
+    .recurring-item:hover {
+      background: var(--bg-elevated);
+    }
+
+    .recurring-item.warning {
+      border-left-color: var(--warning);
+    }
+
+    .recurring-item.info {
+      border-left-color: var(--info);
+    }
+
+    .recurring-rank {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--bg-elevated);
+      border-radius: 50%;
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .recurring-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .recurring-name {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .recurring-meta {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .recurring-count {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+    }
+
+    .recurring-count-value {
+      font-family: var(--font-mono);
+      font-size: 16px;
+      font-weight: 700;
+      color: var(--critical);
+    }
+
+    .recurring-count-label {
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    /* Oldest Alert Highlight */
+    .oldest-alert-card {
+      background: linear-gradient(135deg, var(--critical-bg) 0%, var(--bg-secondary) 100%);
+      border: 1px solid var(--critical);
+      border-radius: var(--radius-lg);
+      padding: 16px;
+      margin-bottom: 16px;
+      display: none;
+    }
+
+    .oldest-alert-card.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .oldest-alert-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 12px;
+    }
+
+    .oldest-alert-badge {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--critical);
+      border-radius: 20px;
+      font-size: 11px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .oldest-alert-content {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      gap: 16px;
+    }
+
+    .oldest-alert-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .oldest-alert-label {
+      font-size: 10px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+    }
+
+    .oldest-alert-value {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .oldest-alert-duration {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--critical);
+    }
+
+    /* Alert Timeline */
+    .timeline-container {
+      padding: 16px 0;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: center;
+      height: 40px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-marker {
+      position: absolute;
+      width: 4px;
+      height: 100%;
+      background: var(--critical);
+      border-radius: 2px;
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .timeline-marker:hover {
+      width: 6px;
+      box-shadow: 0 0 8px var(--critical);
+    }
+
+    .timeline-marker.silenced {
+      background: var(--silenced);
+    }
+
+    .timeline-marker.silenced:hover {
+      box-shadow: 0 0 8px var(--silenced);
+    }
+
+    .timeline-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 8px;
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
+    .timeline-tooltip {
+      position: absolute;
+      bottom: 100%;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 8px 12px;
+      background: var(--bg-elevated);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      font-size: 12px;
+      white-space: nowrap;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.15s ease;
+      z-index: 100;
+    }
+
+    .timeline-marker:hover .timeline-tooltip {
+      opacity: 1;
+    }
+
+    /* Empty state for widgets */
+    .widget-empty {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      color: var(--text-muted);
+      text-align: center;
+    }
+
+    .widget-empty-icon {
+      margin-bottom: 8px;
+      opacity: 0.5;
+    }
+
+    .widget-empty-text {
+      font-size: 13px;
+    }
+
+    /* ========================================
        SEARCH & FILTERS
        ======================================== */
 
@@ -1470,6 +1867,185 @@
           <div class="location-row">
             <span class="location-name">Loading...</span>
             <span class="location-count-badge">-</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats Bar -->
+    <div class="quick-stats" id="quick-stats">
+      <div class="quick-stat">
+        <div class="quick-stat-icon time">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+        </div>
+        <div class="quick-stat-content">
+          <div class="quick-stat-value" id="avg-alert-time">--</div>
+          <div class="quick-stat-label">Avg Time Open</div>
+        </div>
+      </div>
+
+      <div class="quick-stat">
+        <div class="quick-stat-icon oldest">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+            <line x1="12" y1="9" x2="12" y2="13"></line>
+            <line x1="12" y1="17" x2="12.01" y2="17"></line>
+          </svg>
+        </div>
+        <div class="quick-stat-content">
+          <div class="quick-stat-value" id="oldest-alert-time">--</div>
+          <div class="quick-stat-label">Oldest Alert</div>
+        </div>
+      </div>
+
+      <div class="quick-stat">
+        <div class="quick-stat-icon velocity">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+        </div>
+        <div class="quick-stat-content">
+          <div class="quick-stat-value" id="alert-velocity">--</div>
+          <div class="quick-stat-label">Alerts/Hour</div>
+        </div>
+      </div>
+
+      <div class="quick-stat">
+        <div class="quick-stat-icon recurring">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M17 2.1l4 4-4 4"></path>
+            <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"></path>
+            <path d="M7 21.9l-4-4 4-4"></path>
+            <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path>
+          </svg>
+        </div>
+        <div class="quick-stat-content">
+          <div class="quick-stat-value" id="recurring-count">--</div>
+          <div class="quick-stat-label">Recurring Systems</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Oldest Alert Highlight Card -->
+    <div class="oldest-alert-card" id="oldest-alert-card">
+      <div class="oldest-alert-header">
+        <span class="oldest-alert-badge">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <polyline points="12 6 12 12 16 14"></polyline>
+          </svg>
+          Oldest Active Alert
+        </span>
+      </div>
+      <div class="oldest-alert-content">
+        <div class="oldest-alert-field">
+          <span class="oldest-alert-label">Hostname</span>
+          <span class="oldest-alert-value" id="oldest-hostname">--</span>
+        </div>
+        <div class="oldest-alert-field">
+          <span class="oldest-alert-label">Account</span>
+          <span class="oldest-alert-value" id="oldest-account">--</span>
+        </div>
+        <div class="oldest-alert-field">
+          <span class="oldest-alert-label">Started</span>
+          <span class="oldest-alert-value" id="oldest-started">--</span>
+        </div>
+        <div class="oldest-alert-field">
+          <span class="oldest-alert-label">Duration</span>
+          <span class="oldest-alert-duration" id="oldest-duration">--</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Analytics Grid -->
+    <div class="analytics-grid">
+      <!-- Alert Velocity Chart -->
+      <div class="widget-lg">
+        <div class="widget-header">
+          <div>
+            <div class="widget-title">Alert Velocity</div>
+            <div class="widget-subtitle">Alerts triggered over time (24h)</div>
+          </div>
+        </div>
+        <div class="velocity-chart" id="velocity-chart">
+          <!-- Bars will be generated by JS -->
+        </div>
+        <div class="velocity-legend">
+          <div class="velocity-stat">
+            <div class="velocity-stat-value" id="velocity-peak">0</div>
+            <div class="velocity-stat-label">Peak/Hour</div>
+          </div>
+          <div class="velocity-stat">
+            <div class="velocity-stat-value" id="velocity-avg">0</div>
+            <div class="velocity-stat-label">Avg/Hour</div>
+          </div>
+          <div class="velocity-stat">
+            <div class="velocity-stat-value" id="velocity-total">0</div>
+            <div class="velocity-stat-label">Total (24h)</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recurring System Alerts -->
+      <div class="widget-lg">
+        <div class="widget-header">
+          <div>
+            <div class="widget-title">Recurring System Alerts</div>
+            <div class="widget-subtitle">Systems with repeated issues</div>
+          </div>
+        </div>
+        <div class="recurring-list" id="recurring-systems">
+          <div class="widget-empty">
+            <div class="widget-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="widget-empty-text">No recurring patterns detected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recurring Account Alerts -->
+      <div class="widget-lg">
+        <div class="widget-header">
+          <div>
+            <div class="widget-title">Recurring Account Alerts</div>
+            <div class="widget-subtitle">Accounts with multiple issues</div>
+          </div>
+        </div>
+        <div class="recurring-list" id="recurring-accounts">
+          <div class="widget-empty">
+            <div class="widget-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="widget-empty-text">No recurring patterns detected</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Alert Timeline -->
+      <div class="widget-lg">
+        <div class="widget-header">
+          <div>
+            <div class="widget-title">Alert Timeline</div>
+            <div class="widget-subtitle">Visual distribution of alert start times</div>
+          </div>
+        </div>
+        <div class="timeline-container">
+          <div class="timeline" id="alert-timeline">
+            <!-- Markers will be generated by JS -->
+          </div>
+          <div class="timeline-labels">
+            <span id="timeline-start">24h ago</span>
+            <span id="timeline-end">Now</span>
           </div>
         </div>
       </div>
