@@ -3339,6 +3339,17 @@
       border-radius: 10px;
     }
 
+    .incident-status-badge.new {
+      background: var(--critical-bg);
+      color: var(--critical);
+      animation: pulse-new 2s ease-in-out infinite;
+    }
+
+    @keyframes pulse-new {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.6; }
+    }
+
     .incident-status-badge.investigating {
       background: var(--warning-bg);
       color: var(--warning);
@@ -3605,6 +3616,7 @@
       border-radius: 50%;
     }
 
+    .status-dot.new { background: var(--critical); }
     .status-dot.investigating { background: var(--warning); }
     .status-dot.identified { background: var(--info); }
     .status-dot.monitoring { background: var(--silenced); }
@@ -5263,12 +5275,17 @@
           <div class="incident-time-selector">
             <label class="incident-time-label">Window:</label>
             <select class="incident-time-select" id="incident-window-select" onchange="IncidentManager.setWindow(this.value)">
+              <option value="1">1 min</option>
               <option value="2">2 min</option>
               <option value="5" selected>5 min</option>
               <option value="10">10 min</option>
               <option value="15">15 min</option>
               <option value="30">30 min</option>
               <option value="60">1 hour</option>
+              <option value="120">2 hours</option>
+              <option value="360">6 hours</option>
+              <option value="720">12 hours</option>
+              <option value="1440">24 hours</option>
             </select>
           </div>
           <div class="incident-time-selector">
