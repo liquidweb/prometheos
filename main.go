@@ -48,7 +48,7 @@ var config = struct {
 	RequestTimeout time.Duration
 	AlertManagers  []string
 }{
-	Port:           ":8000",
+	Port:           ":8001",
 	UpdateInterval: 5 * time.Minute,
 	RequestTimeout: 10 * time.Second,
 	AlertManagers: []string{
@@ -207,7 +207,7 @@ func indexHandler(w http.ResponseWriter, r *http.Request, txt []serverInfo, tpl 
 	}
 
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
-	fmt.Fprint(w, htmlOut.String())
+	w.Write(htmlOut.Bytes())
 }
 
 // jsonToStruct converts JSON from alert managers into serverInfo structs
