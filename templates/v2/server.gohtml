@@ -30,6 +30,14 @@
           Filters
           <span class="filter-badge" id="filter-badge">0</span>
         </button>
+        <!-- Clear All Filters Button - visible when filters active -->
+        <button type="button" class="btn btn-danger btn-clear-filters" id="clear-all-btn" onclick="clearAllFilters()" title="Clear all active filters and search">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+          Clear All
+        </button>
         <!-- Saved Filter Presets -->
         <div class="presets-control">
           <button type="button" class="btn btn-secondary" id="presets-btn">
