@@ -138,6 +138,18 @@
             </div>
           </div>
         </div>
+        <!-- Stale Alerts Toggle -->
+        <div class="stale-toggle-container" title="Collapse alerts older than threshold as 'Stale'">
+          <span class="stale-toggle-label">Stale:</span>
+          <div class="stale-toggle-switch active" id="stale-toggle-switch" onclick="StaleAlertsManager.toggle()"></div>
+          <select class="stale-threshold-select" id="stale-threshold-select" onchange="StaleAlertsManager.setThreshold(this.value)">
+            <option value="3">3d</option>
+            <option value="5">5d</option>
+            <option value="7" selected>7d</option>
+            <option value="14">14d</option>
+            <option value="30">30d</option>
+          </select>
+        </div>
         <div class="export-dropdown">
           <button type="button" class="btn btn-secondary" id="export-btn">
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">

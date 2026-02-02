@@ -870,6 +870,262 @@
       color: var(--text-muted);
     }
 
+    /* Velocity Trend Indicator */
+    .velocity-trend-indicator {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: var(--radius);
+      font-size: 12px;
+      font-weight: 600;
+    }
+
+    .velocity-trend-indicator.up {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .velocity-trend-indicator.down {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+    }
+
+    .velocity-trend-indicator.stable {
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    /* Priority Queue */
+    .priority-count-badge {
+      padding: 4px 10px;
+      background: var(--critical-bg);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--critical);
+    }
+
+    .priority-queue-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .priority-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      border-left: 3px solid var(--critical);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .priority-item:hover {
+      background: var(--bg-elevated);
+      transform: translateX(2px);
+    }
+
+    .priority-item.high {
+      border-left-color: var(--critical);
+    }
+
+    .priority-item.medium {
+      border-left-color: var(--warning);
+    }
+
+    .priority-item.low {
+      border-left-color: var(--info);
+    }
+
+    .priority-rank {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 24px;
+      height: 24px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 700;
+      color: var(--text-secondary);
+    }
+
+    .priority-item.high .priority-rank {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .priority-info {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .priority-name {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .priority-meta {
+      font-size: 11px;
+      color: var(--text-secondary);
+      margin-top: 2px;
+    }
+
+    .priority-score {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 2px;
+    }
+
+    .priority-score-value {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 700;
+      color: var(--critical);
+    }
+
+    .priority-score-label {
+      font-size: 9px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+    }
+
+    /* Response Metrics Grid */
+    .response-metrics-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .response-metric {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      transition: all 0.15s ease;
+    }
+
+    .response-metric:hover {
+      background: var(--bg-elevated);
+    }
+
+    .response-metric-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      background: var(--bg-secondary);
+      border-radius: var(--radius);
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+
+    .response-metric-icon.critical {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .response-metric-icon.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .response-metric-icon.info {
+      background: var(--info-bg);
+      color: var(--info);
+    }
+
+    .response-metric-content {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .response-metric-value {
+      font-family: var(--font-mono);
+      font-size: 18px;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .response-metric-label {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    /* Service Impact */
+    .service-impact-list {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      max-height: 280px;
+      overflow-y: auto;
+    }
+
+    .service-impact-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 14px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .service-impact-item:hover {
+      background: var(--bg-elevated);
+    }
+
+    .service-impact-bar {
+      position: relative;
+      flex: 1;
+      height: 8px;
+      background: var(--bg-secondary);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+
+    .service-impact-bar-fill {
+      position: absolute;
+      left: 0;
+      top: 0;
+      height: 100%;
+      background: linear-gradient(90deg, var(--critical) 0%, var(--warning) 100%);
+      border-radius: 4px;
+      transition: width 0.3s ease;
+    }
+
+    .service-impact-name {
+      min-width: 100px;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text-primary);
+    }
+
+    .service-impact-count {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 40px;
+      text-align: right;
+    }
+
     /* Oldest Alert Highlight */
     .oldest-alert-card {
       background: linear-gradient(135deg, var(--critical-bg) 0%, var(--bg-secondary) 100%);
@@ -6556,7 +6812,7 @@
       </div>
     </div>
 
-    <!-- Analytics Charts Section - Collapsible -->
+    <!-- Operational Insights Section - Collapsible -->
     <div class="analytics-section" id="charts-section">
       <div class="section-header" onclick="SectionManager.toggle('charts')">
         <div class="section-header-left">
@@ -6565,21 +6821,24 @@
               <polyline points="6 9 12 15 18 9"></polyline>
             </svg>
           </div>
-          <span class="section-title">Velocity & Patterns</span>
-          <span class="section-badge">4 charts</span>
+          <span class="section-title">Operational Insights</span>
+          <span class="section-badge" id="ops-insights-badge">Actionable data</span>
         </div>
       </div>
       <div class="section-content" id="charts-content">
         <div class="analytics-grid">
-          <!-- Alert Velocity Chart -->
+          <!-- Alert Velocity Chart with Trend -->
           <div class="widget-lg">
             <div class="widget-header">
               <div>
                 <div class="widget-title has-tooltip">
-                  Alert Velocity
-                  <div class="tooltip tooltip-wide">Hourly breakdown of when alerts were triggered</div>
+                  Alert Velocity & Trend
+                  <div class="tooltip tooltip-wide">Hourly breakdown with trend analysis for operational planning</div>
                 </div>
                 <div class="widget-subtitle">Alerts triggered over time (<span id="velocity-range-label">24h</span>)</div>
+              </div>
+              <div class="velocity-trend-indicator" id="velocity-trend-indicator">
+                <!-- Populated by JS -->
               </div>
             </div>
             <div class="velocity-chart" id="velocity-chart">
@@ -6587,35 +6846,41 @@
             </div>
             <div class="velocity-legend">
               <div class="velocity-stat has-tooltip">
-                <div class="tooltip">Most alerts in a single hour</div>
+                <div class="tooltip">Most alerts in a single bucket</div>
                 <div class="velocity-stat-value" id="velocity-peak">0</div>
-                <div class="velocity-stat-label">Peak/Hour</div>
+                <div class="velocity-stat-label">Peak</div>
               </div>
               <div class="velocity-stat has-tooltip">
-                <div class="tooltip">Average alerts per hour</div>
+                <div class="tooltip">Average per bucket</div>
                 <div class="velocity-stat-value" id="velocity-avg">0</div>
-                <div class="velocity-stat-label">Avg/Hour</div>
+                <div class="velocity-stat-label">Average</div>
               </div>
               <div class="velocity-stat has-tooltip">
-                <div class="tooltip">Total alerts in selected period</div>
+                <div class="tooltip">Total in period</div>
                 <div class="velocity-stat-value" id="velocity-total">0</div>
                 <div class="velocity-stat-label">Total</div>
               </div>
+              <div class="velocity-stat has-tooltip">
+                <div class="tooltip">Change from previous period</div>
+                <div class="velocity-stat-value" id="velocity-change">--</div>
+                <div class="velocity-stat-label">vs Prev</div>
+              </div>
             </div>
           </div>
 
-          <!-- Recurring System Alerts -->
+          <!-- Priority Queue - Alerts Needing Immediate Attention -->
           <div class="widget-lg">
             <div class="widget-header">
               <div>
                 <div class="widget-title has-tooltip">
-                  Recurring System Alerts
-                  <div class="tooltip tooltip-wide">Systems with multiple services alerting - potential systemic issues</div>
+                  Priority Queue
+                  <div class="tooltip tooltip-wide">Alerts ranked by urgency - age, service count, and impact</div>
                 </div>
-                <div class="widget-subtitle">Click to filter by hostname</div>
+                <div class="widget-subtitle">Click to focus on alert</div>
               </div>
+              <span class="priority-count-badge" id="priority-count-badge">0</span>
             </div>
-            <div class="recurring-list" id="recurring-systems">
+            <div class="priority-queue-list" id="priority-queue">
               <div class="widget-empty">
                 <div class="widget-empty-icon">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -6623,23 +6888,114 @@
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                   </svg>
                 </div>
-                <span class="widget-empty-text">No recurring patterns detected</span>
+                <span class="widget-empty-text">No high-priority alerts</span>
               </div>
             </div>
           </div>
 
-          <!-- Recurring Account Alerts -->
+          <!-- Response Metrics -->
           <div class="widget-lg">
             <div class="widget-header">
               <div>
                 <div class="widget-title has-tooltip">
-                  Recurring Account Alerts
-                  <div class="tooltip tooltip-wide">Accounts with multiple hosts affected - potential account-wide issues</div>
+                  Response Metrics
+                  <div class="tooltip tooltip-wide">Key operational metrics for incident response</div>
                 </div>
-                <div class="widget-subtitle">Click to filter by account</div>
+                <div class="widget-subtitle">Based on current active alerts</div>
               </div>
             </div>
-            <div class="recurring-list" id="recurring-accounts">
+            <div class="response-metrics-grid" id="response-metrics">
+              <div class="response-metric">
+                <div class="response-metric-icon critical">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-critical-count">0</div>
+                  <div class="response-metric-label">Critical (>4h)</div>
+                </div>
+              </div>
+              <div class="response-metric">
+                <div class="response-metric-icon warning">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-aging-count">0</div>
+                  <div class="response-metric-label">Aging (1-4h)</div>
+                </div>
+              </div>
+              <div class="response-metric">
+                <div class="response-metric-icon info">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-fresh-count">0</div>
+                  <div class="response-metric-label">Fresh (<1h)</div>
+                </div>
+              </div>
+              <div class="response-metric">
+                <div class="response-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                    <circle cx="9" cy="7" r="4"></circle>
+                    <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                    <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-affected-accounts">0</div>
+                  <div class="response-metric-label">Accounts Affected</div>
+                </div>
+              </div>
+              <div class="response-metric">
+                <div class="response-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <rect x="2" y="3" width="20" height="14" rx="2" ry="2"></rect>
+                    <line x1="8" y1="21" x2="16" y2="21"></line>
+                    <line x1="12" y1="17" x2="12" y2="21"></line>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-affected-hosts">0</div>
+                  <div class="response-metric-label">Hosts Affected</div>
+                </div>
+              </div>
+              <div class="response-metric">
+                <div class="response-metric-icon">
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path>
+                  </svg>
+                </div>
+                <div class="response-metric-content">
+                  <div class="response-metric-value" id="metric-affected-services">0</div>
+                  <div class="response-metric-label">Services Affected</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Service Impact Analysis -->
+          <div class="widget-lg">
+            <div class="widget-header">
+              <div>
+                <div class="widget-title has-tooltip">
+                  Service Impact
+                  <div class="tooltip tooltip-wide">Which services are most impacted - click to filter</div>
+                </div>
+                <div class="widget-subtitle">Top services by alert count</div>
+              </div>
+            </div>
+            <div class="service-impact-list" id="service-impact">
               <div class="widget-empty">
                 <div class="widget-empty-icon">
                   <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
@@ -6647,29 +7003,7 @@
                     <polyline points="22 4 12 14.01 9 11.01"></polyline>
                   </svg>
                 </div>
-                <span class="widget-empty-text">No recurring patterns detected</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Alert Timeline -->
-          <div class="widget-lg">
-            <div class="widget-header">
-              <div>
-                <div class="widget-title has-tooltip">
-                  Alert Timeline
-                  <div class="tooltip tooltip-wide">Hover over markers to see alert details</div>
-                </div>
-                <div class="widget-subtitle">Visual distribution of alert start times</div>
-              </div>
-            </div>
-            <div class="timeline-container">
-              <div class="timeline" id="alert-timeline">
-                <!-- Markers will be generated by JS -->
-              </div>
-              <div class="timeline-labels">
-                <span id="timeline-start">24h ago</span>
-                <span id="timeline-end">Now</span>
+                <span class="widget-empty-text">No service data</span>
               </div>
             </div>
           </div>

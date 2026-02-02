@@ -458,6 +458,160 @@
       padding-left: 64px !important;
     }
 
+    /* Stale Alerts Collapsing */
+    .stale-alerts-header {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 152, 0, 0.05) 100%);
+      border-left: 3px solid var(--warning);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .stale-alerts-header:hover {
+      background: linear-gradient(135deg, rgba(255, 193, 7, 0.12) 0%, rgba(255, 152, 0, 0.08) 100%);
+    }
+
+    .stale-alerts-header td {
+      padding: 12px 16px !important;
+    }
+
+    .stale-header-content {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .stale-expand-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 20px;
+      height: 20px;
+      border-radius: var(--radius-sm);
+      background: rgba(255, 193, 7, 0.15);
+      color: var(--warning);
+      transition: transform 0.2s ease;
+    }
+
+    .stale-alerts-header.collapsed .stale-expand-icon {
+      transform: rotate(-90deg);
+    }
+
+    .stale-header-icon {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      background: rgba(255, 193, 7, 0.15);
+      border-radius: var(--radius-sm);
+      color: var(--warning);
+    }
+
+    .stale-header-text {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .stale-header-title {
+      font-weight: 600;
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .stale-header-subtitle {
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .stale-header-count {
+      margin-left: auto;
+      padding: 4px 10px;
+      background: rgba(255, 193, 7, 0.2);
+      border-radius: 12px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--warning);
+    }
+
+    .stale-alert-row {
+      opacity: 0.7;
+      background: repeating-linear-gradient(
+        -45deg,
+        transparent,
+        transparent 10px,
+        rgba(255, 193, 7, 0.02) 10px,
+        rgba(255, 193, 7, 0.02) 20px
+      );
+    }
+
+    .stale-alert-row:hover {
+      opacity: 0.9;
+    }
+
+    .stale-alert-row .cell-duration {
+      color: var(--warning);
+    }
+
+    /* Stale alerts toggle in toolbar */
+    .stale-toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius);
+      border: 1px solid var(--border-subtle);
+      font-size: 12px;
+    }
+
+    .stale-toggle-label {
+      color: var(--text-secondary);
+      white-space: nowrap;
+    }
+
+    .stale-toggle-switch {
+      position: relative;
+      width: 36px;
+      height: 20px;
+      background: var(--bg-secondary);
+      border-radius: 10px;
+      border: 1px solid var(--border-default);
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .stale-toggle-switch.active {
+      background: var(--accent);
+      border-color: var(--accent);
+    }
+
+    .stale-toggle-switch::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 14px;
+      height: 14px;
+      background: white;
+      border-radius: 50%;
+      transition: transform 0.2s ease;
+    }
+
+    .stale-toggle-switch.active::after {
+      transform: translateX(16px);
+    }
+
+    .stale-threshold-select {
+      padding: 4px 8px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+
     /* Service tags */
     .cell-services {
       max-width: 300px;
@@ -1675,6 +1829,11 @@ Services: ${this.currentAlert.services}`;
 
       const direction = sortStates[stateKey];
 
+      // Save sort preference for current preset (so it persists when switching presets)
+      if (typeof ViewPresets !== 'undefined') {
+        ViewPresets.saveCurrentSort(columnIndex, direction);
+      }
+
       table.querySelectorAll('th').forEach(header => {
         header.classList.remove('asc', 'desc');
       });
@@ -1887,6 +2046,11 @@ Services: ${this.currentAlert.services}`;
         this.updateFilterBadge();
         this.updateClearAllButton();
         updateCounts();
+
+        // Reapply stale alerts grouping after filter changes
+        if (typeof StaleAlertsManager !== 'undefined') {
+          StaleAlertsManager.refresh();
+        }
       },
 
       updateActiveFilterTags() {
@@ -2965,9 +3129,29 @@ Services: ${this.currentAlert.services}`;
           GroupingManager.clearGrouping();
         }
 
+        // Always reapply default sort (newest/shortest duration first) unless preset has saved sort
+        // Check if there's a saved sort preference for this preset
+        const savedSort = localStorage.getItem(`prometheos-preset-sort-${presetId}`);
+        if (savedSort) {
+          try {
+            const sortConfig = JSON.parse(savedSort);
+            applySavedSort(sortConfig.columnIndex, sortConfig.direction);
+          } catch (e) {
+            applyDefaultSort();
+          }
+        } else {
+          applyDefaultSort();
+        }
+
         if (showToastMsg) {
           showToast(`View: ${preset.name}`, 'success');
         }
+      },
+
+      // Save current sort preference for the active preset
+      saveCurrentSort(columnIndex, direction) {
+        const sortConfig = { columnIndex, direction };
+        localStorage.setItem(`prometheos-preset-sort-${this.current}`, JSON.stringify(sortConfig));
       }
     };
 
@@ -3380,6 +3564,222 @@ Services: ${this.currentAlert.services}`;
     };
 
     // ========================================
+    // STALE ALERTS MANAGER
+    // ========================================
+
+    const StaleAlertsManager = {
+      enabled: true,
+      thresholdDays: 7,
+      collapsed: true,
+
+      init() {
+        // Load settings from localStorage
+        const savedEnabled = localStorage.getItem('prometheos-stale-alerts-enabled');
+        const savedThreshold = localStorage.getItem('prometheos-stale-alerts-threshold');
+        const savedCollapsed = localStorage.getItem('prometheos-stale-alerts-collapsed');
+
+        if (savedEnabled !== null) {
+          this.enabled = savedEnabled === 'true';
+        }
+        if (savedThreshold !== null) {
+          this.thresholdDays = parseInt(savedThreshold) || 7;
+        }
+        if (savedCollapsed !== null) {
+          this.collapsed = savedCollapsed === 'true';
+        }
+
+        // Initialize toggle UI
+        this.updateToggleUI();
+
+        // Apply stale alerts grouping on initial load
+        if (this.enabled) {
+          this.apply();
+        }
+      },
+
+      updateToggleUI() {
+        const toggle = document.getElementById('stale-toggle-switch');
+        const select = document.getElementById('stale-threshold-select');
+
+        if (toggle) {
+          toggle.classList.toggle('active', this.enabled);
+        }
+        if (select) {
+          select.value = this.thresholdDays.toString();
+        }
+      },
+
+      toggle() {
+        this.enabled = !this.enabled;
+        localStorage.setItem('prometheos-stale-alerts-enabled', this.enabled);
+        this.updateToggleUI();
+
+        if (this.enabled) {
+          this.apply();
+        } else {
+          this.clear();
+        }
+
+        showToast(this.enabled ? 'Stale alerts collapsed' : 'Showing all alerts', 'success');
+      },
+
+      setThreshold(days) {
+        this.thresholdDays = parseInt(days) || 7;
+        localStorage.setItem('prometheos-stale-alerts-threshold', this.thresholdDays);
+
+        if (this.enabled) {
+          this.clear();
+          this.apply();
+        }
+      },
+
+      getThresholdMs() {
+        return this.thresholdDays * 24 * 60 * 60 * 1000;
+      },
+
+      apply() {
+        if (!this.enabled) return;
+
+        const now = new Date();
+        const thresholdMs = this.getThresholdMs();
+
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr.alert-row:not(.filtered-out)'));
+
+          if (rows.length === 0) return;
+
+          // Separate stale and fresh alerts
+          const staleAlerts = [];
+          const freshAlerts = [];
+
+          rows.forEach(row => {
+            const timeStr = row.dataset.time;
+            if (timeStr) {
+              const alertTime = new Date(timeStr.replace(' ', 'T'));
+              const age = now - alertTime;
+
+              if (age >= thresholdMs) {
+                staleAlerts.push(row);
+              } else {
+                freshAlerts.push(row);
+              }
+            } else {
+              freshAlerts.push(row);
+            }
+          });
+
+          // Only create stale section if there are stale alerts
+          if (staleAlerts.length === 0) return;
+
+          // Remove any existing stale header
+          tbody.querySelectorAll('.stale-alerts-header').forEach(h => h.remove());
+
+          // Create stale alerts header
+          const colCount = table.querySelectorAll('thead th').length;
+          const staleHeader = document.createElement('tr');
+          staleHeader.className = `stale-alerts-header ${this.collapsed ? 'collapsed' : ''}`;
+          staleHeader.dataset.tableId = tableId;
+          staleHeader.onclick = () => this.toggleStaleSection(staleHeader, tableId);
+
+          // Calculate age summary
+          const oldestStale = staleAlerts.reduce((max, row) => {
+            const time = new Date(row.dataset.time.replace(' ', 'T'));
+            return time < max ? time : max;
+          }, new Date());
+          const oldestDays = Math.floor((now - oldestStale) / (24 * 60 * 60 * 1000));
+
+          staleHeader.innerHTML = `
+            <td colspan="${colCount}">
+              <div class="stale-header-content">
+                <div class="stale-expand-icon">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                </div>
+                <div class="stale-header-icon">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                </div>
+                <div class="stale-header-text">
+                  <span class="stale-header-title">Stale Alerts</span>
+                  <span class="stale-header-subtitle">Older than ${this.thresholdDays} days • May require review or closure</span>
+                </div>
+                <span class="stale-header-count">${staleAlerts.length} alert${staleAlerts.length !== 1 ? 's' : ''} (oldest: ${oldestDays}d)</span>
+              </div>
+            </td>
+          `;
+
+          // Rebuild tbody: fresh alerts first, then stale header, then stale alerts
+          const fragment = document.createDocumentFragment();
+
+          // Add fresh alerts first (maintaining their current order)
+          freshAlerts.forEach(row => {
+            row.classList.remove('stale-alert-row');
+            fragment.appendChild(row);
+          });
+
+          // Add stale header
+          fragment.appendChild(staleHeader);
+
+          // Add stale alerts (hidden if collapsed)
+          staleAlerts.forEach(row => {
+            row.classList.add('stale-alert-row');
+            row.style.display = this.collapsed ? 'none' : '';
+            fragment.appendChild(row);
+          });
+
+          tbody.innerHTML = '';
+          tbody.appendChild(fragment);
+        });
+      },
+
+      toggleStaleSection(header, tableId) {
+        this.collapsed = header.classList.toggle('collapsed');
+        localStorage.setItem('prometheos-stale-alerts-collapsed', this.collapsed);
+
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        tbody.querySelectorAll('.stale-alert-row').forEach(row => {
+          row.style.display = this.collapsed ? 'none' : '';
+        });
+      },
+
+      clear() {
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          const tbody = table.querySelector('tbody');
+
+          // Remove stale headers
+          tbody.querySelectorAll('.stale-alerts-header').forEach(h => h.remove());
+
+          // Remove stale styling from rows
+          tbody.querySelectorAll('.stale-alert-row').forEach(row => {
+            row.classList.remove('stale-alert-row');
+            row.style.display = '';
+          });
+        });
+      },
+
+      // Called after filters change to reapply stale grouping
+      refresh() {
+        if (this.enabled) {
+          this.clear();
+          this.apply();
+        }
+      }
+    };
+
+    // ========================================
     // EXPORT FUNCTIONALITY
     // ========================================
 
@@ -3692,17 +4092,13 @@ Services: ${this.currentAlert.services}`;
       InsightCards.update(alertData);
       MetricModals.update(alertData);
 
-      // Update Alert Velocity
+      // Update Alert Velocity with Trend
       updateAlertVelocity(alertData, now);
 
-      // Update Recurring Systems
-      updateRecurringSystems(alertData);
-
-      // Update Recurring Accounts
-      updateRecurringAccounts(alertData);
-
-      // Update Timeline
-      updateAlertTimeline(alertData, now);
+      // Update Operational Insights (new actionable widgets)
+      updatePriorityQueue(alertData, now);
+      updateResponseMetrics(alertData, now);
+      updateServiceImpact(alertData);
     }
 
     function formatDuration(ms) {
@@ -3898,91 +4294,184 @@ Services: ${this.currentAlert.services}`;
           </div>
         `;
       }).join('');
+
+      // Update velocity trend indicator and vs previous
+      const trendIndicator = document.getElementById('velocity-trend-indicator');
+      const velocityChange = document.getElementById('velocity-change');
+      if (trendIndicator) {
+        // Compare first half vs second half of the period
+        const halfPoint = Math.floor(bucketCount / 2);
+        const firstHalf = buckets.slice(0, halfPoint).reduce((sum, b) => sum + b.count, 0);
+        const secondHalf = buckets.slice(halfPoint).reduce((sum, b) => sum + b.count, 0);
+
+        if (firstHalf === 0) {
+          trendIndicator.className = 'velocity-trend-indicator stable';
+          trendIndicator.innerHTML = '— Stable';
+          if (velocityChange) velocityChange.textContent = '--';
+        } else {
+          const changePercent = Math.round(((secondHalf - firstHalf) / firstHalf) * 100);
+          if (changePercent > 15) {
+            trendIndicator.className = 'velocity-trend-indicator up';
+            trendIndicator.innerHTML = `↑ Increasing`;
+            if (velocityChange) velocityChange.textContent = `+${changePercent}%`;
+          } else if (changePercent < -15) {
+            trendIndicator.className = 'velocity-trend-indicator down';
+            trendIndicator.innerHTML = `↓ Decreasing`;
+            if (velocityChange) velocityChange.textContent = `${changePercent}%`;
+          } else {
+            trendIndicator.className = 'velocity-trend-indicator stable';
+            trendIndicator.innerHTML = '— Stable';
+            if (velocityChange) velocityChange.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
+          }
+        }
+      }
     }
 
-    function updateRecurringSystems(alertData) {
-      const container = document.getElementById('recurring-systems');
+    // ========================================
+    // OPERATIONAL INSIGHTS FUNCTIONS
+    // ========================================
 
-      // Count services per system
-      const systemData = {};
-      alertData.forEach(a => {
-        if (!systemData[a.hostname]) {
-          systemData[a.hostname] = {
-            hostname: a.hostname,
-            account: a.account,
-            services: new Set(),
-            alertCount: 0
-          };
+    function updatePriorityQueue(alertData, now) {
+      const container = document.getElementById('priority-queue');
+      const badge = document.getElementById('priority-count-badge');
+
+      if (!container) return;
+
+      // Calculate priority score for each alert
+      // Score = (age_hours * 10) + (service_count * 5) + (is_recurring * 20)
+      const scored = alertData.map(alert => {
+        const ageHours = alert.duration / (60 * 60 * 1000);
+        const serviceCount = alert.services.split(',').filter(s => s.trim()).length;
+
+        // Check if this host has multiple alerts (recurring)
+        const hostAlerts = alertData.filter(a => a.hostname === alert.hostname).length;
+        const isRecurring = hostAlerts > 1;
+
+        const score = Math.round((ageHours * 10) + (serviceCount * 5) + (isRecurring ? 20 : 0));
+
+        return { ...alert, score, ageHours, serviceCount, isRecurring };
+      });
+
+      // Sort by priority score descending and take top 5
+      const prioritized = scored
+        .sort((a, b) => b.score - a.score)
+        .slice(0, 5);
+
+      // Count high priority (score > 50)
+      const highPriority = scored.filter(a => a.score > 50).length;
+      if (badge) {
+        badge.textContent = highPriority;
+        badge.style.background = highPriority > 0 ? 'var(--critical-bg)' : 'var(--bg-tertiary)';
+        badge.style.color = highPriority > 0 ? 'var(--critical)' : 'var(--text-secondary)';
+      }
+
+      if (prioritized.length === 0) {
+        container.innerHTML = `
+          <div class="widget-empty">
+            <div class="widget-empty-icon">
+              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                <polyline points="22 4 12 14.01 9 11.01"></polyline>
+              </svg>
+            </div>
+            <span class="widget-empty-text">No high-priority alerts</span>
+          </div>
+        `;
+        return;
+      }
+
+      container.innerHTML = prioritized.map((alert, i) => {
+        const priority = alert.score > 80 ? 'high' : alert.score > 40 ? 'medium' : 'low';
+        const services = alert.services.split(',').filter(s => s.trim()).slice(0, 2).join(', ');
+        const ageText = alert.ageHours >= 24 ? `${Math.floor(alert.ageHours / 24)}d` :
+                        alert.ageHours >= 1 ? `${Math.floor(alert.ageHours)}h` :
+                        `${Math.floor(alert.ageHours * 60)}m`;
+
+        return `
+          <div class="priority-item ${priority}" onclick="filterByHostname('${alert.hostname}')">
+            <span class="priority-rank">${i + 1}</span>
+            <div class="priority-info">
+              <div class="priority-name">${alert.hostname}</div>
+              <div class="priority-meta">${services} • ${ageText} old${alert.isRecurring ? ' • Recurring' : ''}</div>
+            </div>
+            <div class="priority-score">
+              <span class="priority-score-value">${alert.score}</span>
+              <span class="priority-score-label">score</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateResponseMetrics(alertData, now) {
+      // Time thresholds
+      const HOUR = 60 * 60 * 1000;
+      const FOUR_HOURS = 4 * HOUR;
+
+      // Count by age category
+      let criticalCount = 0;  // > 4h
+      let agingCount = 0;     // 1-4h
+      let freshCount = 0;     // < 1h
+
+      const accounts = new Set();
+      const hosts = new Set();
+      const services = new Set();
+
+      alertData.forEach(alert => {
+        // Age categorization
+        if (alert.duration > FOUR_HOURS) {
+          criticalCount++;
+        } else if (alert.duration > HOUR) {
+          agingCount++;
+        } else {
+          freshCount++;
         }
-        systemData[a.hostname].alertCount++;
-        a.services.split(',').forEach(s => {
-          if (s.trim()) systemData[a.hostname].services.add(s.trim());
+
+        // Unique counts
+        accounts.add(alert.account);
+        hosts.add(alert.hostname);
+        alert.services.split(',').forEach(s => {
+          if (s.trim()) services.add(s.trim());
         });
       });
 
-      // Filter to recurring (2+ services) and sort
-      const recurring = Object.values(systemData)
-        .filter(s => s.services.size >= 2)
-        .sort((a, b) => b.services.size - a.services.size)
-        .slice(0, 5);
+      // Update UI
+      const criticalEl = document.getElementById('metric-critical-count');
+      const agingEl = document.getElementById('metric-aging-count');
+      const freshEl = document.getElementById('metric-fresh-count');
+      const accountsEl = document.getElementById('metric-affected-accounts');
+      const hostsEl = document.getElementById('metric-affected-hosts');
+      const servicesEl = document.getElementById('metric-affected-services');
 
-      if (recurring.length === 0) {
-        container.innerHTML = `
-          <div class="widget-empty">
-            <div class="widget-empty-icon">
-              <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
-                <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-                <polyline points="22 4 12 14.01 9 11.01"></polyline>
-              </svg>
-            </div>
-            <span class="widget-empty-text">No recurring patterns detected</span>
-          </div>
-        `;
-        return;
-      }
-
-      container.innerHTML = recurring.map((sys, i) => {
-        const severity = sys.services.size >= 4 ? '' : sys.services.size >= 3 ? 'warning' : 'info';
-        return `
-          <div class="recurring-item ${severity}" onclick="filterByHostname('${sys.hostname}')">
-            <span class="recurring-rank">${i + 1}</span>
-            <div class="recurring-info">
-              <div class="recurring-name">${sys.hostname}</div>
-              <div class="recurring-meta">${sys.account}</div>
-            </div>
-            <div class="recurring-count">
-              <span class="recurring-count-value">${sys.services.size}</span>
-              <span class="recurring-count-label">services</span>
-            </div>
-          </div>
-        `;
-      }).join('');
+      if (criticalEl) criticalEl.textContent = criticalCount;
+      if (agingEl) agingEl.textContent = agingCount;
+      if (freshEl) freshEl.textContent = freshCount;
+      if (accountsEl) accountsEl.textContent = accounts.size;
+      if (hostsEl) hostsEl.textContent = hosts.size;
+      if (servicesEl) servicesEl.textContent = services.size;
     }
 
-    function updateRecurringAccounts(alertData) {
-      const container = document.getElementById('recurring-accounts');
+    function updateServiceImpact(alertData) {
+      const container = document.getElementById('service-impact');
+      if (!container) return;
 
-      // Count alerts per account
-      const accountData = {};
-      alertData.forEach(a => {
-        if (!accountData[a.account]) {
-          accountData[a.account] = {
-            account: a.account,
-            hosts: new Set(),
-            alertCount: 0
-          };
-        }
-        accountData[a.account].alertCount++;
-        accountData[a.account].hosts.add(a.hostname);
+      // Count alerts per service
+      const serviceCounts = {};
+      alertData.forEach(alert => {
+        alert.services.split(',').forEach(s => {
+          const service = s.trim();
+          if (service) {
+            serviceCounts[service] = (serviceCounts[service] || 0) + 1;
+          }
+        });
       });
 
-      // Filter to accounts with 2+ hosts and sort
-      const recurring = Object.values(accountData)
-        .filter(a => a.hosts.size >= 2)
-        .sort((a, b) => b.hosts.size - a.hosts.size)
-        .slice(0, 5);
+      // Sort by count descending and take top 8
+      const sorted = Object.entries(serviceCounts)
+        .sort((a, b) => b[1] - a[1])
+        .slice(0, 8);
 
-      if (recurring.length === 0) {
+      if (sorted.length === 0) {
         container.innerHTML = `
           <div class="widget-empty">
             <div class="widget-empty-icon">
@@ -3991,59 +4480,35 @@ Services: ${this.currentAlert.services}`;
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <span class="widget-empty-text">No recurring patterns detected</span>
+            <span class="widget-empty-text">No service data</span>
           </div>
         `;
         return;
       }
 
-      container.innerHTML = recurring.map((acct, i) => {
-        const severity = acct.hosts.size >= 5 ? '' : acct.hosts.size >= 3 ? 'warning' : 'info';
+      const maxCount = sorted[0][1];
+
+      container.innerHTML = sorted.map(([service, count]) => {
+        const percentage = (count / maxCount) * 100;
         return `
-          <div class="recurring-item ${severity}" onclick="filterByAccount('${acct.account}')">
-            <span class="recurring-rank">${i + 1}</span>
-            <div class="recurring-info">
-              <div class="recurring-name">${acct.account}</div>
-              <div class="recurring-meta">${acct.alertCount} total alerts</div>
+          <div class="service-impact-item" onclick="filterByService('${service}')">
+            <span class="service-impact-name">${service}</span>
+            <div class="service-impact-bar">
+              <div class="service-impact-bar-fill" style="width: ${percentage}%"></div>
             </div>
-            <div class="recurring-count">
-              <span class="recurring-count-value">${acct.hosts.size}</span>
-              <span class="recurring-count-label">hosts</span>
-            </div>
+            <span class="service-impact-count">${count}</span>
           </div>
         `;
       }).join('');
     }
 
-    function updateAlertTimeline(alertData, now) {
-      const timeline = document.getElementById('alert-timeline');
-      const timelineWidth = timeline.offsetWidth;
-
-      if (alertData.length === 0) {
-        timeline.innerHTML = '';
-        return;
+    function filterByService(service) {
+      const serviceFilter = document.getElementById('filter-service');
+      if (serviceFilter) {
+        serviceFilter.value = service;
+        FilterManager.apply();
+        showToast(`Filtered by ${service}`, 'success');
       }
-
-      // Use selected time range
-      const rangeMs = TimeRangeManager.getRangeMs();
-      const startTime = new Date(now - rangeMs);
-
-      const markers = alertData
-        .filter(a => a.time >= startTime)
-        .map(a => {
-          const position = ((a.time - startTime) / rangeMs) * 100;
-          return `
-            <div class="timeline-marker" style="left: ${position}%">
-              <div class="timeline-tooltip">
-                <strong>${a.hostname}</strong><br>
-                ${a.time.toLocaleTimeString()}<br>
-                ${a.services.split(',').slice(0, 2).join(', ')}
-              </div>
-            </div>
-          `;
-        }).join('');
-
-      timeline.innerHTML = markers;
     }
 
     function filterByHostname(hostname) {
@@ -6541,6 +7006,9 @@ Services: ${this.currentAlert.services}`;
       // Apply default sort by duration (most recent/new alerts first)
       applyDefaultSort();
 
+      // Initialize stale alerts manager (after sort so stale alerts appear at bottom)
+      StaleAlertsManager.init();
+
       // Update durations every minute
       setInterval(updateDurations, 60000);
     });
@@ -6585,6 +7053,63 @@ Services: ${this.currentAlert.services}`;
         if (th) {
           table.querySelectorAll('th').forEach(header => header.classList.remove('asc', 'desc'));
           th.classList.add('asc');
+        }
+      });
+    }
+
+    // Apply a saved sort configuration
+    function applySavedSort(columnIndex, direction) {
+      ['active-table', 'silenced-table'].forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        if (rows.length === 0) return;
+
+        // Set sort state
+        sortStates[`${tableId}-${columnIndex}`] = direction;
+
+        rows.sort((a, b) => {
+          const aVal = a.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
+          const bVal = b.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
+
+          // Handle duration column (index 11)
+          if (columnIndex === 11) {
+            const aIsNew = aVal === 'new' || aVal === '--';
+            const bIsNew = bVal === 'new' || bVal === '--';
+
+            if (aIsNew && bIsNew) return 0;
+            if (aIsNew) return direction === 'asc' ? -1 : 1;
+            if (bIsNew) return direction === 'asc' ? 1 : -1;
+
+            const aSeconds = parseDurationToSeconds(aVal);
+            const bSeconds = parseDurationToSeconds(bVal);
+            return direction === 'asc' ? aSeconds - bSeconds : bSeconds - aSeconds;
+          }
+
+          // Handle time column (index 10)
+          const datePattern = /^\d{4}-\d{2}-\d{2}/;
+          if (datePattern.test(aVal) && datePattern.test(bVal)) {
+            const aDate = new Date(aVal.replace(' ', 'T'));
+            const bDate = new Date(bVal.replace(' ', 'T'));
+            return direction === 'asc' ? aDate - bDate : bDate - aDate;
+          }
+
+          // Default string comparison
+          if (aVal < bVal) return direction === 'asc' ? -1 : 1;
+          if (aVal > bVal) return direction === 'asc' ? 1 : -1;
+          return 0;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        // Update header indicator
+        const th = table.querySelectorAll('th')[columnIndex];
+        if (th) {
+          table.querySelectorAll('th').forEach(header => header.classList.remove('asc', 'desc'));
+          th.classList.add(direction);
         }
       });
     }
