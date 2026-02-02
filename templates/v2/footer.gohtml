@@ -2212,20 +2212,27 @@ Services: ${this.currentAlert.services}`;
     }
 
     function clearAllFilters() {
-      FilterManager.clearAll();
+      // Clear all filter dropdowns
+      const filterIds = ['filter-datacenter', 'filter-section', 'filter-row', 'filter-rack', 'filter-prom', 'filter-time', 'filter-service'];
+      filterIds.forEach(id => {
+        const el = document.getElementById(id);
+        if (el) el.value = '';
+      });
+
+      // Clear search box
+      const searchBox = document.getElementById('search-box');
+      if (searchBox) {
+        searchBox.value = '';
+      }
+
+      // Use FilterManager.apply() to properly update the data table
+      // This ensures the same code path as individual filter clears
+      FilterManager.apply();
+
       // Also reset to Detailed view if in a grouped view
       if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
         ViewPresets.apply('detailed');
       }
-
-      // Refresh stale alerts grouping AFTER all view changes are complete
-      // This ensures stale rows are properly hidden/shown based on user preference
-      if (typeof StaleAlertsManager !== 'undefined') {
-        StaleAlertsManager.refresh();
-      }
-
-      // Update counts at the very end to reflect the final state
-      updateCounts();
 
       showToast('All filters and search cleared', 'success');
     }
