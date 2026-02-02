@@ -2610,31 +2610,51 @@ Services: ${this.currentAlert.services}`;
         this.windowMinutes = parseInt(minutes) || 5;
         this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
         localStorage.setItem('prometheos-incident-window', this.windowMinutes.toString());
-        showToast(`Incident window set to ${this.windowMinutes} minutes`, 'success');
+        // Auto-rescan with new window - clears unsaved incidents
+        this.rescanWithMessage(`Window changed to ${this.windowMinutes}min`);
       },
 
       setMinAlerts(count) {
         this.minAlerts = parseInt(count) || 3;
         localStorage.setItem('prometheos-incident-min-alerts', this.minAlerts.toString());
-        showToast(`Minimum alerts set to ${this.minAlerts}`, 'success');
+        // Auto-rescan with new threshold - clears unsaved incidents
+        this.rescanWithMessage(`Min alerts changed to ${this.minAlerts}`);
       },
 
       setMinHosts(count) {
         this.minHosts = parseInt(count) || 2;
         localStorage.setItem('prometheos-incident-min-hosts', this.minHosts.toString());
-        showToast(`Minimum hosts set to ${this.minHosts}`, 'success');
+        // Auto-rescan with new threshold - clears unsaved incidents
+        this.rescanWithMessage(`Min hosts changed to ${this.minHosts}`);
       },
 
       rescan() {
-        // Preserve only "saved" incidents (ones with custom names or notes)
+        this.rescanWithMessage('Manual rescan');
+      },
+
+      rescanWithMessage(reason) {
+        // Preserve only "saved" incidents (ones with custom names, notes, or status changes)
+        const previousCount = this.incidents.length;
         const savedIncidents = this.incidents.filter(inc => this.isIncidentSaved(inc));
+        const clearedCount = previousCount - savedIncidents.length;
+
+        // Reset to only saved incidents
         this.incidents = savedIncidents;
 
-        // Re-detect and merge
+        // Re-detect incidents with current settings
         this.detectIncidents();
 
         const newCount = this.incidents.length - savedIncidents.length;
-        showToast(`Rescanned: found ${newCount} new incident(s), preserved ${savedIncidents.length} saved`, 'success');
+
+        // Build informative message
+        let message = reason ? `${reason}: ` : '';
+        const parts = [];
+        if (newCount > 0) parts.push(`${newCount} new`);
+        if (clearedCount > 0) parts.push(`${clearedCount} cleared`);
+        if (savedIncidents.length > 0) parts.push(`${savedIncidents.length} preserved`);
+
+        message += parts.length > 0 ? parts.join(', ') : 'No incidents found';
+        showToast(message, 'success');
       },
 
       isIncidentSaved(incident) {
