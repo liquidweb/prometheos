@@ -350,15 +350,17 @@
       padding-left: 48px !important;
     }
 
-    .group-header-row.collapsed + .grouped-row,
-    .group-header-row.collapsed ~ .grouped-row {
-      display: none;
-    }
+    /* Collapse behavior handled via JavaScript for proper group scoping */
 
     /* Subgroup header (e.g., section within datacenter) */
     .subgroup-header-row {
       background: var(--bg-secondary) !important;
       border-left: 3px solid rgba(99, 102, 241, 0.5);
+      cursor: pointer;
+    }
+
+    .subgroup-header-row:hover {
+      background: var(--bg-tertiary) !important;
     }
 
     .subgroup-header-row td {
@@ -375,6 +377,17 @@
       color: var(--text-secondary);
     }
 
+    .subgroup-expand-icon {
+      width: 14px;
+      height: 14px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .subgroup-header-row.collapsed .subgroup-expand-icon {
+      transform: rotate(-90deg);
+    }
+
     .subgroup-name {
       color: var(--text-primary);
     }
@@ -385,6 +398,64 @@
       border-radius: var(--radius-sm);
       font-size: 10px;
       font-weight: 500;
+    }
+
+    /* Row-level header (row/rack within section) */
+    .row-header-row {
+      background: var(--bg-primary) !important;
+      border-left: 3px solid rgba(99, 102, 241, 0.3);
+      cursor: pointer;
+    }
+
+    .row-header-row:hover {
+      background: var(--bg-secondary) !important;
+    }
+
+    .row-header-row td {
+      padding: 6px 16px !important;
+      padding-left: 48px !important;
+    }
+
+    .row-header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .row-expand-icon {
+      width: 12px;
+      height: 12px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .row-header-row.collapsed .row-expand-icon {
+      transform: rotate(-90deg);
+    }
+
+    .row-header-name {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .row-header-count {
+      padding: 1px 5px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .grouped-row.indent-3 {
+      border-left-color: rgba(99, 102, 241, 0.1);
+    }
+
+    .grouped-row.indent-3 td:first-child {
+      padding-left: 64px !important;
     }
 
     /* Service tags */
@@ -2931,12 +3002,15 @@ Services: ${this.currentAlert.services}`;
 
           const tbody = table.querySelector('tbody');
 
-          // Remove all group header rows
-          tbody.querySelectorAll('.group-header-row, .subgroup-header-row').forEach(row => row.remove());
+          // Remove all group/subgroup/row header rows
+          tbody.querySelectorAll('.group-header-row, .subgroup-header-row, .row-header-row').forEach(row => row.remove());
 
-          // Remove grouping classes from alert rows
+          // Remove grouping classes and data attributes from alert rows
           tbody.querySelectorAll('.grouped-row').forEach(row => {
-            row.classList.remove('grouped-row', 'indent-1', 'indent-2');
+            row.classList.remove('grouped-row', 'indent-1', 'indent-2', 'indent-3');
+            delete row.dataset.parentGroup;
+            delete row.dataset.parentSubgroup;
+            delete row.dataset.parentRowgroup;
           });
 
           // Show all rows
@@ -2961,7 +3035,7 @@ Services: ${this.currentAlert.services}`;
 
           if (rows.length === 0) return;
 
-          // Group by datacenter, then by section
+          // Group by datacenter > section > row
           const groups = new Map();
 
           rows.forEach(row => {
@@ -2969,14 +3043,18 @@ Services: ${this.currentAlert.services}`;
             const parsed = this.parseLocation(location);
             const dc = parsed?.fullDC || 'Unknown';
             const section = parsed?.fullSection || 'Unknown';
+            const rowKey = parsed ? `${parsed.fullSection}${parsed.row}` : 'Unknown';
 
             if (!groups.has(dc)) {
               groups.set(dc, new Map());
             }
             if (!groups.get(dc).has(section)) {
-              groups.get(dc).set(section, []);
+              groups.get(dc).set(section, new Map());
             }
-            groups.get(dc).get(section).push(row);
+            if (!groups.get(dc).get(section).has(rowKey)) {
+              groups.get(dc).get(section).set(rowKey, []);
+            }
+            groups.get(dc).get(section).get(rowKey).push(row);
           });
 
           // Sort groups by datacenter and section
@@ -2991,18 +3069,21 @@ Services: ${this.currentAlert.services}`;
             let dcTotalAlerts = 0;
             let dcNewAlerts = 0;
             sections.forEach(sectionRows => {
-              dcTotalAlerts += sectionRows.length;
-              sectionRows.forEach(row => {
-                const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
-                if (duration === 'new') dcNewAlerts++;
+              sectionRows.forEach(rowAlerts => {
+                dcTotalAlerts += rowAlerts.length;
+                rowAlerts.forEach(row => {
+                  const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                  if (duration === 'new') dcNewAlerts++;
+                });
               });
             });
 
-            // Create datacenter header
+            // Create datacenter header (collapsed by default)
             const dcHeader = document.createElement('tr');
-            dcHeader.className = 'group-header-row';
+            dcHeader.className = 'group-header-row collapsed';
             dcHeader.dataset.group = dc;
-            dcHeader.onclick = () => this.toggleGroup(dcHeader);
+            dcHeader.dataset.level = 'datacenter';
+            dcHeader.onclick = (e) => { e.stopPropagation(); this.toggleGroup(dcHeader); };
 
             dcHeader.innerHTML = `
               <td colspan="${colCount}">
@@ -3030,38 +3111,92 @@ Services: ${this.currentAlert.services}`;
             // Sort sections
             const sortedSections = new Map([...sections.entries()].sort());
 
-            sortedSections.forEach((sectionRows, section) => {
+            sortedSections.forEach((sectionRowsMap, section) => {
               // Calculate section stats
+              let sectionTotalAlerts = 0;
               let sectionNewAlerts = 0;
-              sectionRows.forEach(row => {
-                const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
-                if (duration === 'new') sectionNewAlerts++;
+              sectionRowsMap.forEach(rowAlerts => {
+                sectionTotalAlerts += rowAlerts.length;
+                rowAlerts.forEach(row => {
+                  const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                  if (duration === 'new') sectionNewAlerts++;
+                });
               });
 
-              // Create section subheader
+              // Create section subheader (collapsed by default, hidden initially)
               const sectionHeader = document.createElement('tr');
-              sectionHeader.className = 'subgroup-header-row grouped-row indent-1';
+              sectionHeader.className = 'subgroup-header-row grouped-row indent-1 collapsed';
               sectionHeader.dataset.subgroup = section;
               sectionHeader.dataset.parentGroup = dc;
+              sectionHeader.dataset.level = 'section';
+              sectionHeader.style.display = 'none'; // Hidden because parent is collapsed
+              sectionHeader.onclick = (e) => { e.stopPropagation(); this.toggleSubgroup(sectionHeader); };
 
               const sectionDisplay = section.replace(dc, ''); // Show just "S2" instead of "B3S2"
               sectionHeader.innerHTML = `
                 <td colspan="${colCount}">
                   <div class="subgroup-header-content">
+                    <svg class="subgroup-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <polyline points="6 9 12 15 18 9"></polyline>
+                    </svg>
                     <span class="subgroup-name">Section ${sectionDisplay}</span>
-                    <span class="subgroup-count">${sectionRows.length}</span>
+                    <span class="subgroup-count">${sectionTotalAlerts}</span>
                     ${sectionNewAlerts > 0 ? `<span class="group-summary-item new" style="margin-left: auto;">🆕 ${sectionNewAlerts}</span>` : ''}
+                    <span class="group-summary-item" style="margin-left: ${sectionNewAlerts > 0 ? '8px' : 'auto'};">${sectionRowsMap.size} row${sectionRowsMap.size !== 1 ? 's' : ''}</span>
                   </div>
                 </td>
               `;
               fragment.appendChild(sectionHeader);
 
-              // Add rows for this section
-              sectionRows.forEach(row => {
-                row.classList.add('grouped-row', 'indent-2');
-                row.dataset.parentGroup = dc;
-                row.dataset.parentSubgroup = section;
-                fragment.appendChild(row);
+              // Sort rows within section
+              const sortedRowsMap = new Map([...sectionRowsMap.entries()].sort());
+
+              sortedRowsMap.forEach((rowAlerts, rowKey) => {
+                // Get row display name (e.g., "R9" from "B3S2R9")
+                const rowMatch = rowKey.match(/R(\d+)$/i);
+                const rowDisplay = rowMatch ? `R${rowMatch[1]}` : rowKey.replace(section, '');
+
+                // Calculate rack info
+                const racks = new Set();
+                rowAlerts.forEach(row => {
+                  const loc = row.dataset.location || '';
+                  const parsed = this.parseLocation(loc);
+                  if (parsed?.rack) racks.add(parsed.rack);
+                });
+
+                // Create row header (collapsed by default, hidden initially)
+                const rowHeader = document.createElement('tr');
+                rowHeader.className = 'row-header-row grouped-row indent-2 collapsed';
+                rowHeader.dataset.rowgroup = rowKey;
+                rowHeader.dataset.parentGroup = dc;
+                rowHeader.dataset.parentSubgroup = section;
+                rowHeader.dataset.level = 'row';
+                rowHeader.style.display = 'none'; // Hidden because parent is collapsed
+                rowHeader.onclick = (e) => { e.stopPropagation(); this.toggleRowGroup(rowHeader); };
+
+                rowHeader.innerHTML = `
+                  <td colspan="${colCount}">
+                    <div class="row-header-content">
+                      <svg class="row-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="6 9 12 15 18 9"></polyline>
+                      </svg>
+                      <span class="row-header-name">Row ${rowDisplay}</span>
+                      <span class="row-header-count">${rowAlerts.length} alert${rowAlerts.length !== 1 ? 's' : ''}</span>
+                      <span class="row-header-count" style="margin-left: 4px;">${racks.size} rack${racks.size !== 1 ? 's' : ''}</span>
+                    </div>
+                  </td>
+                `;
+                fragment.appendChild(rowHeader);
+
+                // Add alert rows (hidden initially)
+                rowAlerts.forEach(row => {
+                  row.classList.add('grouped-row', 'indent-3');
+                  row.dataset.parentGroup = dc;
+                  row.dataset.parentSubgroup = section;
+                  row.dataset.parentRowgroup = rowKey;
+                  row.style.display = 'none'; // Hidden because parent is collapsed
+                  fragment.appendChild(row);
+                });
               });
             });
           });
@@ -3120,11 +3255,12 @@ Services: ${this.currentAlert.services}`;
               rowServices.forEach(s => { if (s.trim()) services.add(s.trim()); });
             });
 
-            // Create account header
+            // Create account header (collapsed by default)
             const accountHeader = document.createElement('tr');
-            accountHeader.className = 'group-header-row';
+            accountHeader.className = 'group-header-row collapsed';
             accountHeader.dataset.group = account;
-            accountHeader.onclick = () => this.toggleGroup(accountHeader);
+            accountHeader.dataset.level = 'account';
+            accountHeader.onclick = (e) => { e.stopPropagation(); this.toggleGroup(accountHeader); };
 
             accountHeader.innerHTML = `
               <td colspan="${colCount}">
@@ -3149,10 +3285,11 @@ Services: ${this.currentAlert.services}`;
             `;
             fragment.appendChild(accountHeader);
 
-            // Add rows for this account
+            // Add rows for this account (hidden by default since parent is collapsed)
             accountRows.forEach(row => {
               row.classList.add('grouped-row', 'indent-1');
               row.dataset.parentGroup = account;
+              row.style.display = 'none'; // Hidden because parent is collapsed
               fragment.appendChild(row);
             });
           });
@@ -3163,20 +3300,75 @@ Services: ${this.currentAlert.services}`;
         });
       },
 
+      // Toggle datacenter/account group (top level)
       toggleGroup(headerRow) {
-        headerRow.classList.toggle('collapsed');
-
+        const isCollapsed = headerRow.classList.toggle('collapsed');
         const groupId = headerRow.dataset.group;
         const tbody = headerRow.closest('tbody');
 
-        // Find all rows belonging to this group
-        let nextRow = headerRow.nextElementSibling;
-        while (nextRow && (nextRow.dataset.parentGroup === groupId || nextRow.dataset.parentSubgroup)) {
-          if (nextRow.dataset.parentGroup === groupId) {
-            nextRow.style.display = headerRow.classList.contains('collapsed') ? 'none' : '';
+        // Find all direct children of this group (sections or alert rows)
+        tbody.querySelectorAll(`tr[data-parent-group="${groupId}"]`).forEach(row => {
+          if (isCollapsed) {
+            // Collapse: hide all children
+            row.style.display = 'none';
+          } else {
+            // Expand: show only direct children (subgroups/sections)
+            // For location grouping, show section headers only (they remain collapsed)
+            // For account grouping, show alert rows directly
+            if (row.classList.contains('subgroup-header-row') || row.classList.contains('alert-row')) {
+              row.style.display = '';
+            }
           }
-          nextRow = nextRow.nextElementSibling;
+        });
+
+        // Also hide deeper nested items when collapsing datacenter
+        if (isCollapsed) {
+          tbody.querySelectorAll(`tr.row-header-row[data-parent-group="${groupId}"]`).forEach(row => {
+            row.style.display = 'none';
+          });
+          tbody.querySelectorAll(`tr.alert-row[data-parent-group="${groupId}"]`).forEach(row => {
+            row.style.display = 'none';
+          });
         }
+      },
+
+      // Toggle section subgroup (second level in location grouping)
+      toggleSubgroup(headerRow) {
+        const isCollapsed = headerRow.classList.toggle('collapsed');
+        const subgroupId = headerRow.dataset.subgroup;
+        const tbody = headerRow.closest('tbody');
+
+        // Find all direct children of this subgroup (row headers)
+        tbody.querySelectorAll(`tr[data-parent-subgroup="${subgroupId}"]`).forEach(row => {
+          if (isCollapsed) {
+            // Collapse: hide all children
+            row.style.display = 'none';
+          } else {
+            // Expand: show row headers only (they remain collapsed)
+            if (row.classList.contains('row-header-row')) {
+              row.style.display = '';
+            }
+          }
+        });
+
+        // Also hide alert rows when collapsing section
+        if (isCollapsed) {
+          tbody.querySelectorAll(`tr.alert-row[data-parent-subgroup="${subgroupId}"]`).forEach(row => {
+            row.style.display = 'none';
+          });
+        }
+      },
+
+      // Toggle row group (third level in location grouping - shows individual alerts)
+      toggleRowGroup(headerRow) {
+        const isCollapsed = headerRow.classList.toggle('collapsed');
+        const rowgroupId = headerRow.dataset.rowgroup;
+        const tbody = headerRow.closest('tbody');
+
+        // Find all alert rows belonging to this row group
+        tbody.querySelectorAll(`tr.alert-row[data-parent-rowgroup="${rowgroupId}"]`).forEach(row => {
+          row.style.display = isCollapsed ? 'none' : '';
+        });
       },
 
       escapeHtml(text) {
