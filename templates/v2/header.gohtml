@@ -1290,52 +1290,6 @@
       opacity: 1;
     }
 
-    /* ========================================
-       BULK ACTIONS BAR
-       ======================================== */
-
-    .bulk-actions-bar {
-      background: var(--accent);
-      border-radius: var(--radius-lg);
-      padding: 12px 20px;
-      margin-bottom: 16px;
-      display: none;
-      align-items: center;
-      justify-content: space-between;
-      animation: slideDown 0.2s ease;
-    }
-
-    .bulk-actions-bar.show {
-      display: flex;
-    }
-
-    .bulk-info {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      color: white;
-    }
-
-    .bulk-count {
-      font-weight: 600;
-    }
-
-    .bulk-buttons {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-bulk {
-      padding: 6px 12px;
-      background: rgba(255, 255, 255, 0.2);
-      border: 1px solid rgba(255, 255, 255, 0.3);
-      border-radius: var(--radius-md);
-      color: white;
-      font-size: 12px;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
 
     .btn-bulk:hover {
       background: rgba(255, 255, 255, 0.3);
@@ -4377,7 +4331,23 @@
         <div class="help-content" id="help-content-incidents" style="display: none;">
           <div class="help-section">
             <h3 class="help-section-title">Incident Detection</h3>
-            <p class="help-text">Prometheos automatically groups alerts that fired within a configurable time window, helping identify related issues.</p>
+            <p class="help-text">Prometheos automatically groups alerts that represent significant multi-system outages. Configurable thresholds filter out noise to focus on real incidents.</p>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Detection Thresholds</h3>
+            <p class="help-text">Incidents must meet BOTH criteria:</p>
+            <div class="help-grid">
+              <div class="help-item">
+                <span class="help-item-label">Min Alerts</span>
+                <span class="help-item-desc">At least N alerts in time window (default: 3+)</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">Min Hosts</span>
+                <span class="help-item-desc">At least N unique hosts affected (default: 2+)</span>
+              </div>
+            </div>
+            <p class="help-text" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">This prevents single-server issues from creating incident noise.</p>
           </div>
 
           <div class="help-section">
@@ -4414,10 +4384,20 @@
           </div>
 
           <div class="help-section">
+            <h3 class="help-section-title">Smart Naming</h3>
+            <p class="help-text">Auto-generated incident names reflect scope:</p>
+            <ul class="help-list">
+              <li><strong>Multi-Location Incident</strong> - Alerts span multiple datacenters</li>
+              <li><strong>Multi-Account Incident</strong> - Multiple customer accounts affected</li>
+              <li><strong>Major Incident</strong> - More than 3 hosts affected</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
             <h3 class="help-section-title">Saved vs Unsaved</h3>
             <p class="help-text">When rescanning, incidents are preserved if they have:</p>
             <ul class="help-list">
-              <li>A custom name (changed from default)</li>
+              <li>A custom name (changed from auto-generated)</li>
               <li>Status changed from "Investigating"</li>
               <li>Any notes attached</li>
             </ul>
@@ -5107,6 +5087,25 @@
               <option value="60">1 hour</option>
             </select>
           </div>
+          <div class="incident-time-selector">
+            <label class="incident-time-label">Min Alerts:</label>
+            <select class="incident-time-select" id="incident-min-alerts" onchange="IncidentManager.setMinAlerts(this.value)">
+              <option value="2">2+</option>
+              <option value="3" selected>3+</option>
+              <option value="4">4+</option>
+              <option value="5">5+</option>
+              <option value="10">10+</option>
+            </select>
+          </div>
+          <div class="incident-time-selector">
+            <label class="incident-time-label">Min Hosts:</label>
+            <select class="incident-time-select" id="incident-min-hosts" onchange="IncidentManager.setMinHosts(this.value)">
+              <option value="1">1+</option>
+              <option value="2" selected>2+</option>
+              <option value="3">3+</option>
+              <option value="5">5+</option>
+            </select>
+          </div>
           <button type="button" class="btn btn-sm btn-secondary" onclick="IncidentManager.rescan()" title="Rescan and clear unsaved incidents">
             <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
               <path d="M21 12a9 9 0 1 1-9-9c2.52 0 4.93 1 6.74 2.74L21 8"></path>
@@ -5143,7 +5142,7 @@
                 <path d="M2 12l10 5 10-5"></path>
               </svg>
             </div>
-            <span class="widget-empty-text">No incidents detected. Alerts within the configured time window are grouped.</span>
+            <span class="widget-empty-text">No incidents detected. Incidents require multiple hosts with alerts within the time window.</span>
           </div>
         </div>
       </div>

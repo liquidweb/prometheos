@@ -76,20 +76,30 @@ Collapsible sections (click header to expand/collapse). All sections auto-collap
 
 ### Incident Management
 
-Automatically detects and groups alerts that fired within a configurable time window.
+Automatically detects and groups alerts that represent significant multi-system outages. Configurable thresholds filter out noise to focus on real incidents.
 
 #### Features
 - **Configurable Time Window** - 2min, 5min, 10min, 15min, 30min, or 1 hour
+- **Minimum Alert Threshold** - Require 2, 3, 4, 5, or 10+ alerts (default: 3)
+- **Minimum Host Threshold** - Require 1, 2, 3, or 5+ unique hosts (default: 2)
 - **Auto-detection** - Clusters alerts by start time proximity
+- **Smart Naming** - Auto-generated names based on scope (multi-location, multi-account, major)
 - **Manual Creation** - Select alerts and create custom incident groups
 - **Incident Naming** - Click to rename incidents with meaningful titles
 - **Status Tracking** - Investigating, Identified, Monitoring, Resolved
 - **Notes** - Add timestamped notes to incidents
 - **Rescan** - Re-detect incidents while preserving saved ones
 
+#### Incident Criteria
+To form an incident, alerts must meet BOTH thresholds:
+- **Min Alerts** - At least N alerts in the time window (default: 3+)
+- **Min Hosts** - At least N unique hostnames affected (default: 2+)
+
+This prevents single-server alerts or minor issues from creating incident noise.
+
 #### Saved Incidents
 Incidents are preserved during rescan if they have:
-- Custom name (changed from default)
+- Custom name (changed from auto-generated default)
 - Status changed from "Investigating"
 - Notes attached
 
