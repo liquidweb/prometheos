@@ -1626,7 +1626,6 @@ Services: ${this.currentAlert.services}`;
           const searchBox = document.getElementById('search-box');
           if (searchBox) {
             searchBox.value = search;
-            searchBox.dispatchEvent(new Event('input'));
           }
         }
 
@@ -1672,9 +1671,11 @@ Services: ${this.currentAlert.services}`;
             const el = document.getElementById('filter-prom');
             if (el) el.value = prom;
           }
+        }
 
-          // Apply filters
-          setTimeout(() => FilterManager.applyFilters(), 100);
+        // Apply filters if any URL state was loaded (including search)
+        if (search || location || account || service || prom) {
+          setTimeout(() => FilterManager.apply(), 100);
         }
       },
 
@@ -1890,8 +1891,11 @@ Services: ${this.currentAlert.services}`;
         rack: '',
         prom: '',
         time: '',
-        service: ''
+        service: '',
+        search: ''  // Client-side text search
       },
+
+      searchDebounceTimer: null,
 
       init() {
         this.populateFilterOptions();
@@ -1900,11 +1904,15 @@ Services: ${this.currentAlert.services}`;
           this.togglePanel();
         });
 
-        // Update clear all button when search changes
+        // Apply filters when search changes (with debounce for performance)
         const searchBox = document.getElementById('search-box');
         if (searchBox) {
           searchBox.addEventListener('input', () => {
-            this.updateClearAllButton();
+            // Debounce search filtering to avoid filtering on every keystroke
+            clearTimeout(this.searchDebounceTimer);
+            this.searchDebounceTimer = setTimeout(() => {
+              this.apply();
+            }, 150);
           });
         }
       },
@@ -1925,6 +1933,25 @@ Services: ${this.currentAlert.services}`;
           row: `B${match[1]}S${match[2]}R${match[3]}`,
           rack: `B${match[1]}S${match[2]}R${match[3]}K${match[4]}`
         };
+      },
+
+      // Parse search string into include/exclude terms (! prefix for exclusion)
+      parseSearchTerms(searchStr) {
+        const include = [];
+        const exclude = [];
+        if (!searchStr) return { include, exclude };
+
+        // Split by spaces, respecting the ! prefix
+        const terms = searchStr.split(/\s+/).filter(t => t.length > 0);
+        terms.forEach(term => {
+          if (term.startsWith('!') && term.length > 1) {
+            exclude.push(term.substring(1));
+          } else {
+            include.push(term);
+          }
+        });
+
+        return { include, exclude };
       },
 
       populateFilterOptions() {
@@ -1989,8 +2016,12 @@ Services: ${this.currentAlert.services}`;
         this.filters.prom = document.getElementById('filter-prom')?.value || '';
         this.filters.time = document.getElementById('filter-time')?.value || '';
         this.filters.service = document.getElementById('filter-service')?.value || '';
+        this.filters.search = document.getElementById('search-box')?.value?.trim() || '';
 
         const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
+
+        // Parse search terms (support ! for exclusion)
+        const searchTerms = this.filters.search ? this.parseSearchTerms(this.filters.search) : { include: [], exclude: [] };
 
         rows.forEach(row => {
           let show = true;
@@ -2039,6 +2070,29 @@ Services: ${this.currentAlert.services}`;
             }
           }
 
+          // Client-side text search filter
+          if (show && (searchTerms.include.length > 0 || searchTerms.exclude.length > 0)) {
+            const rowText = row.textContent.toLowerCase();
+
+            // Must include all include terms
+            for (const term of searchTerms.include) {
+              if (!rowText.includes(term.toLowerCase())) {
+                show = false;
+                break;
+              }
+            }
+
+            // Must not include any exclude terms
+            if (show) {
+              for (const term of searchTerms.exclude) {
+                if (rowText.includes(term.toLowerCase())) {
+                  show = false;
+                  break;
+                }
+              }
+            }
+          }
+
           row.classList.toggle('filtered-out', !show);
         });
 
@@ -2081,6 +2135,13 @@ Services: ${this.currentAlert.services}`;
         if (this.filters.service) {
           activeFilters.push({ type: 'service', label: `Service: ${this.filters.service}` });
         }
+        if (this.filters.search) {
+          // Truncate long search terms for display
+          const displaySearch = this.filters.search.length > 20
+            ? this.filters.search.substring(0, 20) + '...'
+            : this.filters.search;
+          activeFilters.push({ type: 'search', label: `Search: ${displaySearch}` });
+        }
 
         activeFilters.forEach(filter => {
           const tag = document.createElement('div');
@@ -2115,13 +2176,14 @@ Services: ${this.currentAlert.services}`;
 
         // Clear search box
         const searchBox = document.getElementById('search-box');
-        if (searchBox && searchBox.value) {
+        if (searchBox) {
           searchBox.value = '';
-          searchBox.dispatchEvent(new Event('input'));
         }
 
-        this.filters = { datacenter: '', section: '', row: '', rack: '', prom: '', time: '', service: '' };
+        // Reset all filter state including search
+        this.filters = { datacenter: '', section: '', row: '', rack: '', prom: '', time: '', service: '', search: '' };
 
+        // Remove filtered-out class from all rows to show everything
         document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr').forEach(row => {
           row.classList.remove('filtered-out');
         });
@@ -2130,17 +2192,23 @@ Services: ${this.currentAlert.services}`;
         this.updateFilterBadge();
         this.updateClearAllButton();
         updateCounts();
+
+        // Refresh stale alerts grouping after clearing filters
+        if (typeof StaleAlertsManager !== 'undefined') {
+          StaleAlertsManager.refresh();
+        }
+
         showToast('All filters and search cleared', 'success');
       },
 
       updateClearAllButton() {
+        // Check if any filter is active (including search which is now part of filters)
         const hasFilters = Object.values(this.filters).some(v => v);
-        const hasSearch = document.getElementById('search-box')?.value?.trim();
         // Also check if grouping is active (Location/Account Focus views)
         const hasGrouping = typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping;
         const clearBtn = document.getElementById('clear-all-btn');
         if (clearBtn) {
-          clearBtn.classList.toggle('show', hasFilters || hasSearch || hasGrouping);
+          clearBtn.classList.toggle('show', hasFilters || hasGrouping);
         }
       }
     };
@@ -2158,10 +2226,19 @@ Services: ${this.currentAlert.services}`;
     }
 
     function removeFilter(type) {
-      const el = document.getElementById(`filter-${type}`);
-      if (el) {
-        el.value = '';
-        FilterManager.filters[type] = '';
+      if (type === 'search') {
+        // Handle search box specially
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+          searchBox.value = '';
+        }
+        FilterManager.filters.search = '';
+      } else {
+        const el = document.getElementById(`filter-${type}`);
+        if (el) {
+          el.value = '';
+          FilterManager.filters[type] = '';
+        }
       }
       FilterManager.apply();
     }
@@ -2653,14 +2730,16 @@ Services: ${this.currentAlert.services}`;
       filterByHostname(hostname) {
         const searchBox = document.getElementById('search-box');
         searchBox.value = hostname;
-        searchBox.dispatchEvent(new Event('input'));
+        // Apply immediately for programmatic filter
+        FilterManager.apply();
         showToast(`Filtered by: ${hostname}`, 'success');
       },
 
       filterByAccount(account) {
         const searchBox = document.getElementById('search-box');
         searchBox.value = account;
-        searchBox.dispatchEvent(new Event('input'));
+        // Apply immediately for programmatic filter
+        FilterManager.apply();
         showToast(`Filtered by account: ${account}`, 'success');
       },
 
@@ -3888,15 +3967,16 @@ Services: ${this.currentAlert.services}`;
     function filterByHostname(hostname) {
       const searchBox = document.getElementById('search-box');
       searchBox.value = hostname;
-      searchBox.dispatchEvent(new Event('input'));
+      // Apply immediately for programmatic filter (no debounce needed)
+      FilterManager.apply();
       showToast(`Filtered by hostname: ${hostname}`, 'success');
     }
 
     function filterByAccount(account) {
-      // Search for the specific account
       const searchBox = document.getElementById('search-box');
       searchBox.value = account;
-      searchBox.dispatchEvent(new Event('input'));
+      // Apply immediately for programmatic filter (no debounce needed)
+      FilterManager.apply();
       showToast(`Filtered by account: ${account}`, 'success');
     }
 
@@ -3921,7 +4001,8 @@ Services: ${this.currentAlert.services}`;
       if (recurringHosts.length > 0) {
         const searchBox = document.getElementById('search-box');
         searchBox.value = recurringHosts[0]; // Filter to first recurring host
-        searchBox.dispatchEvent(new Event('input'));
+        // Apply immediately for programmatic filter
+        FilterManager.apply();
         showToast(`Showing recurring system: ${recurringHosts[0]} (${recurringHosts.length} total)`, 'success');
       } else {
         showToast('No recurring systems found', 'info');
