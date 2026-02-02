@@ -162,11 +162,30 @@
         <span class="filters-title">Advanced Filters</span>
         <button type="button" class="btn btn-ghost btn-sm" onclick="clearAllFilters()">Clear All</button>
       </div>
-      <div class="filters-grid">
+      <div class="filters-grid filters-grid-extended">
+        <!-- Location Intelligence Filters -->
         <div class="filter-group">
-          <label class="filter-label">Location</label>
-          <select class="filter-select" id="filter-location" onchange="applyFilters()">
-            <option value="">All Locations</option>
+          <label class="filter-label">Data Center</label>
+          <select class="filter-select" id="filter-datacenter" onchange="applyFilters()">
+            <option value="">All Data Centers</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Section</label>
+          <select class="filter-select" id="filter-section" onchange="applyFilters()">
+            <option value="">All Sections</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Row</label>
+          <select class="filter-select" id="filter-row" onchange="applyFilters()">
+            <option value="">All Rows</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label class="filter-label">Rack</label>
+          <select class="filter-select" id="filter-rack" onchange="applyFilters()">
+            <option value="">All Racks</option>
           </select>
         </div>
         <div class="filter-group">
@@ -277,8 +296,10 @@
                       {{$value.Hostname}}
                     </div>
                   </td>
-                  <td class="cell-text">{{$value.Location}}</td>
-                  <td class="cell-mono cell-muted">{{$value.Prom}}</td>
+                  <td class="cell-text cell-location" data-location="{{$value.Location}}">{{$value.Location}}</td>
+                  <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
+                    <span class="prom-display"></span>
+                  </td>
                   <td class="cell-mono">
                     <span class="time-badge">{{$value.Time}}</span>
                   </td>
@@ -384,8 +405,10 @@
                       {{$value.Hostname}}
                     </div>
                   </td>
-                  <td class="cell-text">{{$value.Location}}</td>
-                  <td class="cell-mono cell-muted">{{$value.Prom}}</td>
+                  <td class="cell-text cell-location" data-location="{{$value.Location}}">{{$value.Location}}</td>
+                  <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
+                    <span class="prom-display"></span>
+                  </td>
                   <td class="cell-mono">
                     <span class="time-badge">{{$value.Time}}</span>
                   </td>

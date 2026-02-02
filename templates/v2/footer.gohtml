@@ -1441,7 +1441,10 @@ Services: ${this.currentAlert.services}`;
 
     const FilterManager = {
       filters: {
-        location: '',
+        datacenter: '',
+        section: '',
+        row: '',
+        rack: '',
         prom: '',
         time: '',
         service: ''
@@ -1468,14 +1471,38 @@ Services: ${this.currentAlert.services}`;
         panel.classList.toggle('show');
       },
 
+      // Parse location code: B3S2R9K8U27 -> { datacenter, section, row, rack }
+      parseLocation(location) {
+        if (!location) return null;
+        const match = location.match(/^B(\d+)S(\d+)R(\d+)K(\d+)(?:U(\d+))?$/i);
+        if (!match) return null;
+        return {
+          datacenter: `B${match[1]}`,
+          section: `B${match[1]}S${match[2]}`,
+          row: `B${match[1]}S${match[2]}R${match[3]}`,
+          rack: `B${match[1]}S${match[2]}R${match[3]}K${match[4]}`
+        };
+      },
+
       populateFilterOptions() {
         const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
-        const locations = new Set();
+        const datacenters = new Set();
+        const sections = new Set();
+        const rowsSet = new Set();
+        const racks = new Set();
         const proms = new Set();
         const services = new Set();
 
         rows.forEach(row => {
-          if (row.dataset.location) locations.add(row.dataset.location);
+          if (row.dataset.location) {
+            const parsed = this.parseLocation(row.dataset.location);
+            if (parsed) {
+              datacenters.add(parsed.datacenter);
+              sections.add(parsed.section);
+              rowsSet.add(parsed.row);
+              racks.add(parsed.rack);
+            }
+          }
           if (row.dataset.prom) proms.add(row.dataset.prom);
           if (row.dataset.services) {
             row.dataset.services.split(',').forEach(s => {
@@ -1484,7 +1511,10 @@ Services: ${this.currentAlert.services}`;
           }
         });
 
-        this.populateSelect('filter-location', Array.from(locations).sort());
+        this.populateSelect('filter-datacenter', Array.from(datacenters).sort());
+        this.populateSelect('filter-section', Array.from(sections).sort());
+        this.populateSelect('filter-row', Array.from(rowsSet).sort());
+        this.populateSelect('filter-rack', Array.from(racks).sort());
         this.populateSelect('filter-prom', Array.from(proms).sort());
         this.populateSelect('filter-service', Array.from(services).sort());
       },
@@ -1509,18 +1539,33 @@ Services: ${this.currentAlert.services}`;
       },
 
       apply() {
-        this.filters.location = document.getElementById('filter-location').value;
-        this.filters.prom = document.getElementById('filter-prom').value;
-        this.filters.time = document.getElementById('filter-time').value;
-        this.filters.service = document.getElementById('filter-service').value;
+        this.filters.datacenter = document.getElementById('filter-datacenter')?.value || '';
+        this.filters.section = document.getElementById('filter-section')?.value || '';
+        this.filters.row = document.getElementById('filter-row')?.value || '';
+        this.filters.rack = document.getElementById('filter-rack')?.value || '';
+        this.filters.prom = document.getElementById('filter-prom')?.value || '';
+        this.filters.time = document.getElementById('filter-time')?.value || '';
+        this.filters.service = document.getElementById('filter-service')?.value || '';
 
         const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
 
         rows.forEach(row => {
           let show = true;
+          const location = row.dataset.location || '';
+          const parsed = this.parseLocation(location);
 
-          if (this.filters.location && row.dataset.location !== this.filters.location) {
-            show = false;
+          // Location hierarchy filters
+          if (this.filters.datacenter && parsed) {
+            if (parsed.datacenter !== this.filters.datacenter) show = false;
+          }
+          if (this.filters.section && parsed) {
+            if (parsed.section !== this.filters.section) show = false;
+          }
+          if (this.filters.row && parsed) {
+            if (parsed.row !== this.filters.row) show = false;
+          }
+          if (this.filters.rack && parsed) {
+            if (parsed.rack !== this.filters.rack) show = false;
           }
 
           if (this.filters.prom && row.dataset.prom !== this.filters.prom) {
@@ -1566,11 +1611,20 @@ Services: ${this.currentAlert.services}`;
 
         const activeFilters = [];
 
-        if (this.filters.location) {
-          activeFilters.push({ type: 'location', label: `Location: ${this.filters.location}` });
+        if (this.filters.datacenter) {
+          activeFilters.push({ type: 'datacenter', label: `DC: ${this.filters.datacenter}` });
+        }
+        if (this.filters.section) {
+          activeFilters.push({ type: 'section', label: `Section: ${this.filters.section}` });
+        }
+        if (this.filters.row) {
+          activeFilters.push({ type: 'row', label: `Row: ${this.filters.row}` });
+        }
+        if (this.filters.rack) {
+          activeFilters.push({ type: 'rack', label: `Rack: ${this.filters.rack}` });
         }
         if (this.filters.prom) {
-          activeFilters.push({ type: 'prom', label: `Node: ${this.filters.prom}` });
+          activeFilters.push({ type: 'prom', label: `Node: ${simplifyPromName(this.filters.prom)}` });
         }
         if (this.filters.time) {
           const timeLabels = { '1h': 'Last 1 Hour', '6h': 'Last 6 Hours', '24h': 'Last 24 Hours', '7d': 'Last 7 Days' };
@@ -1605,19 +1659,20 @@ Services: ${this.currentAlert.services}`;
 
       clearAll() {
         // Clear filter dropdowns
-        document.getElementById('filter-location').value = '';
-        document.getElementById('filter-prom').value = '';
-        document.getElementById('filter-time').value = '';
-        document.getElementById('filter-service').value = '';
+        const filterIds = ['filter-datacenter', 'filter-section', 'filter-row', 'filter-rack', 'filter-prom', 'filter-time', 'filter-service'];
+        filterIds.forEach(id => {
+          const el = document.getElementById(id);
+          if (el) el.value = '';
+        });
 
         // Clear search box
         const searchBox = document.getElementById('search-box');
-        if (searchBox.value) {
+        if (searchBox && searchBox.value) {
           searchBox.value = '';
           searchBox.dispatchEvent(new Event('input'));
         }
 
-        this.filters = { location: '', prom: '', time: '', service: '' };
+        this.filters = { datacenter: '', section: '', row: '', rack: '', prom: '', time: '', service: '' };
 
         document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr').forEach(row => {
           row.classList.remove('filtered-out');
@@ -1649,13 +1704,270 @@ Services: ${this.currentAlert.services}`;
     }
 
     function removeFilter(type) {
-      document.getElementById(`filter-${type}`).value = '';
+      const el = document.getElementById(`filter-${type}`);
+      if (el) {
+        el.value = '';
+        FilterManager.filters[type] = '';
+      }
       FilterManager.apply();
     }
 
     function toggleFiltersPanel() {
       FilterManager.togglePanel();
     }
+
+    // ========================================
+    // PROM NAME SIMPLIFICATION
+    // ========================================
+
+    // Simplify full prom name to short form: n01.b3.alertmanager.pro.mon.liquidweb.com -> n01.b3
+    function simplifyPromName(fullName) {
+      if (!fullName) return '';
+      const parts = fullName.split('.');
+      if (parts.length >= 2) {
+        return `${parts[0]}.${parts[1]}`;
+      }
+      return fullName;
+    }
+
+    // Initialize prom display names in table cells
+    function initPromDisplayNames() {
+      document.querySelectorAll('.cell-prom').forEach(cell => {
+        const fullName = cell.dataset.promFull || '';
+        const shortName = simplifyPromName(fullName);
+        const display = cell.querySelector('.prom-display');
+        if (display) {
+          display.innerHTML = `<span class="prom-short">${shortName}</span>`;
+          display.title = fullName; // Show full name on hover
+        }
+      });
+    }
+
+    // ========================================
+    // STATUS CARDS NAVIGATION
+    // ========================================
+
+    const StatusCards = {
+      goToActiveAlerts() {
+        // Switch to active tab and scroll to table
+        const activeTab = document.querySelector('.tab-btn');
+        if (activeTab) activeTab.click();
+
+        const table = document.getElementById('active-table');
+        if (table) {
+          table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast('Viewing active alerts', 'info');
+      },
+
+      goToAffectedServers() {
+        // Switch to active tab and focus on unique hostnames
+        const activeTab = document.querySelector('.tab-btn');
+        if (activeTab) activeTab.click();
+
+        // Show unique servers count
+        const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
+        const hosts = new Set();
+        rows.forEach(row => {
+          const hostname = row.querySelector('.hostname')?.textContent.trim();
+          if (hostname) hosts.add(hostname);
+        });
+
+        const table = document.getElementById('active-table');
+        if (table) {
+          table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast(`${hosts.size} unique servers affected`, 'info');
+      },
+
+      goToIncidents() {
+        // Expand incidents section and scroll to it
+        const incidentsSection = document.getElementById('incidents-section');
+        if (incidentsSection) {
+          // Ensure section is expanded
+          const content = incidentsSection.querySelector('.section-content');
+          if (content && content.style.display === 'none') {
+            SectionManager.toggle('incidents');
+          }
+          incidentsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast('Viewing incidents', 'info');
+      },
+
+      goToSilenced() {
+        // Switch to silenced tab
+        const silencedTab = document.querySelectorAll('.tab-btn')[1];
+        if (silencedTab) silencedTab.click();
+
+        const table = document.getElementById('silenced-table');
+        if (table) {
+          table.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+        showToast('Viewing silenced alerts', 'info');
+      }
+    };
+
+    // ========================================
+    // ALERT MANAGERS MODAL
+    // ========================================
+
+    const AlertManagersModal = {
+      alertManagers: [
+        'c01.b3.alertmanager.pro.mon.liquidweb.com',
+        'c02.b3.alertmanager.pro.mon.liquidweb.com',
+        'n01.b2.alertmanager.pro.mon.liquidweb.com',
+        'n01.b3.alertmanager.pro.mon.liquidweb.com',
+        'n01.b4.alertmanager.pro.mon.liquidweb.com',
+        'n01.b5.alertmanager.pro.mon.liquidweb.com',
+        'n02.b2.alertmanager.pro.mon.liquidweb.com',
+        'n02.b3.alertmanager.pro.mon.liquidweb.com',
+        'n02.b4.alertmanager.pro.mon.liquidweb.com',
+        'n02.b5.alertmanager.pro.mon.liquidweb.com',
+        'n03.b3.alertmanager.pro.mon.liquidweb.com',
+        'n04.b3.alertmanager.pro.mon.liquidweb.com',
+        'n05.b3.alertmanager.pro.mon.liquidweb.com',
+        'n06.b3.alertmanager.pro.mon.liquidweb.com',
+        'n07.b3.alertmanager.pro.mon.liquidweb.com',
+        'n08.b3.alertmanager.pro.mon.liquidweb.com'
+      ],
+
+      stats: {},
+
+      init() {
+        this.collectStats();
+      },
+
+      collectStats() {
+        this.stats = {};
+        const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
+
+        // Initialize all managers with zero counts
+        this.alertManagers.forEach(am => {
+          this.stats[am] = {
+            count: 0,
+            lastSeen: null
+          };
+        });
+
+        // Count alerts per manager and track last seen times
+        rows.forEach(row => {
+          const prom = row.dataset.prom;
+          const timeStr = row.dataset.time;
+
+          if (prom && this.stats[prom]) {
+            this.stats[prom].count++;
+            if (timeStr) {
+              const alertTime = new Date(timeStr.replace(' ', 'T'));
+              if (!this.stats[prom].lastSeen || alertTime > this.stats[prom].lastSeen) {
+                this.stats[prom].lastSeen = alertTime;
+              }
+            }
+          }
+        });
+      },
+
+      open() {
+        this.collectStats();
+        this.render();
+        document.getElementById('alert-managers-modal').classList.add('show');
+      },
+
+      close() {
+        document.getElementById('alert-managers-modal').classList.remove('show');
+      },
+
+      render() {
+        const list = document.getElementById('am-list');
+        const totalCount = document.getElementById('am-total-count');
+        const activeCount = document.getElementById('am-active-count');
+        const totalAlerts = document.getElementById('am-total-alerts');
+
+        let managersWithAlerts = 0;
+        let totalAlertCount = 0;
+
+        // Sort by alert count (descending), then by name
+        const sorted = this.alertManagers.slice().sort((a, b) => {
+          const countDiff = (this.stats[b]?.count || 0) - (this.stats[a]?.count || 0);
+          if (countDiff !== 0) return countDiff;
+          return a.localeCompare(b);
+        });
+
+        list.innerHTML = sorted.map(am => {
+          const stat = this.stats[am] || { count: 0, lastSeen: null };
+          const shortName = simplifyPromName(am);
+          const hasAlerts = stat.count > 0;
+
+          if (hasAlerts) {
+            managersWithAlerts++;
+            totalAlertCount += stat.count;
+          }
+
+          const lastSeenStr = this.formatLastSeen(stat.lastSeen);
+          const lastSeenClass = this.getLastSeenClass(stat.lastSeen);
+
+          return `
+            <div class="am-item ${hasAlerts ? 'has-alerts' : 'no-alerts'}" onclick="AlertManagersModal.filterByManager('${am}')">
+              <div class="am-name">
+                <span class="am-name-short">${shortName}</span>
+                <span class="am-name-full">${am}</span>
+              </div>
+              <div class="am-alerts">
+                <span class="am-alert-count">${stat.count}</span>
+              </div>
+              <div class="am-last-seen ${lastSeenClass}">${lastSeenStr}</div>
+            </div>
+          `;
+        }).join('');
+
+        totalCount.textContent = this.alertManagers.length;
+        activeCount.textContent = managersWithAlerts;
+        totalAlerts.textContent = totalAlertCount;
+
+        // Update the card count
+        const cardCount = document.getElementById('alert-managers-count');
+        if (cardCount) cardCount.textContent = this.alertManagers.length;
+      },
+
+      formatLastSeen(date) {
+        if (!date) return 'No alerts';
+
+        const now = new Date();
+        const diff = now - date;
+        const minutes = Math.floor(diff / (60 * 1000));
+        const hours = Math.floor(diff / (60 * 60 * 1000));
+        const days = Math.floor(diff / (24 * 60 * 60 * 1000));
+
+        if (minutes < 1) return 'Just now';
+        if (minutes < 60) return `${minutes}m ago`;
+        if (hours < 24) return `${hours}h ago`;
+        return `${days}d ago`;
+      },
+
+      getLastSeenClass(date) {
+        if (!date) return '';
+
+        const now = new Date();
+        const diff = now - date;
+        const hours = diff / (60 * 60 * 1000);
+
+        if (hours < 1) return 'recent';
+        if (hours < 24) return 'stale';
+        return 'old';
+      },
+
+      filterByManager(manager) {
+        this.close();
+
+        // Set the prom filter and apply
+        const promFilter = document.getElementById('filter-prom');
+        if (promFilter) {
+          promFilter.value = manager;
+          FilterManager.apply();
+        }
+
+        showToast(`Filtered by ${simplifyPromName(manager)}`, 'success');
+      }
+    };
 
     // ========================================
     // EXPORT FUNCTIONALITY
@@ -4677,11 +4989,32 @@ Services: ${this.currentAlert.services}`;
       BulkActions.init();
       NewAlertsIndicator.init();
       URLState.init();
+      AlertManagersModal.init();
+
+      // Initialize simplified prom display names
+      initPromDisplayNames();
 
       // Close status dropdowns on outside click
       document.addEventListener('click', (e) => {
         if (!e.target.closest('.status-selector')) {
           document.querySelectorAll('.status-dropdown.show').forEach(d => d.classList.remove('show'));
+        }
+      });
+
+      // Close Alert Managers modal on overlay click
+      document.getElementById('alert-managers-modal')?.addEventListener('click', (e) => {
+        if (e.target.classList.contains('modal-overlay')) {
+          AlertManagersModal.close();
+        }
+      });
+
+      // Close modals on Escape key
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape') {
+          const amModal = document.getElementById('alert-managers-modal');
+          if (amModal?.classList.contains('show')) {
+            AlertManagersModal.close();
+          }
         }
       });
 
