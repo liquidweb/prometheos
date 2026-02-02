@@ -222,14 +222,101 @@
 
     <!-- Tabs -->
     <div class="tabs-container">
-      <button class="tab-btn active" onclick="openAlerts(event, 'active')">
-        Active Alerts
-        <span class="tab-badge" id="active-badge">0</span>
-      </button>
-      <button class="tab-btn" onclick="openAlerts(event, 'silenced')">
-        Silenced
-        <span class="tab-badge" id="silenced-badge">0</span>
-      </button>
+      <div class="tabs-left">
+        <button class="tab-btn active" onclick="openAlerts(event, 'active')">
+          Active Alerts
+          <span class="tab-badge" id="active-badge">0</span>
+        </button>
+        <button class="tab-btn" onclick="openAlerts(event, 'silenced')">
+          Silenced
+          <span class="tab-badge" id="silenced-badge">0</span>
+        </button>
+      </div>
+      <div class="tabs-right">
+        <!-- View Presets Dropdown -->
+        <div class="view-presets-control">
+          <button type="button" class="view-presets-btn" id="view-presets-btn" onclick="ViewPresets.toggle()">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="7" height="7"></rect>
+              <rect x="14" y="3" width="7" height="7"></rect>
+              <rect x="14" y="14" width="7" height="7"></rect>
+              <rect x="3" y="14" width="7" height="7"></rect>
+            </svg>
+            <span id="view-preset-current">Detailed</span>
+            <svg class="dropdown-chevron" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="6 9 12 15 18 9"></polyline>
+            </svg>
+          </button>
+          <div class="view-presets-dropdown" id="view-presets-dropdown">
+            <div class="view-preset-option active" data-preset="detailed" onclick="ViewPresets.apply('detailed')">
+              <div class="view-preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="8" y1="6" x2="21" y2="6"></line>
+                  <line x1="8" y1="12" x2="21" y2="12"></line>
+                  <line x1="8" y1="18" x2="21" y2="18"></line>
+                  <line x1="3" y1="6" x2="3.01" y2="6"></line>
+                  <line x1="3" y1="12" x2="3.01" y2="12"></line>
+                  <line x1="3" y1="18" x2="3.01" y2="18"></line>
+                </svg>
+              </div>
+              <span class="view-preset-name">Detailed</span>
+              <svg class="view-preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="view-preset-option" data-preset="compact" onclick="ViewPresets.apply('compact')">
+              <div class="view-preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <line x1="3" y1="6" x2="21" y2="6"></line>
+                  <line x1="3" y1="12" x2="21" y2="12"></line>
+                  <line x1="3" y1="18" x2="21" y2="18"></line>
+                </svg>
+              </div>
+              <span class="view-preset-name">Compact</span>
+              <svg class="view-preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="view-preset-option" data-preset="location" onclick="ViewPresets.apply('location')">
+              <div class="view-preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                  <circle cx="12" cy="10" r="3"></circle>
+                </svg>
+              </div>
+              <span class="view-preset-name">Location Focus</span>
+              <svg class="view-preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="view-preset-option" data-preset="account" onclick="ViewPresets.apply('account')">
+              <div class="view-preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                </svg>
+              </div>
+              <span class="view-preset-name">Account Focus</span>
+              <svg class="view-preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+            <div class="view-preset-option" data-preset="triage" onclick="ViewPresets.apply('triage')">
+              <div class="view-preset-icon">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+              </div>
+              <span class="view-preset-name">Triage</span>
+              <svg class="view-preset-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="20 6 9 17 4 12"></polyline>
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </section>
 

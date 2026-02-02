@@ -1980,6 +1980,710 @@ Services: ${this.currentAlert.services}`;
     };
 
     // ========================================
+    // INSIGHT CARDS
+    // ========================================
+
+    const InsightCards = {
+      alertData: [],
+
+      init() {
+        // Insight cards are updated via updateInsightCards() called from updateMetrics()
+      },
+
+      update(alertData) {
+        this.alertData = alertData;
+        this.updateOldestAlerts();
+        this.updateRecurringSystems();
+        this.updateRecentAlerts();
+        this.updateAffectedAccounts();
+      },
+
+      updateOldestAlerts() {
+        const card = document.getElementById('oldest-alerts-card');
+        const list = document.getElementById('oldest-alerts-list');
+        const badge = document.getElementById('oldest-alerts-badge');
+
+        if (this.alertData.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        // Sort by duration descending and get top 5
+        const sorted = [...this.alertData].sort((a, b) => b.duration - a.duration).slice(0, 5);
+
+        // Only show if there are alerts > 1 hour old
+        const oldAlerts = sorted.filter(a => a.duration >= 60 * 60 * 1000);
+        if (oldAlerts.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        badge.textContent = oldAlerts.length;
+        list.innerHTML = oldAlerts.map((alert, i) => `
+          <li class="insight-list-item" onclick="InsightCards.openAlert('${alert.hostname}')">
+            <span class="insight-rank ${i === 0 ? 'top' : ''}">${i + 1}</span>
+            <div class="insight-item-info">
+              <div class="insight-item-primary">${alert.hostname}</div>
+              <div class="insight-item-secondary">${alert.account}</div>
+            </div>
+            <span class="insight-item-value">${formatDuration(alert.duration)}</span>
+            <button class="insight-filter-btn" onclick="event.stopPropagation(); InsightCards.filterByHostname('${alert.hostname}')">Filter</button>
+          </li>
+        `).join('');
+
+        card.classList.add('show');
+      },
+
+      updateRecurringSystems() {
+        const card = document.getElementById('recurring-systems-card');
+        const list = document.getElementById('recurring-systems-list');
+        const badge = document.getElementById('recurring-systems-badge');
+
+        // Group alerts by hostname and count unique services
+        const hostServices = {};
+        this.alertData.forEach(alert => {
+          if (!hostServices[alert.hostname]) {
+            hostServices[alert.hostname] = {
+              services: new Set(),
+              account: alert.account,
+              alertCount: 0
+            };
+          }
+          alert.services.split(',').forEach(s => {
+            if (s.trim()) hostServices[alert.hostname].services.add(s.trim());
+          });
+          hostServices[alert.hostname].alertCount++;
+        });
+
+        // Filter to hosts with 2+ services
+        const recurring = Object.entries(hostServices)
+          .filter(([_, data]) => data.services.size >= 2)
+          .map(([hostname, data]) => ({
+            hostname,
+            account: data.account,
+            serviceCount: data.services.size,
+            services: Array.from(data.services).slice(0, 3).join(', ')
+          }))
+          .sort((a, b) => b.serviceCount - a.serviceCount)
+          .slice(0, 5);
+
+        if (recurring.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        badge.textContent = recurring.length;
+        list.innerHTML = recurring.map((item, i) => `
+          <li class="insight-list-item" onclick="InsightCards.openAlert('${item.hostname}')">
+            <span class="insight-rank ${i === 0 ? 'top' : ''}">${i + 1}</span>
+            <div class="insight-item-info">
+              <div class="insight-item-primary">${item.hostname}</div>
+              <div class="insight-item-secondary">${item.services}${item.serviceCount > 3 ? '...' : ''}</div>
+            </div>
+            <span class="insight-item-value" style="color: var(--warning);">${item.serviceCount} svc</span>
+            <button class="insight-filter-btn" onclick="event.stopPropagation(); InsightCards.filterByHostname('${item.hostname}')">Filter</button>
+          </li>
+        `).join('');
+
+        card.classList.add('show');
+      },
+
+      updateRecentAlerts() {
+        const card = document.getElementById('recent-alerts-card');
+        const list = document.getElementById('recent-alerts-list');
+        const badge = document.getElementById('recent-alerts-badge');
+
+        if (this.alertData.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        // Sort by time descending (most recent first) and get top 5
+        const now = new Date();
+        const oneHourAgo = new Date(now - 60 * 60 * 1000);
+        const recentAlerts = [...this.alertData]
+          .filter(a => a.time >= oneHourAgo)
+          .sort((a, b) => b.time - a.time)
+          .slice(0, 5);
+
+        if (recentAlerts.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        badge.textContent = recentAlerts.length;
+        list.innerHTML = recentAlerts.map((alert, i) => {
+          const ago = Math.floor((now - alert.time) / 60000); // minutes ago
+          const agoStr = ago < 60 ? `${ago}m ago` : `${Math.floor(ago / 60)}h ago`;
+          return `
+            <li class="insight-list-item" onclick="InsightCards.openAlert('${alert.hostname}')">
+              <span class="insight-rank ${i === 0 ? 'top' : ''}">${i + 1}</span>
+              <div class="insight-item-info">
+                <div class="insight-item-primary">${alert.hostname}</div>
+                <div class="insight-item-secondary">${alert.services.split(',')[0] || 'alert'}</div>
+              </div>
+              <span class="insight-item-value info">${agoStr}</span>
+              <button class="insight-filter-btn" onclick="event.stopPropagation(); InsightCards.filterByHostname('${alert.hostname}')">Filter</button>
+            </li>
+          `;
+        }).join('');
+
+        card.classList.add('show');
+      },
+
+      updateAffectedAccounts() {
+        const card = document.getElementById('affected-accounts-card');
+        const list = document.getElementById('affected-accounts-list');
+        const badge = document.getElementById('affected-accounts-badge');
+
+        if (this.alertData.length === 0) {
+          card.classList.remove('show');
+          return;
+        }
+
+        // Group by account
+        const accountStats = {};
+        this.alertData.forEach(alert => {
+          if (!accountStats[alert.account]) {
+            accountStats[alert.account] = { alertCount: 0, hosts: new Set() };
+          }
+          accountStats[alert.account].alertCount++;
+          accountStats[alert.account].hosts.add(alert.hostname);
+        });
+
+        // Get top 5 by alert count
+        const topAccounts = Object.entries(accountStats)
+          .map(([account, data]) => ({
+            account,
+            alertCount: data.alertCount,
+            hostCount: data.hosts.size
+          }))
+          .sort((a, b) => b.alertCount - a.alertCount)
+          .slice(0, 5);
+
+        if (topAccounts.length <= 1) {
+          // Don't show if only 1 account (not interesting)
+          card.classList.remove('show');
+          return;
+        }
+
+        badge.textContent = topAccounts.length;
+        list.innerHTML = topAccounts.map((item, i) => `
+          <li class="insight-list-item" onclick="InsightCards.filterByAccount('${item.account}')">
+            <span class="insight-rank ${i === 0 ? 'top' : ''}">${i + 1}</span>
+            <div class="insight-item-info">
+              <div class="insight-item-primary">${item.account}</div>
+              <div class="insight-item-secondary">${item.hostCount} server${item.hostCount !== 1 ? 's' : ''}</div>
+            </div>
+            <span class="insight-item-value warning">${item.alertCount} alerts</span>
+            <button class="insight-filter-btn" onclick="event.stopPropagation(); InsightCards.filterByAccount('${item.account}')">Filter</button>
+          </li>
+        `).join('');
+
+        card.classList.add('show');
+      },
+
+      openAlert(hostname) {
+        // Find the row and open the drawer
+        const row = document.querySelector(`#active-table tbody tr .hostname`);
+        const rows = document.querySelectorAll('#active-table tbody tr');
+        for (const r of rows) {
+          const hn = r.querySelector('.hostname')?.textContent.trim();
+          if (hn === hostname) {
+            AlertDrawer.openFromRow(r);
+            return;
+          }
+        }
+      },
+
+      filterByHostname(hostname) {
+        const searchBox = document.getElementById('search-box');
+        searchBox.value = hostname;
+        searchBox.dispatchEvent(new Event('input'));
+        showToast(`Filtered by: ${hostname}`, 'success');
+      },
+
+      filterByAccount(account) {
+        const searchBox = document.getElementById('search-box');
+        searchBox.value = account;
+        searchBox.dispatchEvent(new Event('input'));
+        showToast(`Filtered by account: ${account}`, 'success');
+      },
+
+      sortByDuration() {
+        sortTable('active-table', 11); // Duration column
+        showToast('Sorted by duration', 'success');
+      },
+
+      sortByTime() {
+        sortTable('active-table', 10); // Start Time column
+        showToast('Sorted by start time', 'success');
+      },
+
+      sortByAccount() {
+        sortTable('active-table', 2); // Account column
+        showToast('Sorted by account', 'success');
+      }
+    };
+
+    // ========================================
+    // METRIC MODALS
+    // ========================================
+
+    const MetricModals = {
+      alertData: [],
+      oldestAlert: null,
+      healthBreakdown: null,
+
+      update(alertData) {
+        this.alertData = alertData;
+        if (alertData.length > 0) {
+          this.oldestAlert = alertData.reduce((max, a) => a.duration > max.duration ? a : max);
+        }
+      },
+
+      open(modalId) {
+        document.getElementById(`${modalId}-modal`).classList.add('show');
+      },
+
+      close(modalId) {
+        document.getElementById(`${modalId}-modal`).classList.remove('show');
+      },
+
+      openAvgDuration() {
+        if (this.alertData.length === 0) {
+          showToast('No active alerts', 'info');
+          return;
+        }
+
+        const avgDuration = this.alertData.reduce((sum, a) => sum + a.duration, 0) / this.alertData.length;
+        document.getElementById('modal-avg-duration').textContent = formatDuration(avgDuration);
+
+        // Calculate distribution
+        const buckets = {
+          '< 1h': { count: 0, class: 'info' },
+          '1-4h': { count: 0, class: 'info' },
+          '4-12h': { count: 0, class: 'warning' },
+          '12-24h': { count: 0, class: 'warning' },
+          '> 24h': { count: 0, class: 'critical' }
+        };
+
+        this.alertData.forEach(a => {
+          const hours = a.duration / (60 * 60 * 1000);
+          if (hours < 1) buckets['< 1h'].count++;
+          else if (hours < 4) buckets['1-4h'].count++;
+          else if (hours < 12) buckets['4-12h'].count++;
+          else if (hours < 24) buckets['12-24h'].count++;
+          else buckets['> 24h'].count++;
+        });
+
+        const maxCount = Math.max(...Object.values(buckets).map(b => b.count), 1);
+        const total = this.alertData.length;
+
+        const distribution = document.getElementById('duration-distribution');
+        distribution.innerHTML = Object.entries(buckets).map(([label, data]) => {
+          const pct = Math.round((data.count / total) * 100);
+          const width = Math.round((data.count / maxCount) * 100);
+          return `
+            <div class="metric-dist-row">
+              <span class="metric-dist-label">${label}</span>
+              <div class="metric-dist-bar-container">
+                <div class="metric-dist-bar ${data.class}" style="width: ${Math.max(width, 5)}%"></div>
+              </div>
+              <span class="metric-dist-count">${data.count} (${pct}%)</span>
+            </div>
+          `;
+        }).join('');
+
+        this.open('avg-duration');
+      },
+
+      openOldestAlert() {
+        if (!this.oldestAlert) {
+          showToast('No active alerts', 'info');
+          return;
+        }
+
+        document.getElementById('modal-oldest-duration').textContent = formatDuration(this.oldestAlert.duration);
+
+        const details = document.getElementById('oldest-alert-details');
+        details.innerHTML = `
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Hostname</span>
+            <span class="metric-detail-value">${this.oldestAlert.hostname}</span>
+          </li>
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Account</span>
+            <span class="metric-detail-value">${this.oldestAlert.account}</span>
+          </li>
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Services</span>
+            <span class="metric-detail-value">${this.oldestAlert.services || '--'}</span>
+          </li>
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Location</span>
+            <span class="metric-detail-value">${this.oldestAlert.location || '--'}</span>
+          </li>
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Started</span>
+            <span class="metric-detail-value">${this.oldestAlert.time.toLocaleString()}</span>
+          </li>
+          <li class="metric-detail-item">
+            <span class="metric-detail-name">Prom Node</span>
+            <span class="metric-detail-value">${this.oldestAlert.prom || '--'}</span>
+          </li>
+        `;
+
+        this.open('oldest-alert');
+      },
+
+      openVelocity() {
+        const rangeMs = TimeRangeManager.getRangeMs();
+        const now = new Date();
+        const rangeStart = new Date(now - rangeMs);
+
+        const recentAlerts = this.alertData.filter(a => a.time >= rangeStart);
+        document.getElementById('modal-velocity-count').textContent = recentAlerts.length;
+
+        // Time breakdown by hour buckets
+        const buckets = {};
+        const bucketSize = rangeMs > 24 * 60 * 60 * 1000 ? 6 : (rangeMs > 6 * 60 * 60 * 1000 ? 1 : 0.25); // hours per bucket
+
+        recentAlerts.forEach(a => {
+          const hoursAgo = Math.floor((now - a.time) / (bucketSize * 60 * 60 * 1000));
+          const label = bucketSize >= 1
+            ? `${hoursAgo * bucketSize}-${(hoursAgo + 1) * bucketSize}h ago`
+            : `${hoursAgo * bucketSize * 60}-${(hoursAgo + 1) * bucketSize * 60}m ago`;
+          buckets[label] = (buckets[label] || 0) + 1;
+        });
+
+        const breakdown = document.getElementById('velocity-breakdown');
+        const entries = Object.entries(buckets).slice(0, 8);
+
+        if (entries.length === 0) {
+          breakdown.innerHTML = '<li class="metric-detail-item"><span class="metric-detail-name">No alerts in this period</span></li>';
+        } else {
+          breakdown.innerHTML = entries.map(([label, count]) => `
+            <li class="metric-detail-item">
+              <span class="metric-detail-name">${label}</span>
+              <span class="metric-detail-value">${count} alert${count !== 1 ? 's' : ''}</span>
+            </li>
+          `).join('');
+        }
+
+        this.open('velocity');
+      },
+
+      openRecurring() {
+        // Group by hostname
+        const hostServices = {};
+        this.alertData.forEach(alert => {
+          if (!hostServices[alert.hostname]) {
+            hostServices[alert.hostname] = { services: new Set(), account: alert.account };
+          }
+          alert.services.split(',').forEach(s => {
+            if (s.trim()) hostServices[alert.hostname].services.add(s.trim());
+          });
+        });
+
+        const recurring = Object.entries(hostServices)
+          .filter(([_, data]) => data.services.size >= 2)
+          .map(([hostname, data]) => ({
+            hostname,
+            account: data.account,
+            serviceCount: data.services.size,
+            services: Array.from(data.services)
+          }))
+          .sort((a, b) => b.serviceCount - a.serviceCount);
+
+        document.getElementById('modal-recurring-count').textContent = recurring.length;
+
+        const details = document.getElementById('recurring-systems-details');
+        if (recurring.length === 0) {
+          details.innerHTML = '<li class="metric-detail-item"><span class="metric-detail-name">No recurring systems detected</span></li>';
+        } else {
+          details.innerHTML = recurring.slice(0, 10).map(item => `
+            <li class="metric-detail-item" style="cursor: pointer;" onclick="InsightCards.filterByHostname('${item.hostname}'); MetricModals.close('recurring');">
+              <span class="metric-detail-name">${item.hostname}</span>
+              <span class="metric-detail-value">${item.serviceCount} services</span>
+            </li>
+          `).join('');
+        }
+
+        this.open('recurring');
+      },
+
+      openHealthScore() {
+        const breakdown = this.calculateHealthBreakdown();
+
+        document.getElementById('modal-health-score').textContent = breakdown.score;
+
+        // Update icon color based on score
+        const icon = document.getElementById('health-modal-icon');
+        icon.className = 'metric-modal-icon';
+        if (breakdown.score >= 80) icon.classList.add('healthy');
+        else if (breakdown.score >= 50) icon.classList.add('warning');
+        else icon.classList.add('critical');
+
+        const breakdownEl = document.getElementById('health-breakdown');
+        breakdownEl.innerHTML = breakdown.items.map(item => `
+          <div class="health-item">
+            <span class="health-item-label">${item.label}</span>
+            <span class="health-item-detail">${item.detail}</span>
+            <span class="health-item-impact ${item.impact === 0 ? 'none' : ''}">${item.impact === 0 ? '+0' : '-' + item.impact}</span>
+          </div>
+        `).join('');
+
+        const finalEl = document.getElementById('health-final-value');
+        finalEl.textContent = breakdown.score;
+        finalEl.className = 'health-final-score';
+        if (breakdown.score >= 80) finalEl.classList.add('healthy');
+        else if (breakdown.score >= 50) finalEl.classList.add('warning');
+        else finalEl.classList.add('critical');
+
+        this.open('health-score');
+      },
+
+      calculateHealthBreakdown() {
+        let score = 100;
+        const items = [];
+
+        // Alert count deduction
+        const alertCount = this.alertData.length;
+        const alertDeduction = Math.min(alertCount * 2, 30);
+        score -= alertDeduction;
+        items.push({
+          label: 'Alert Count',
+          detail: `${alertCount} alerts`,
+          impact: alertDeduction
+        });
+
+        // Long-running alerts
+        const longRunning = this.alertData.filter(a => a.duration >= 60 * 60 * 1000).length;
+        const longDeduction = Math.min(longRunning * 5, 20);
+        score -= longDeduction;
+        items.push({
+          label: 'Long-running (>1h)',
+          detail: `${longRunning} alerts`,
+          impact: longDeduction
+        });
+
+        // Recurring systems
+        const hostServices = {};
+        this.alertData.forEach(a => {
+          if (!hostServices[a.hostname]) hostServices[a.hostname] = new Set();
+          a.services.split(',').forEach(s => { if (s.trim()) hostServices[a.hostname].add(s.trim()); });
+        });
+        const recurringCount = Object.values(hostServices).filter(s => s.size >= 2).length;
+        const recurringDeduction = Math.min(recurringCount * 5, 20);
+        score -= recurringDeduction;
+        items.push({
+          label: 'Recurring Systems',
+          detail: `${recurringCount} systems`,
+          impact: recurringDeduction
+        });
+
+        // Recent velocity
+        const now = new Date();
+        const oneHourAgo = new Date(now - 60 * 60 * 1000);
+        const recentCount = this.alertData.filter(a => a.time >= oneHourAgo).length;
+        const velocityDeduction = Math.min(recentCount * 3, 15);
+        score -= velocityDeduction;
+        items.push({
+          label: 'Recent Alerts (1h)',
+          detail: `${recentCount} alerts`,
+          impact: velocityDeduction
+        });
+
+        // Incidents
+        const incidentCount = parseInt(document.getElementById('incidents-count')?.textContent || '0');
+        const incidentDeduction = Math.min(incidentCount * 3, 15);
+        score -= incidentDeduction;
+        items.push({
+          label: 'Active Incidents',
+          detail: `${incidentCount} incidents`,
+          impact: incidentDeduction
+        });
+
+        return { score: Math.max(0, score), items };
+      },
+
+      filterOldestAlert() {
+        if (this.oldestAlert) {
+          InsightCards.filterByHostname(this.oldestAlert.hostname);
+          this.close('oldest-alert');
+        }
+      },
+
+      silenceOldestAlert() {
+        if (this.oldestAlert) {
+          // Find the row and trigger silence
+          const rows = document.querySelectorAll('#active-table tbody tr');
+          for (const row of rows) {
+            const hn = row.querySelector('.hostname')?.textContent.trim();
+            if (hn === this.oldestAlert.hostname) {
+              const btn = row.querySelector('.silence-btn');
+              if (btn) btn.click();
+              this.close('oldest-alert');
+              return;
+            }
+          }
+        }
+      },
+
+      filterByDuration(range) {
+        // Clear existing filters first
+        const searchBox = document.getElementById('search-box');
+
+        // Apply duration-based filtering via the time filter
+        const timeFilter = document.getElementById('filter-time');
+        if (timeFilter) {
+          if (range === '1h') {
+            // For < 1h, we just show recent
+            timeFilter.value = '1h';
+          } else if (range === '1h+') {
+            // Long-running: > 1 hour - no direct filter, use search
+            showToast('Showing long-running alerts (>1h)', 'info');
+          }
+          applyFilters();
+        }
+        this.close('avg-duration');
+        showToast(`Filtering by duration: ${range}`, 'success');
+      },
+
+      filterByTimeRange(range) {
+        const timeFilter = document.getElementById('filter-time');
+        if (timeFilter) {
+          timeFilter.value = range;
+          applyFilters();
+        }
+        this.close('velocity');
+        showToast(`Filtering by time range: ${range}`, 'success');
+      }
+    };
+
+    // ========================================
+    // VIEW PRESETS
+    // ========================================
+
+    const ViewPresets = {
+      current: 'detailed',
+
+      presets: {
+        detailed: {
+          name: 'Detailed',
+          columns: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'location', 'prom', 'time', 'duration', 'services', 'actions']
+        },
+        compact: {
+          name: 'Compact',
+          columns: ['checkbox', 'hostname', 'services', 'duration', 'actions']
+        },
+        location: {
+          name: 'Location Focus',
+          columns: ['checkbox', 'hostname', 'datacenter', 'section', 'row', 'rack', 'duration', 'actions']
+        },
+        account: {
+          name: 'Account Focus',
+          columns: ['checkbox', 'account', 'hostname', 'services', 'duration', 'actions']
+        },
+        triage: {
+          name: 'Triage',
+          columns: ['checkbox', 'hostname', 'services', 'duration', 'prom', 'actions']
+        }
+      },
+
+      columnIndexMap: {
+        'checkbox': 0,
+        'uid': 1,
+        'account': 2,
+        'hostname': 3,
+        'datacenter': 4,
+        'section': 5,
+        'row': 6,
+        'rack': 7,
+        'location': 8,
+        'prom': 9,
+        'time': 10,
+        'duration': 11,
+        'services': 12,
+        'actions': 13
+      },
+
+      init() {
+        // Load saved preset
+        const saved = localStorage.getItem('prometheos-view-preset');
+        if (saved && this.presets[saved]) {
+          this.current = saved;
+          this.apply(saved, false);
+        }
+
+        // Close dropdown when clicking outside
+        document.addEventListener('click', (e) => {
+          if (!e.target.closest('.view-presets-control')) {
+            document.getElementById('view-presets-dropdown')?.classList.remove('show');
+          }
+        });
+      },
+
+      toggle() {
+        const dropdown = document.getElementById('view-presets-dropdown');
+        dropdown.classList.toggle('show');
+      },
+
+      apply(presetId, showToastMsg = true) {
+        if (!this.presets[presetId]) return;
+
+        this.current = presetId;
+        localStorage.setItem('prometheos-view-preset', presetId);
+
+        const preset = this.presets[presetId];
+        const visibleColumns = new Set(preset.columns);
+
+        // Update both active and silenced tables
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          // Update header visibility
+          const headers = table.querySelectorAll('thead th');
+          headers.forEach((th, i) => {
+            const colName = Object.keys(this.columnIndexMap).find(k => this.columnIndexMap[k] === i);
+            if (colName) {
+              th.style.display = visibleColumns.has(colName) ? '' : 'none';
+            }
+          });
+
+          // Update row cell visibility
+          const rows = table.querySelectorAll('tbody tr');
+          rows.forEach(row => {
+            const cells = row.querySelectorAll('td');
+            cells.forEach((td, i) => {
+              const colName = Object.keys(this.columnIndexMap).find(k => this.columnIndexMap[k] === i);
+              if (colName) {
+                td.style.display = visibleColumns.has(colName) ? '' : 'none';
+              }
+            });
+          });
+        });
+
+        // Update UI
+        document.getElementById('view-preset-current').textContent = preset.name;
+
+        // Update active state in dropdown
+        document.querySelectorAll('.view-preset-option').forEach(opt => {
+          opt.classList.toggle('active', opt.dataset.preset === presetId);
+        });
+
+        // Close dropdown
+        document.getElementById('view-presets-dropdown')?.classList.remove('show');
+
+        if (showToastMsg) {
+          showToast(`View: ${preset.name}`, 'success');
+        }
+      }
+    };
+
+    // ========================================
     // EXPORT FUNCTIONALITY
     // ========================================
 
@@ -2285,8 +2989,12 @@ Services: ${this.currentAlert.services}`;
       // Update Quick Stats
       updateQuickStats(alertData, now);
 
-      // Update Oldest Alert
+      // Update Oldest Alert (legacy)
       updateOldestAlert(alertData);
+
+      // Update Insight Cards and Metric Modals
+      InsightCards.update(alertData);
+      MetricModals.update(alertData);
 
       // Update Alert Velocity
       updateAlertVelocity(alertData, now);
@@ -2834,9 +3542,15 @@ Services: ${this.currentAlert.services}`;
         HelpModal.close();
         ColumnManager.close();
         AlertDrawer.close();
+        MetricModals.close('avg-duration');
+        MetricModals.close('oldest-alert');
+        MetricModals.close('velocity');
+        MetricModals.close('recurring');
+        MetricModals.close('health-score');
         document.getElementById('filters-panel').classList.remove('show');
         document.getElementById('refresh-dropdown').classList.remove('show');
         document.getElementById('export-menu').classList.remove('show');
+        document.getElementById('view-presets-dropdown')?.classList.remove('show');
       }
 
       // Ctrl+A to select all in current table
@@ -2847,6 +3561,40 @@ Services: ${this.currentAlert.services}`;
         if (headerCheckbox) {
           headerCheckbox.checked = true;
           headerCheckbox.dispatchEvent(new Event('change'));
+        }
+      }
+
+      // O to open Oldest Alert modal
+      if (e.key === 'o' || e.key === 'O') {
+        e.preventDefault();
+        MetricModals.openOldestAlert();
+      }
+
+      // G to open Health Score modal (G for "Good/bad" health)
+      if (e.key === 'g' || e.key === 'G') {
+        e.preventDefault();
+        MetricModals.openHealthScore();
+      }
+
+      // V to open Velocity modal
+      if (e.key === 'v' || e.key === 'V') {
+        e.preventDefault();
+        MetricModals.openVelocity();
+      }
+
+      // 1-5 to filter to top oldest alerts (when insight card visible)
+      if (['1', '2', '3', '4', '5'].includes(e.key) && !e.altKey && !e.ctrlKey && !e.metaKey) {
+        const oldestCard = document.getElementById('oldest-alerts-card');
+        if (oldestCard?.classList.contains('show')) {
+          const items = oldestCard.querySelectorAll('.insight-list-item');
+          const index = parseInt(e.key) - 1;
+          if (items[index]) {
+            e.preventDefault();
+            const hostname = items[index].querySelector('.insight-item-primary')?.textContent;
+            if (hostname) {
+              InsightCards.filterByHostname(hostname);
+            }
+          }
         }
       }
 
@@ -5019,6 +5767,8 @@ Services: ${this.currentAlert.services}`;
       NewAlertsIndicator.init();
       URLState.init();
       AlertManagersModal.init();
+      ViewPresets.init();
+      InsightCards.init();
 
       // Initialize simplified prom display names
       initPromDisplayNames();
@@ -5038,6 +5788,16 @@ Services: ${this.currentAlert.services}`;
         if (e.target.classList.contains('modal-overlay')) {
           AlertManagersModal.close();
         }
+      });
+
+      // Close metric modals on overlay click
+      ['avg-duration-modal', 'oldest-alert-modal', 'velocity-modal', 'recurring-modal', 'health-score-modal'].forEach(modalId => {
+        document.getElementById(modalId)?.addEventListener('click', (e) => {
+          if (e.target.classList.contains('modal-overlay')) {
+            const modalName = modalId.replace('-modal', '');
+            MetricModals.close(modalName);
+          }
+        });
       });
 
       // Close modals on Escape key
