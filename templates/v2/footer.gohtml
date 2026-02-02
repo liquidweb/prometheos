@@ -2683,6 +2683,16 @@ Services: ${this.currentAlert.services}`;
       CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes (default)
       minAlerts: 3,  // Minimum alerts to form an incident
       minHosts: 2,   // Minimum unique hosts to form an incident
+      useCustomWindow: false, // Whether using custom date range
+      customDateStart: null,  // Custom date range start
+      customDateEnd: null,    // Custom date range end
+      // Incident type filters - which types to detect
+      enabledTypes: {
+        rack: true,
+        row: true,
+        section: true,
+        account: true
+      },
 
       // Hostnames to exclude from account-based grouping (internal infrastructure)
       excludedHostnamePatterns: [
@@ -2694,7 +2704,14 @@ Services: ${this.currentAlert.services}`;
       init() {
         // Load saved window setting
         const savedWindow = localStorage.getItem('prometheos-incident-window');
-        if (savedWindow) {
+        if (savedWindow === 'custom') {
+          this.useCustomWindow = true;
+          // Load saved date range
+          const savedDateStart = localStorage.getItem('prometheos-incident-date-start');
+          const savedDateEnd = localStorage.getItem('prometheos-incident-date-end');
+          if (savedDateStart) this.customDateStart = new Date(savedDateStart);
+          if (savedDateEnd) this.customDateEnd = new Date(savedDateEnd);
+        } else if (savedWindow) {
           this.windowMinutes = parseInt(savedWindow) || 5;
           this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
         }
@@ -2702,18 +2719,106 @@ Services: ${this.currentAlert.services}`;
         // Load saved threshold settings
         const savedMinAlerts = localStorage.getItem('prometheos-incident-min-alerts');
         const savedMinHosts = localStorage.getItem('prometheos-incident-min-hosts');
-        if (savedMinAlerts) this.minAlerts = parseInt(savedMinAlerts) || 3;
-        if (savedMinHosts) this.minHosts = parseInt(savedMinHosts) || 2;
+        if (savedMinAlerts) {
+          if (savedMinAlerts === 'custom') {
+            const customValue = localStorage.getItem('prometheos-incident-min-alerts-custom');
+            this.minAlerts = parseInt(customValue) || 3;
+          } else {
+            this.minAlerts = parseInt(savedMinAlerts) || 3;
+          }
+        }
+        if (savedMinHosts) {
+          if (savedMinHosts === 'custom') {
+            const customValue = localStorage.getItem('prometheos-incident-min-hosts-custom');
+            this.minHosts = parseInt(customValue) || 2;
+          } else {
+            this.minHosts = parseInt(savedMinHosts) || 2;
+          }
+        }
+
+        // Load saved type filters
+        const savedTypes = localStorage.getItem('prometheos-incident-enabled-types');
+        if (savedTypes) {
+          try {
+            this.enabledTypes = JSON.parse(savedTypes);
+          } catch (e) {
+            // Use defaults
+          }
+        }
 
         // Update select elements
         const windowSelect = document.getElementById('incident-window-select');
-        if (windowSelect) windowSelect.value = this.windowMinutes.toString();
+        if (windowSelect) {
+          if (this.useCustomWindow) {
+            windowSelect.value = 'custom';
+          } else {
+            windowSelect.value = this.windowMinutes.toString();
+          }
+        }
 
+        // Show/hide date range picker
+        this.updateDateRangeVisibility();
+
+        // Update date inputs if we have saved values
+        if (this.customDateStart) {
+          const startInput = document.getElementById('incident-date-start');
+          if (startInput) startInput.value = this.formatDateTimeLocal(this.customDateStart);
+        }
+        if (this.customDateEnd) {
+          const endInput = document.getElementById('incident-date-end');
+          if (endInput) endInput.value = this.formatDateTimeLocal(this.customDateEnd);
+        }
+
+        // Update min alerts select and custom input
         const minAlertsSelect = document.getElementById('incident-min-alerts');
-        if (minAlertsSelect) minAlertsSelect.value = this.minAlerts.toString();
+        const minAlertsCustom = document.getElementById('incident-min-alerts-custom');
+        const savedMinAlertsRaw = localStorage.getItem('prometheos-incident-min-alerts');
+        if (savedMinAlertsRaw === 'custom') {
+          if (minAlertsSelect) minAlertsSelect.value = 'custom';
+          if (minAlertsCustom) {
+            minAlertsCustom.style.display = 'block';
+            minAlertsCustom.value = this.minAlerts;
+          }
+        } else if (minAlertsSelect) {
+          // Check if value exists in options
+          const options = Array.from(minAlertsSelect.options).map(o => o.value);
+          if (options.includes(this.minAlerts.toString())) {
+            minAlertsSelect.value = this.minAlerts.toString();
+          } else {
+            minAlertsSelect.value = 'custom';
+            if (minAlertsCustom) {
+              minAlertsCustom.style.display = 'block';
+              minAlertsCustom.value = this.minAlerts;
+            }
+          }
+        }
 
+        // Update min hosts select and custom input
         const minHostsSelect = document.getElementById('incident-min-hosts');
-        if (minHostsSelect) minHostsSelect.value = this.minHosts.toString();
+        const minHostsCustom = document.getElementById('incident-min-hosts-custom');
+        const savedMinHostsRaw = localStorage.getItem('prometheos-incident-min-hosts');
+        if (savedMinHostsRaw === 'custom') {
+          if (minHostsSelect) minHostsSelect.value = 'custom';
+          if (minHostsCustom) {
+            minHostsCustom.style.display = 'block';
+            minHostsCustom.value = this.minHosts;
+          }
+        } else if (minHostsSelect) {
+          // Check if value exists in options
+          const options = Array.from(minHostsSelect.options).map(o => o.value);
+          if (options.includes(this.minHosts.toString())) {
+            minHostsSelect.value = this.minHosts.toString();
+          } else {
+            minHostsSelect.value = 'custom';
+            if (minHostsCustom) {
+              minHostsCustom.style.display = 'block';
+              minHostsCustom.value = this.minHosts;
+            }
+          }
+        }
+
+        // Update type filter toggles
+        this.updateTypeFilterUI();
 
         const saved = localStorage.getItem('prometheos-incidents');
         this.incidents = saved ? JSON.parse(saved) : [];
@@ -2725,6 +2830,98 @@ Services: ${this.currentAlert.services}`;
         this.detectIncidents();
         this.render();
         this.updateExportCounts();
+      },
+
+      // Format date for datetime-local input
+      formatDateTimeLocal(date) {
+        const d = new Date(date);
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, '0');
+        const day = String(d.getDate()).padStart(2, '0');
+        const hours = String(d.getHours()).padStart(2, '0');
+        const minutes = String(d.getMinutes()).padStart(2, '0');
+        return `${year}-${month}-${day}T${hours}:${minutes}`;
+      },
+
+      // Toggle incident type filter
+      toggleType(type, element) {
+        this.enabledTypes[type] = !this.enabledTypes[type];
+
+        // Update UI
+        if (this.enabledTypes[type]) {
+          element.classList.add('active');
+        } else {
+          element.classList.remove('active');
+        }
+
+        // Save to localStorage
+        localStorage.setItem('prometheos-incident-enabled-types', JSON.stringify(this.enabledTypes));
+
+        // Rescan with new filters
+        this.rescanWithMessage(`${type} detection ${this.enabledTypes[type] ? 'enabled' : 'disabled'}`);
+      },
+
+      // Update type filter UI from state
+      updateTypeFilterUI() {
+        ['rack', 'row', 'section', 'account'].forEach(type => {
+          const toggle = document.getElementById(`incident-type-${type}`);
+          if (toggle) {
+            if (this.enabledTypes[type]) {
+              toggle.classList.add('active');
+            } else {
+              toggle.classList.remove('active');
+            }
+          }
+        });
+      },
+
+      // Show/hide date range picker based on window selection
+      updateDateRangeVisibility() {
+        const dateRange = document.getElementById('incident-date-range');
+        if (dateRange) {
+          if (this.useCustomWindow) {
+            dateRange.classList.add('visible');
+          } else {
+            dateRange.classList.remove('visible');
+          }
+        }
+      },
+
+      // Set custom date range
+      setDateRange() {
+        const startInput = document.getElementById('incident-date-start');
+        const endInput = document.getElementById('incident-date-end');
+
+        if (startInput && startInput.value) {
+          this.customDateStart = new Date(startInput.value);
+          localStorage.setItem('prometheos-incident-date-start', this.customDateStart.toISOString());
+        }
+        if (endInput && endInput.value) {
+          this.customDateEnd = new Date(endInput.value);
+          localStorage.setItem('prometheos-incident-date-end', this.customDateEnd.toISOString());
+        }
+
+        if (this.customDateStart && this.customDateEnd) {
+          this.rescanWithMessage('Custom date range updated');
+        }
+      },
+
+      // Set custom min alerts value
+      setMinAlertsCustom(value) {
+        const count = parseInt(value) || 3;
+        this.minAlerts = Math.max(1, count);
+        localStorage.setItem('prometheos-incident-min-alerts', 'custom');
+        localStorage.setItem('prometheos-incident-min-alerts-custom', this.minAlerts.toString());
+        this.rescanWithMessage(`Min alerts changed to ${this.minAlerts}`);
+      },
+
+      // Set custom min hosts value
+      setMinHostsCustom(value) {
+        const count = parseInt(value) || 2;
+        this.minHosts = Math.max(1, count);
+        localStorage.setItem('prometheos-incident-min-hosts', 'custom');
+        localStorage.setItem('prometheos-incident-min-hosts-custom', this.minHosts.toString());
+        this.rescanWithMessage(`Min hosts changed to ${this.minHosts}`);
       },
 
       // Generate a signature for an incident to track dismissals
@@ -2790,19 +2987,74 @@ Services: ${this.currentAlert.services}`;
       },
 
       setWindow(minutes) {
+        if (minutes === 'custom') {
+          this.useCustomWindow = true;
+          localStorage.setItem('prometheos-incident-window', 'custom');
+          this.updateDateRangeVisibility();
+          // Initialize date range to now and 24 hours ago if not set
+          if (!this.customDateStart || !this.customDateEnd) {
+            const now = new Date();
+            const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+            this.customDateEnd = now;
+            this.customDateStart = dayAgo;
+            const startInput = document.getElementById('incident-date-start');
+            const endInput = document.getElementById('incident-date-end');
+            if (startInput) startInput.value = this.formatDateTimeLocal(dayAgo);
+            if (endInput) endInput.value = this.formatDateTimeLocal(now);
+            localStorage.setItem('prometheos-incident-date-start', dayAgo.toISOString());
+            localStorage.setItem('prometheos-incident-date-end', now.toISOString());
+          }
+          showToast('Custom date range enabled - select start and end dates', 'info');
+          return;
+        }
+
+        this.useCustomWindow = false;
         this.windowMinutes = parseInt(minutes) || 5;
         this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
         localStorage.setItem('prometheos-incident-window', this.windowMinutes.toString());
+        this.updateDateRangeVisibility();
         this.rescanWithMessage(`Window changed to ${this.windowMinutes}min`);
       },
 
       setMinAlerts(count) {
+        const minAlertsCustom = document.getElementById('incident-min-alerts-custom');
+
+        if (count === 'custom') {
+          if (minAlertsCustom) {
+            minAlertsCustom.style.display = 'block';
+            minAlertsCustom.value = this.minAlerts;
+            minAlertsCustom.focus();
+          }
+          localStorage.setItem('prometheos-incident-min-alerts', 'custom');
+          localStorage.setItem('prometheos-incident-min-alerts-custom', this.minAlerts.toString());
+          return;
+        }
+
+        if (minAlertsCustom) {
+          minAlertsCustom.style.display = 'none';
+        }
         this.minAlerts = parseInt(count) || 3;
         localStorage.setItem('prometheos-incident-min-alerts', this.minAlerts.toString());
         this.rescanWithMessage(`Min alerts changed to ${this.minAlerts}`);
       },
 
       setMinHosts(count) {
+        const minHostsCustom = document.getElementById('incident-min-hosts-custom');
+
+        if (count === 'custom') {
+          if (minHostsCustom) {
+            minHostsCustom.style.display = 'block';
+            minHostsCustom.value = this.minHosts;
+            minHostsCustom.focus();
+          }
+          localStorage.setItem('prometheos-incident-min-hosts', 'custom');
+          localStorage.setItem('prometheos-incident-min-hosts-custom', this.minHosts.toString());
+          return;
+        }
+
+        if (minHostsCustom) {
+          minHostsCustom.style.display = 'none';
+        }
         this.minHosts = parseInt(count) || 2;
         localStorage.setItem('prometheos-incident-min-hosts', this.minHosts.toString());
         this.rescanWithMessage(`Min hosts changed to ${this.minHosts}`);
@@ -2857,7 +3109,7 @@ Services: ${this.currentAlert.services}`;
 
       detectIncidents() {
         const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
-        const alerts = [];
+        let alerts = [];
 
         // Collect all alerts with parsed location data
         rows.forEach(row => {
@@ -2882,13 +3134,22 @@ Services: ${this.currentAlert.services}`;
           }
         });
 
+        // Filter alerts by custom date range if using custom window mode
+        if (this.useCustomWindow && this.customDateStart && this.customDateEnd) {
+          alerts = alerts.filter(a => {
+            return a.time >= this.customDateStart && a.time <= this.customDateEnd;
+          });
+        }
+
         // Group alerts by infrastructure hierarchy (rack > row > section > datacenter)
         // and by account for non-excluded hosts
         // IMPORTANT: Within each group, cluster by time window to avoid grouping unrelated alerts
         const newIncidents = [];
 
-        // Helper to check if incident should be created (not dismissed)
+        // Helper to check if incident should be created (not dismissed and type enabled)
         const shouldCreateIncident = (type, key) => {
+          // Check if type is enabled in filters
+          if (!this.enabledTypes[type]) return false;
           const signature = type === 'account' ? `account:${key}` : `${type}:${key}`;
           return !this.isIncidentDismissed(signature);
         };
@@ -2911,53 +3172,61 @@ Services: ${this.currentAlert.services}`;
         };
 
         // 1. First, detect RACK-level incidents (highest priority)
-        const rackGroups = this.groupAlertsByKey(alerts, a => a.parsedLocation?.rack);
-        rackGroups.forEach((groupAlerts, rack) => {
-          const incidents = processLocationGroup(groupAlerts, 'rack', rack);
-          newIncidents.push(...incidents);
-        });
+        if (this.enabledTypes.rack) {
+          const rackGroups = this.groupAlertsByKey(alerts, a => a.parsedLocation?.rack);
+          rackGroups.forEach((groupAlerts, rack) => {
+            const incidents = processLocationGroup(groupAlerts, 'rack', rack);
+            newIncidents.push(...incidents);
+          });
+        }
 
         // Get alerts already in rack incidents to avoid double-counting
         const rackAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
 
         // 2. Detect ROW-level incidents (alerts not already in rack incidents)
-        const remainingForRow = alerts.filter(a => !rackAlertIds.has(a.id));
-        const rowGroups = this.groupAlertsByKey(remainingForRow, a => a.parsedLocation?.row);
-        rowGroups.forEach((groupAlerts, row) => {
-          const incidents = processLocationGroup(groupAlerts, 'row', row);
-          newIncidents.push(...incidents);
-        });
+        if (this.enabledTypes.row) {
+          const remainingForRow = alerts.filter(a => !rackAlertIds.has(a.id));
+          const rowGroups = this.groupAlertsByKey(remainingForRow, a => a.parsedLocation?.row);
+          rowGroups.forEach((groupAlerts, row) => {
+            const incidents = processLocationGroup(groupAlerts, 'row', row);
+            newIncidents.push(...incidents);
+          });
+        }
 
         // Get alerts in rack or row incidents
         const infraAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
 
         // 3. Detect SECTION-level incidents
-        const remainingForSection = alerts.filter(a => !infraAlertIds.has(a.id));
-        const sectionGroups = this.groupAlertsByKey(remainingForSection, a => a.parsedLocation?.section);
-        sectionGroups.forEach((groupAlerts, section) => {
-          const incidents = processLocationGroup(groupAlerts, 'section', section);
-          newIncidents.push(...incidents);
-        });
+        if (this.enabledTypes.section) {
+          const remainingForSection = alerts.filter(a => !infraAlertIds.has(a.id));
+          const sectionGroups = this.groupAlertsByKey(remainingForSection, a => a.parsedLocation?.section);
+          sectionGroups.forEach((groupAlerts, section) => {
+            const incidents = processLocationGroup(groupAlerts, 'section', section);
+            newIncidents.push(...incidents);
+          });
+        }
 
         // Update infraAlertIds
         const allInfraAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
 
         // 4. Detect ACCOUNT-based incidents (for non-excluded hosts not in infra incidents)
-        const remainingForAccount = alerts.filter(a =>
-          !allInfraAlertIds.has(a.id) && !a.isExcluded
-        );
-        const accountGroups = this.groupAlertsByKey(remainingForAccount, a => a.account);
-        accountGroups.forEach((groupAlerts, account) => {
-          if (!account || !shouldCreateIncident('account', account)) return;
+        if (this.enabledTypes.account) {
+          const remainingForAccount = alerts.filter(a =>
+            !allInfraAlertIds.has(a.id) && !a.isExcluded
+          );
+          const accountGroups = this.groupAlertsByKey(remainingForAccount, a => a.account);
+          accountGroups.forEach((groupAlerts, account) => {
+            if (!account || !shouldCreateIncident('account', account)) return;
 
-          // Cluster by time window for account groups too
-          const timeClusters = this.clusterByTimeWindow(groupAlerts);
-          timeClusters.forEach(cluster => {
-            if (this.meetsAccountCriteria(cluster)) {
-              newIncidents.push(this.createAccountIncident(cluster, account));
-            }
+            // Cluster by time window for account groups too
+            const timeClusters = this.clusterByTimeWindow(groupAlerts);
+            timeClusters.forEach(cluster => {
+              if (this.meetsAccountCriteria(cluster)) {
+                newIncidents.push(this.createAccountIncident(cluster, account));
+              }
+            });
           });
-        });
+        }
 
         this.mergeIncidents(newIncidents);
         this.save();
@@ -2982,6 +3251,11 @@ Services: ${this.currentAlert.services}`;
       // Cluster alerts by time window - returns array of clusters
       clusterByTimeWindow(alerts) {
         if (alerts.length === 0) return [];
+
+        // When using custom date range, treat all alerts in range as one cluster
+        if (this.useCustomWindow) {
+          return [alerts];
+        }
 
         // Sort by time
         const sorted = [...alerts].sort((a, b) => a.time - b.time);
@@ -3010,17 +3284,19 @@ Services: ${this.currentAlert.services}`;
       },
 
       meetsInfrastructureCriteria(alerts) {
-        // For infrastructure incidents: need minimum hosts in same location
+        // For infrastructure incidents: need minimum alerts AND minimum hosts in same location
+        const minAlerts = this.minAlerts || 3;
         const minHosts = this.minHosts || 2;
         const uniqueHosts = new Set(alerts.map(a => a.hostname)).size;
-        return uniqueHosts >= minHosts;
+        return alerts.length >= minAlerts && uniqueHosts >= minHosts;
       },
 
       meetsAccountCriteria(alerts) {
-        // For account incidents: need multiple hosts from same account
+        // For account incidents: need minimum alerts AND multiple hosts from same account
+        const minAlerts = this.minAlerts || 3;
         const minHosts = this.minHosts || 2;
         const uniqueHosts = new Set(alerts.map(a => a.hostname)).size;
-        return uniqueHosts >= minHosts;
+        return alerts.length >= minAlerts && uniqueHosts >= minHosts;
       },
 
       createInfrastructureIncident(alerts, level, locationKey) {
