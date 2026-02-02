@@ -249,6 +249,10 @@
                 <span>Start Time</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
+              <th class="sortable" data-sort="duration" onclick="sortTable('active-table', 7)">
+                <span>Duration</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
               <th>Services</th>
               <th class="col-actions">Actions</th>
             </tr>
@@ -277,6 +281,9 @@
                   <td class="cell-mono cell-muted">{{$value.Prom}}</td>
                   <td class="cell-mono">
                     <span class="time-badge">{{$value.Time}}</span>
+                  </td>
+                  <td class="cell-mono cell-duration" data-start-time="{{$value.Time}}">
+                    <span class="duration-badge">--</span>
                   </td>
                   <td class="cell-services">
                     <div class="service-tags">
@@ -349,6 +356,10 @@
                 <span>Start Time</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 7)">
+                <span>Duration</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
               <th>Services</th>
               <th class="col-actions">Actions</th>
             </tr>
@@ -377,6 +388,9 @@
                   <td class="cell-mono cell-muted">{{$value.Prom}}</td>
                   <td class="cell-mono">
                     <span class="time-badge">{{$value.Time}}</span>
+                  </td>
+                  <td class="cell-mono cell-duration" data-start-time="{{$value.Time}}">
+                    <span class="duration-badge silenced">--</span>
                   </td>
                   <td class="cell-services">
                     <div class="service-tags">

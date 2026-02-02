@@ -189,6 +189,37 @@
       color: var(--text-secondary);
     }
 
+    /* Duration badge */
+    .duration-badge {
+      display: inline-block;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      font-size: 12px;
+      font-weight: 500;
+      background: var(--bg-tertiary);
+      color: var(--text-secondary);
+    }
+
+    .duration-badge.short {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+    }
+
+    .duration-badge.medium {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .duration-badge.long {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .duration-badge.silenced {
+      background: var(--silenced-bg);
+      color: var(--silenced);
+    }
+
     /* Service tags */
     .cell-services {
       max-width: 300px;
@@ -2295,6 +2326,57 @@ Services: ${this.currentAlert.services}`;
     }
 
     // ========================================
+    // DURATION CALCULATION
+    // ========================================
+
+    function updateDurations() {
+      const now = new Date();
+      document.querySelectorAll('.cell-duration').forEach(cell => {
+        const startTimeStr = cell.dataset.startTime;
+        if (!startTimeStr) return;
+
+        const startTime = new Date(startTimeStr.replace(' ', 'T'));
+        const diffMs = now - startTime;
+
+        if (isNaN(diffMs) || diffMs < 0) {
+          cell.querySelector('.duration-badge').textContent = '--';
+          return;
+        }
+
+        const seconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+
+        let durationText;
+        if (days > 0) {
+          durationText = `${days}d ${hours % 24}h`;
+        } else if (hours > 0) {
+          durationText = `${hours}h ${minutes % 60}m`;
+        } else if (minutes > 0) {
+          durationText = `${minutes}m`;
+        } else {
+          durationText = `${seconds}s`;
+        }
+
+        const badge = cell.querySelector('.duration-badge');
+        badge.textContent = durationText;
+
+        // Color-code based on duration (skip if silenced)
+        if (!badge.classList.contains('silenced')) {
+          badge.classList.remove('short', 'medium', 'long');
+          if (hours >= 24) {
+            badge.classList.add('long');
+          } else if (hours >= 1) {
+            badge.classList.add('medium');
+          } else {
+            badge.classList.add('short');
+          }
+        }
+      });
+    }
+
+    // ========================================
     // COUNT BADGES & EMPTY STATES
     // ========================================
 
@@ -2590,7 +2672,7 @@ Services: ${this.currentAlert.services}`;
     };
 
     // ========================================
-    // INCIDENT MANAGER
+    // INCIDENT MANAGER - Infrastructure-Based Detection
     // ========================================
 
     const IncidentManager = {
@@ -2600,6 +2682,13 @@ Services: ${this.currentAlert.services}`;
       CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes (default)
       minAlerts: 3,  // Minimum alerts to form an incident
       minHosts: 2,   // Minimum unique hosts to form an incident
+
+      // Hostnames to exclude from account-based grouping (internal infrastructure)
+      excludedHostnamePatterns: [
+        /\.liquidweb\.com$/i,
+        /\.nexcess\.net$/i,
+        /^metalseed\./i
+      ],
 
       init() {
         // Load saved window setting
@@ -2632,25 +2721,45 @@ Services: ${this.currentAlert.services}`;
         this.updateExportCounts();
       },
 
+      // Parse location code: B3S2R9K8U27 -> { datacenter, section, row, rack, unit }
+      parseLocation(location) {
+        if (!location) return null;
+
+        // Pattern: B{num}S{num}R{num}K{num}U{num}
+        const match = location.match(/^B(\d+)S(\d+)R(\d+)K(\d+)(?:U(\d+))?$/i);
+        if (!match) return null;
+
+        return {
+          datacenter: `B${match[1]}`,
+          section: `B${match[1]}S${match[2]}`,
+          row: `B${match[1]}S${match[2]}R${match[3]}`,
+          rack: `B${match[1]}S${match[2]}R${match[3]}K${match[4]}`,
+          unit: match[5] ? `B${match[1]}S${match[2]}R${match[3]}K${match[4]}U${match[5]}` : null,
+          raw: location
+        };
+      },
+
+      // Check if hostname should be excluded from account-based grouping
+      isExcludedHostname(hostname) {
+        return this.excludedHostnamePatterns.some(pattern => pattern.test(hostname));
+      },
+
       setWindow(minutes) {
         this.windowMinutes = parseInt(minutes) || 5;
         this.CLUSTER_WINDOW_MS = this.windowMinutes * 60 * 1000;
         localStorage.setItem('prometheos-incident-window', this.windowMinutes.toString());
-        // Auto-rescan with new window - clears unsaved incidents
         this.rescanWithMessage(`Window changed to ${this.windowMinutes}min`);
       },
 
       setMinAlerts(count) {
         this.minAlerts = parseInt(count) || 3;
         localStorage.setItem('prometheos-incident-min-alerts', this.minAlerts.toString());
-        // Auto-rescan with new threshold - clears unsaved incidents
         this.rescanWithMessage(`Min alerts changed to ${this.minAlerts}`);
       },
 
       setMinHosts(count) {
         this.minHosts = parseInt(count) || 2;
         localStorage.setItem('prometheos-incident-min-hosts', this.minHosts.toString());
-        // Auto-rescan with new threshold - clears unsaved incidents
         this.rescanWithMessage(`Min hosts changed to ${this.minHosts}`);
       },
 
@@ -2659,20 +2768,15 @@ Services: ${this.currentAlert.services}`;
       },
 
       rescanWithMessage(reason) {
-        // Preserve only "saved" incidents (ones with custom names, notes, or status changes)
         const previousCount = this.incidents.length;
         const savedIncidents = this.incidents.filter(inc => this.isIncidentSaved(inc));
         const clearedCount = previousCount - savedIncidents.length;
 
-        // Reset to only saved incidents
         this.incidents = savedIncidents;
-
-        // Re-detect incidents with current settings
         this.detectIncidents();
 
         const newCount = this.incidents.length - savedIncidents.length;
 
-        // Build informative message
         let message = reason ? `${reason}: ` : '';
         const parts = [];
         if (newCount > 0) parts.push(`${newCount} new`);
@@ -2684,16 +2788,13 @@ Services: ${this.currentAlert.services}`;
       },
 
       isIncidentSaved(incident) {
-        // An incident is considered "saved" if:
-        // 1. It has notes
-        // 2. Its name was manually changed (not an auto-generated name)
-        // 3. Its status was changed from 'investigating'
         const autoGeneratedPrefixes = [
-          'Incident ',
-          'Incident (',
-          'Multi-Location Incident',
-          'Multi-Account Incident',
-          'Major Incident',
+          'Rack Outage',
+          'Row Outage',
+          'Section Outage',
+          'Datacenter Outage',
+          'Account Outage',
+          'Infrastructure Incident',
           'Manual Incident'
         ];
         const isAutoName = autoGeneratedPrefixes.some(prefix => incident.name.startsWith(prefix));
@@ -2709,70 +2810,165 @@ Services: ${this.currentAlert.services}`;
         const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
         const alerts = [];
 
+        // Collect all alerts with parsed location data
         rows.forEach(row => {
           const timeStr = row.dataset.time;
-          if (timeStr) {
+          const hostname = row.querySelector('.hostname')?.textContent.trim() || '';
+
+          if (timeStr && hostname) {
+            const location = row.dataset.location || '';
+            const parsedLocation = this.parseLocation(location);
+
             alerts.push({
-              id: row.dataset.hostname + '-' + timeStr,
-              hostname: row.querySelector('.hostname')?.textContent.trim() || '',
+              id: hostname + '-' + timeStr,
+              hostname: hostname,
               account: row.querySelector('.cell-primary')?.textContent.trim() || '',
               time: new Date(timeStr.replace(' ', 'T')),
               timeStr: timeStr,
               services: row.dataset.services || '',
-              location: row.dataset.location || ''
+              location: location,
+              parsedLocation: parsedLocation,
+              isExcluded: this.isExcludedHostname(hostname)
             });
           }
         });
 
-        // Sort by time
-        alerts.sort((a, b) => a.time - b.time);
-
-        // Cluster alerts within CLUSTER_WINDOW_MS
+        // Group alerts by infrastructure hierarchy (rack > row > section > datacenter)
+        // and by account for non-excluded hosts
         const newIncidents = [];
-        let currentCluster = [];
 
-        alerts.forEach((alert, i) => {
-          if (currentCluster.length === 0) {
-            currentCluster.push(alert);
-          } else {
-            const lastAlert = currentCluster[currentCluster.length - 1];
-            const timeDiff = alert.time - lastAlert.time;
-
-            if (timeDiff <= this.CLUSTER_WINDOW_MS) {
-              currentCluster.push(alert);
-            } else {
-              // Check if cluster meets incident criteria
-              if (this.meetsIncidentCriteria(currentCluster)) {
-                newIncidents.push(this.createIncidentFromCluster(currentCluster));
-              }
-              currentCluster = [alert];
-            }
+        // 1. First, detect RACK-level incidents (highest priority)
+        const rackGroups = this.groupAlertsByKey(alerts, a => a.parsedLocation?.rack);
+        rackGroups.forEach((groupAlerts, rack) => {
+          if (rack && this.meetsInfrastructureCriteria(groupAlerts)) {
+            newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'rack', rack));
           }
         });
 
-        // Don't forget the last cluster
-        if (this.meetsIncidentCriteria(currentCluster)) {
-          newIncidents.push(this.createIncidentFromCluster(currentCluster));
-        }
+        // Get alerts already in rack incidents to avoid double-counting
+        const rackAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
 
-        // Merge with existing incidents (preserve names and notes)
+        // 2. Detect ROW-level incidents (alerts not already in rack incidents)
+        const remainingForRow = alerts.filter(a => !rackAlertIds.has(a.id));
+        const rowGroups = this.groupAlertsByKey(remainingForRow, a => a.parsedLocation?.row);
+        rowGroups.forEach((groupAlerts, row) => {
+          if (row && this.meetsInfrastructureCriteria(groupAlerts)) {
+            newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'row', row));
+          }
+        });
+
+        // Get alerts in rack or row incidents
+        const infraAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
+
+        // 3. Detect SECTION-level incidents
+        const remainingForSection = alerts.filter(a => !infraAlertIds.has(a.id));
+        const sectionGroups = this.groupAlertsByKey(remainingForSection, a => a.parsedLocation?.section);
+        sectionGroups.forEach((groupAlerts, section) => {
+          if (section && this.meetsInfrastructureCriteria(groupAlerts)) {
+            newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'section', section));
+          }
+        });
+
+        // Update infraAlertIds
+        const allInfraAlertIds = new Set(newIncidents.flatMap(i => i.alerts.map(a => a.id)));
+
+        // 4. Detect ACCOUNT-based incidents (for non-excluded hosts not in infra incidents)
+        const remainingForAccount = alerts.filter(a =>
+          !allInfraAlertIds.has(a.id) && !a.isExcluded
+        );
+        const accountGroups = this.groupAlertsByKey(remainingForAccount, a => a.account);
+        accountGroups.forEach((groupAlerts, account) => {
+          if (account && this.meetsAccountCriteria(groupAlerts)) {
+            newIncidents.push(this.createAccountIncident(groupAlerts, account));
+          }
+        });
+
         this.mergeIncidents(newIncidents);
         this.save();
         this.render();
         this.updateIncidentCounts();
       },
 
-      meetsIncidentCriteria(cluster) {
-        // Minimum 3 alerts required (configurable)
-        const minAlerts = this.minAlerts || 3;
-        if (cluster.length < minAlerts) return false;
+      groupAlertsByKey(alerts, keyFn) {
+        const groups = new Map();
+        alerts.forEach(alert => {
+          const key = keyFn(alert);
+          if (key) {
+            if (!groups.has(key)) {
+              groups.set(key, []);
+            }
+            groups.get(key).push(alert);
+          }
+        });
+        return groups;
+      },
 
-        // Must involve at least 2 unique hosts (configurable)
+      meetsInfrastructureCriteria(alerts) {
+        // For infrastructure incidents: need minimum hosts in same location
         const minHosts = this.minHosts || 2;
-        const uniqueHosts = new Set(cluster.map(a => a.hostname)).size;
-        if (uniqueHosts < minHosts) return false;
+        const uniqueHosts = new Set(alerts.map(a => a.hostname)).size;
+        return uniqueHosts >= minHosts;
+      },
 
-        return true;
+      meetsAccountCriteria(alerts) {
+        // For account incidents: need multiple hosts from same account
+        const minHosts = this.minHosts || 2;
+        const uniqueHosts = new Set(alerts.map(a => a.hostname)).size;
+        return uniqueHosts >= minHosts;
+      },
+
+      createInfrastructureIncident(alerts, level, locationKey) {
+        const firstAlert = alerts.reduce((min, a) => a.time < min.time ? a : min);
+        const lastAlert = alerts.reduce((max, a) => a.time > max.time ? a : max);
+        const stats = this.getClusterStats(alerts);
+
+        // Format level-appropriate name
+        let levelLabel;
+        switch (level) {
+          case 'rack': levelLabel = 'Rack'; break;
+          case 'row': levelLabel = 'Row'; break;
+          case 'section': levelLabel = 'Section'; break;
+          case 'datacenter': levelLabel = 'Datacenter'; break;
+          default: levelLabel = 'Infrastructure';
+        }
+
+        const name = `${levelLabel} Outage: ${locationKey} (${stats.hostCount} hosts)`;
+
+        return {
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+          name: name,
+          type: level, // 'rack', 'row', 'section', 'datacenter'
+          locationKey: locationKey,
+          status: 'investigating',
+          alerts: alerts,
+          stats: stats,
+          startTime: firstAlert.time.toISOString(),
+          endTime: lastAlert.time.toISOString(),
+          notes: [],
+          createdAt: new Date().toISOString()
+        };
+      },
+
+      createAccountIncident(alerts, account) {
+        const firstAlert = alerts.reduce((min, a) => a.time < min.time ? a : min);
+        const lastAlert = alerts.reduce((max, a) => a.time > max.time ? a : max);
+        const stats = this.getClusterStats(alerts);
+
+        const name = `Account Outage: ${account} (${stats.hostCount} hosts)`;
+
+        return {
+          id: Date.now() + Math.random().toString(36).substr(2, 9),
+          name: name,
+          type: 'account',
+          account: account,
+          status: 'investigating',
+          alerts: alerts,
+          stats: stats,
+          startTime: firstAlert.time.toISOString(),
+          endTime: lastAlert.time.toISOString(),
+          notes: [],
+          createdAt: new Date().toISOString()
+        };
       },
 
       getClusterStats(cluster) {
@@ -2788,36 +2984,6 @@ Services: ${this.currentAlert.services}`;
           hosts: [...uniqueHosts],
           accounts: [...uniqueAccounts],
           locations: [...uniqueLocations]
-        };
-      },
-
-      createIncidentFromCluster(cluster) {
-        const firstAlert = cluster[0];
-        const lastAlert = cluster[cluster.length - 1];
-        const stats = this.getClusterStats(cluster);
-
-        // Generate a more descriptive name
-        let name;
-        if (stats.locationCount > 1) {
-          name = `Multi-Location Incident (${stats.hostCount} hosts, ${stats.locationCount} locations)`;
-        } else if (stats.accountCount > 1) {
-          name = `Multi-Account Incident (${stats.hostCount} hosts, ${stats.accountCount} accounts)`;
-        } else if (stats.hostCount > 3) {
-          name = `Major Incident (${stats.hostCount} hosts affected)`;
-        } else {
-          name = `Incident (${stats.hostCount} hosts, ${cluster.length} alerts)`;
-        }
-
-        return {
-          id: Date.now() + Math.random().toString(36).substr(2, 9),
-          name: name,
-          status: 'investigating',
-          alerts: cluster,
-          stats: stats,
-          startTime: firstAlert.time.toISOString(),
-          endTime: lastAlert.time.toISOString(),
-          notes: [],
-          createdAt: new Date().toISOString()
         };
       },
 
@@ -2912,7 +3078,7 @@ Services: ${this.currentAlert.services}`;
                   <path d="M2 12l10 5 10-5"></path>
                 </svg>
               </div>
-              <span class="widget-empty-text">No incidents detected. Requires ${this.minAlerts}+ alerts across ${this.minHosts}+ hosts within ${this.windowMinutes} min.</span>
+              <span class="widget-empty-text">No infrastructure incidents detected. Requires ${this.minHosts}+ hosts in same rack, row, section, or account.</span>
             </div>
           `;
           return;
@@ -2930,11 +3096,33 @@ Services: ${this.currentAlert.services}`;
         const stats = incident.stats || this.getClusterStats(incident.alerts);
         const hostCount = stats.hostCount || new Set(incident.alerts.map(a => a.hostname)).size;
 
-        // Severity based on host count for multi-system outages
-        const severityClass = hostCount >= 5 ? '' : hostCount >= 3 ? 'warning' : 'info';
+        // Color based on incident type (infrastructure level)
+        let severityClass = '';
+        let typeLabel = '';
+        switch (incident.type) {
+          case 'rack':
+            severityClass = ''; // Critical (red) - same rack is highest priority
+            typeLabel = 'RACK';
+            break;
+          case 'row':
+            severityClass = 'warning'; // Warning (orange)
+            typeLabel = 'ROW';
+            break;
+          case 'section':
+            severityClass = 'info'; // Info (cyan)
+            typeLabel = 'SECTION';
+            break;
+          case 'account':
+            severityClass = 'account'; // Purple
+            typeLabel = 'ACCOUNT';
+            break;
+          default:
+            severityClass = hostCount >= 5 ? '' : hostCount >= 3 ? 'warning' : 'info';
+            typeLabel = 'INFRA';
+        }
 
         return `
-          <div class="incident-group" id="incident-${incident.id}" data-id="${incident.id}">
+          <div class="incident-group" id="incident-${incident.id}" data-id="${incident.id}" data-type="${incident.type || 'unknown'}">
             <div class="incident-header" onclick="IncidentManager.toggleExpand('${incident.id}')">
               <div class="incident-expand-icon">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4105,6 +4293,12 @@ Services: ${this.currentAlert.services}`;
       });
 
       updateCounts();
+
+      // Calculate and display alert durations
+      updateDurations();
+
+      // Update durations every minute
+      setInterval(updateDurations, 60000);
     });
   </script>
 </body>

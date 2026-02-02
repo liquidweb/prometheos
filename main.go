@@ -568,16 +568,24 @@ func createHandler(store *AlertStore, tpl *template.Template, version string) ht
 			searchCriteria = val[0]
 		}
 
-		// Handle silence request
-		if val, ok := r.Form["silence-alert"]; ok && len(val) > 0 {
-			if err := addSilencedAlert(val[0]); err != nil {
-				log.Printf("Error silencing alert: %v", err)
+		// Handle silence request (supports bulk operations)
+		if vals, ok := r.Form["silence-alert"]; ok {
+			for _, val := range vals {
+				if val != "" {
+					if err := addSilencedAlert(val); err != nil {
+						log.Printf("Error silencing alert %s: %v", val, err)
+					}
+				}
 			}
 		}
 
-		// Handle unsilence request
-		if val, ok := r.Form["remove-silence"]; ok && len(val) > 0 {
-			tmp = removeSilenced(tmp, val[0])
+		// Handle unsilence request (supports bulk operations)
+		if vals, ok := r.Form["remove-silence"]; ok {
+			for _, val := range vals {
+				if val != "" {
+					tmp = removeSilenced(tmp, val)
+				}
+			}
 		}
 
 		// Apply search filter

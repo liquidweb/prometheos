@@ -3131,12 +3131,88 @@
       text-align: center;
     }
 
+    .tooltip-health {
+      width: 280px;
+      text-align: left;
+      line-height: 1.5;
+      padding: 12px;
+    }
+
+    .tooltip-health strong {
+      display: block;
+      margin-bottom: 8px;
+      font-size: 12px;
+    }
+
+    .tooltip-hint {
+      display: block;
+      margin-top: 8px;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-subtle);
+      font-size: 10px;
+      color: var(--text-muted);
+    }
+
     /* ========================================
        INCIDENT GROUPING
        ======================================== */
 
     .incidents-section {
       margin-bottom: 24px;
+    }
+
+    .incidents-explanation {
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      padding: 12px 16px;
+      margin-bottom: 16px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.5;
+    }
+
+    .incidents-explanation strong {
+      color: var(--text-primary);
+    }
+
+    .incidents-explanation .detection-types {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .incidents-explanation .detection-type {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 500;
+    }
+
+    .incidents-explanation .detection-type.rack {
+      border-color: var(--critical);
+      color: var(--critical);
+    }
+
+    .incidents-explanation .detection-type.row {
+      border-color: var(--warning);
+      color: var(--warning);
+    }
+
+    .incidents-explanation .detection-type.section {
+      border-color: var(--info);
+      color: var(--info);
+    }
+
+    .incidents-explanation .detection-type.account {
+      border-color: var(--silenced);
+      color: var(--silenced);
     }
 
     .incident-group {
@@ -3193,6 +3269,7 @@
 
     .incident-color-bar.warning { background: var(--warning); }
     .incident-color-bar.info { background: var(--info); }
+    .incident-color-bar.account { background: var(--silenced); }
 
     .incident-info {
       flex: 1;
@@ -4406,34 +4483,55 @@
 
         <div class="help-content" id="help-content-incidents" style="display: none;">
           <div class="help-section">
-            <h3 class="help-section-title">Incident Detection</h3>
-            <p class="help-text">Prometheos automatically groups alerts that represent significant multi-system outages. Configurable thresholds filter out noise to focus on real incidents.</p>
+            <h3 class="help-section-title">Infrastructure-Based Incident Detection</h3>
+            <p class="help-text">Prometheos automatically detects multi-server outages based on infrastructure location and account ownership. Alerts are grouped by physical proximity in the datacenter or by customer account.</p>
           </div>
 
           <div class="help-section">
-            <h3 class="help-section-title">Detection Thresholds</h3>
-            <p class="help-text">Incidents must meet BOTH criteria:</p>
+            <h3 class="help-section-title">Location Format</h3>
+            <p class="help-text">Location codes follow the format: <code>B3S2R9K8U27</code></p>
             <div class="help-grid">
               <div class="help-item">
-                <span class="help-item-label">Min Alerts</span>
-                <span class="help-item-desc">At least N alerts in time window (default: 3+)</span>
+                <span class="help-item-label">B3</span>
+                <span class="help-item-desc">Datacenter 3</span>
               </div>
               <div class="help-item">
-                <span class="help-item-label">Min Hosts</span>
-                <span class="help-item-desc">At least N unique hosts affected (default: 2+)</span>
+                <span class="help-item-label">S2</span>
+                <span class="help-item-desc">Section 2</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">R9</span>
+                <span class="help-item-desc">Row 9</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">K8</span>
+                <span class="help-item-desc">Rack/Cabinet 8</span>
+              </div>
+              <div class="help-item">
+                <span class="help-item-label">U27</span>
+                <span class="help-item-desc">Rack Unit 27</span>
               </div>
             </div>
-            <p class="help-text" style="margin-top: 0.75rem; font-size: 0.8rem; color: var(--text-muted);">This prevents single-server issues from creating incident noise.</p>
           </div>
 
           <div class="help-section">
-            <h3 class="help-section-title">Time Window</h3>
-            <p class="help-text">Configure the clustering window in the Incidents section header:</p>
+            <h3 class="help-section-title">Detection Priority</h3>
+            <p class="help-text">Incidents are detected in order of infrastructure specificity:</p>
             <ul class="help-list">
-              <li>2 minutes - Very tight correlation</li>
-              <li>5 minutes - Default, good for most cases</li>
-              <li>10-15 minutes - Broader incident scope</li>
-              <li>30 min - 1 hour - Major incident correlation</li>
+              <li><strong style="color: var(--critical);">Rack Outage</strong> - Multiple hosts in same rack (highest priority, likely power/network issue)</li>
+              <li><strong style="color: var(--warning);">Row Outage</strong> - Multiple hosts in same row (possible TOR switch or power distribution)</li>
+              <li><strong style="color: var(--info);">Section Outage</strong> - Multiple hosts in same section (larger infrastructure event)</li>
+              <li><strong style="color: var(--silenced);">Account Outage</strong> - Multiple hosts for same customer (excludes internal infrastructure)</li>
+            </ul>
+          </div>
+
+          <div class="help-section">
+            <h3 class="help-section-title">Excluded Hostnames</h3>
+            <p class="help-text">Internal infrastructure hosts are excluded from account-based grouping:</p>
+            <ul class="help-list">
+              <li>*.liquidweb.com</li>
+              <li>*.nexcess.net</li>
+              <li>metalseed.*</li>
             </ul>
           </div>
 
@@ -4972,7 +5070,16 @@
           </div>
 
           <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide">Overall system health score (0-100)</div>
+            <div class="tooltip tooltip-wide tooltip-health">
+              <strong>Health Score (0-100)</strong><br>
+              Starts at 100, deducts points for:<br>
+              • Alert count: -2 per alert (max -30)<br>
+              • Long-running (>1h): -5 each (max -20)<br>
+              • Recurring systems: -5 each (max -20)<br>
+              • Recent alerts (1h): -3 each (max -15)<br>
+              • Incidents: -3 each (max -15)<br>
+              <span class="tooltip-hint">80+ = Healthy, 50-79 = Warning, &lt;50 = Critical</span>
+            </div>
             <div class="quick-stat-icon" style="background: var(--healthy-bg); color: var(--healthy);">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
@@ -5193,6 +5300,18 @@
         </div>
       </div>
       <div class="section-content" id="incidents-content">
+        <!-- Incidents Explanation -->
+        <div class="incidents-explanation">
+          <strong>Infrastructure-Based Incident Detection</strong>
+          Automatically detects multi-server outages by analyzing alerts from the same infrastructure location (rack, row, section) or same account. Location format: <code>B3S2R9K8U27</code> = Datacenter 3, Section 2, Row 9, Rack 8, Unit 27.
+          <div class="detection-types">
+            <span class="detection-type rack">Same Rack (highest priority)</span>
+            <span class="detection-type row">Same Row</span>
+            <span class="detection-type section">Same Section</span>
+            <span class="detection-type account">Same Account</span>
+          </div>
+        </div>
+
         <!-- Create Incident Bar (shows when alerts are selected) -->
         <div class="create-incident-bar" id="create-incident-bar">
           <div class="create-incident-info">
