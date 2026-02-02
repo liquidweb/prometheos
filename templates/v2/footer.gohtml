@@ -3699,6 +3699,7 @@ Services: ${this.currentAlert.services}`;
         const isCollapsed = headerRow.classList.toggle('collapsed');
         const groupId = headerRow.dataset.group;
         const tbody = headerRow.closest('tbody');
+        const level = headerRow.dataset.level; // 'datacenter' or 'account'
 
         // Use data attribute matching to handle special characters in account names
         const allRows = Array.from(tbody.querySelectorAll('tr[data-parent-group]'));
@@ -3709,11 +3710,17 @@ Services: ${this.currentAlert.services}`;
             // Collapse: hide all children
             row.style.display = 'none';
           } else {
-            // Expand: show only direct children (subgroups/sections)
-            // For location grouping, show section headers only (they remain collapsed)
-            // For account grouping, show alert rows directly
-            if (row.classList.contains('subgroup-header-row') || row.classList.contains('alert-row')) {
-              row.style.display = '';
+            // Expand: show only direct children based on grouping type
+            if (level === 'datacenter') {
+              // For location grouping, show section headers only (they remain collapsed)
+              if (row.classList.contains('subgroup-header-row')) {
+                row.style.display = '';
+              }
+            } else if (level === 'account') {
+              // For account grouping, show alert rows directly
+              if (row.classList.contains('alert-row')) {
+                row.style.display = '';
+              }
             }
           }
         });
