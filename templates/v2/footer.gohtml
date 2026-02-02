@@ -2136,9 +2136,11 @@ Services: ${this.currentAlert.services}`;
       updateClearAllButton() {
         const hasFilters = Object.values(this.filters).some(v => v);
         const hasSearch = document.getElementById('search-box')?.value?.trim();
+        // Also check if grouping is active (Location/Account Focus views)
+        const hasGrouping = typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping;
         const clearBtn = document.getElementById('clear-all-btn');
         if (clearBtn) {
-          clearBtn.classList.toggle('show', hasFilters || hasSearch);
+          clearBtn.classList.toggle('show', hasFilters || hasSearch || hasGrouping);
         }
       }
     };
@@ -2149,6 +2151,10 @@ Services: ${this.currentAlert.services}`;
 
     function clearAllFilters() {
       FilterManager.clearAll();
+      // Also reset to Detailed view if in a grouped view
+      if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
+        ViewPresets.apply('detailed');
+      }
     }
 
     function removeFilter(type) {
@@ -3129,6 +3135,9 @@ Services: ${this.currentAlert.services}`;
           GroupingManager.clearGrouping();
         }
 
+        // Update clear all button state based on new view
+        FilterManager.updateClearAllButton();
+
         // Always reapply default sort (newest/shortest duration first) unless preset has saved sort
         // Check if there's a saved sort preference for this preset
         const savedSort = localStorage.getItem(`prometheos-preset-sort-${presetId}`);
@@ -3859,111 +3868,8 @@ Services: ${this.currentAlert.services}`;
     // ========================================
 
     function updateDashboardWidgets() {
-      const rows = document.querySelectorAll('#active-table tbody tr:not(.filtered-out)');
-
-      // Severity distribution (simulated based on service names)
-      let critical = 0, warning = 0, info = 0;
-      const serviceCounts = {};
-      const locationCounts = {};
-
-      rows.forEach(row => {
-        const services = row.dataset.services ? row.dataset.services.split(',') : [];
-        const location = row.dataset.location || 'Unknown';
-
-        services.forEach(service => {
-          if (service.trim()) {
-            serviceCounts[service.trim()] = (serviceCounts[service.trim()] || 0) + 1;
-
-            // Categorize by service name
-            const s = service.toLowerCase();
-            if (s.includes('critical') || s.includes('down') || s.includes('fail')) {
-              critical++;
-            } else if (s.includes('warn') || s.includes('high') || s.includes('load')) {
-              warning++;
-            } else {
-              info++;
-            }
-          }
-        });
-
-        locationCounts[location] = (locationCounts[location] || 0) + 1;
-      });
-
-      // If no categorization, count all as critical
-      if (critical === 0 && warning === 0 && info === 0) {
-        critical = rows.length;
-      }
-
-      const total = critical + warning + info || 1;
-
-      // Update severity bars
-      document.getElementById('severity-critical').style.width = `${(critical / total) * 100}%`;
-      document.getElementById('severity-warning').style.width = `${(warning / total) * 100}%`;
-      document.getElementById('severity-info').style.width = `${(info / total) * 100}%`;
-
-      document.getElementById('severity-critical-count').textContent = critical;
-      document.getElementById('severity-warning-count').textContent = warning;
-      document.getElementById('severity-info-count').textContent = info;
-
-      // Update top services
-      const topServices = Object.entries(serviceCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-
-      const servicesContainer = document.getElementById('top-services');
-      if (topServices.length > 0) {
-        servicesContainer.innerHTML = topServices.map(([name, count]) => `
-          <div class="service-row clickable" onclick="filterByService('${name.replace(/'/g, "\\'")}')">
-            <span class="service-name">${name}</span>
-            <span class="service-count-badge">${count}</span>
-          </div>
-        `).join('');
-      } else {
-        servicesContainer.innerHTML = `
-          <div class="service-row">
-            <span class="service-name">No active alerts</span>
-            <span class="service-count-badge">0</span>
-          </div>
-        `;
-      }
-
-      // Update top locations
-      const topLocations = Object.entries(locationCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5);
-
-      const locationsContainer = document.getElementById('top-locations');
-      if (topLocations.length > 0) {
-        locationsContainer.innerHTML = topLocations.map(([name, count]) => `
-          <div class="location-row" onclick="filterByLocation('${name}')">
-            <span class="location-name">${name}</span>
-            <span class="location-count-badge">${count}</span>
-          </div>
-        `).join('');
-      } else {
-        locationsContainer.innerHTML = `
-          <div class="location-row">
-            <span class="location-name">No locations</span>
-            <span class="location-count-badge">0</span>
-          </div>
-        `;
-      }
-
       // Update advanced analytics
       updateAdvancedAnalytics();
-    }
-
-    function filterByLocation(location) {
-      document.getElementById('filter-location').value = location;
-      FilterManager.apply();
-
-      // Open filters panel if not open
-      const panel = document.getElementById('filters-panel');
-      if (!panel.classList.contains('show')) {
-        panel.classList.add('show');
-      }
-
-      showToast(`Filtered by location: ${location}`, 'success');
     }
 
     function filterByService(service) {
@@ -3977,29 +3883,6 @@ Services: ${this.currentAlert.services}`;
       }
 
       showToast(`Filtered by service: ${service}`, 'success');
-    }
-
-    function filterBySeverity(severity) {
-      // Search for alerts matching severity keywords
-      const searchBox = document.getElementById('search-box');
-      let keywords = '';
-
-      switch (severity) {
-        case 'critical':
-          keywords = 'critical down fail';
-          break;
-        case 'warning':
-          keywords = 'warn high load';
-          break;
-        case 'info':
-          // For info, we exclude critical and warning
-          keywords = '!critical !down !fail !warn !high !load';
-          break;
-      }
-
-      searchBox.value = keywords;
-      searchBox.dispatchEvent(new Event('input'));
-      showToast(`Showing ${severity} severity alerts`, 'success');
     }
 
     function filterByHostname(hostname) {
@@ -4502,25 +4385,6 @@ Services: ${this.currentAlert.services}`;
       }).join('');
     }
 
-    function filterByService(service) {
-      const serviceFilter = document.getElementById('filter-service');
-      if (serviceFilter) {
-        serviceFilter.value = service;
-        FilterManager.apply();
-        showToast(`Filtered by ${service}`, 'success');
-      }
-    }
-
-    function filterByHostname(hostname) {
-      document.getElementById('search-box').value = hostname;
-      document.getElementById('search-form').submit();
-    }
-
-    function filterByAccount(account) {
-      document.getElementById('search-box').value = account;
-      document.getElementById('search-form').submit();
-    }
-
     // ========================================
     // DURATION CALCULATION
     // ========================================
@@ -4816,7 +4680,7 @@ Services: ${this.currentAlert.services}`;
     const SectionManager = {
       collapsed: {},
       // Sections that should be collapsed by default
-      defaultCollapsed: ['distribution', 'metrics', 'charts', 'incidents'],
+      defaultCollapsed: ['metrics', 'charts', 'incidents'],
 
       init() {
         const saved = localStorage.getItem('prometheos-collapsed-sections');
