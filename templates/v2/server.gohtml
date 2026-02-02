@@ -201,24 +201,6 @@
     <!-- Active Filters Tags -->
     <div class="active-filters" id="active-filters"></div>
 
-    <!-- Bulk Actions Bar -->
-    <div class="bulk-actions-bar" id="bulk-actions">
-      <div class="bulk-info">
-        <input type="checkbox" id="select-all-checkbox" onchange="toggleSelectAll(this)">
-        <span><span class="bulk-count" id="selected-count">0</span> alerts selected</span>
-      </div>
-      <div class="bulk-buttons">
-        <button type="button" class="btn-bulk" onclick="bulkSilence()">
-          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
-            <line x1="12" y1="2" x2="12" y2="12"></line>
-          </svg>
-          Silence Selected
-        </button>
-        <button type="button" class="btn-bulk" onclick="clearSelection()">Cancel</button>
-      </div>
-    </div>
-
     <!-- Tabs -->
     <div class="tabs-container">
       <button class="tab-btn active" onclick="openAlerts(event, 'active')">
@@ -241,7 +223,7 @@
           <thead>
             <tr>
               <th class="col-checkbox">
-                <input type="checkbox" class="row-checkbox-header" onchange="toggleAllInTable('active-table', this)">
+                <input type="checkbox" class="row-checkbox-header">
               </th>
               <th class="sortable" data-sort="uid" onclick="sortTable('active-table', 1)">
                 <span>UID</span>
@@ -277,7 +259,7 @@
               {{if (ne $value.Silenced true)}}
                 <tr class="alert-row" data-uid="{{$value.UID}}" data-location="{{$value.Location}}" data-prom="{{$value.Prom}}" data-time="{{$value.Time}}" data-services="{{range $i, $s := $value.Service}}{{if $i}},{{end}}{{$s}}{{end}}">
                   <td class="cell-checkbox">
-                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}" onchange="updateSelectionCount()">
+                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}">
                   </td>
                   <td class="cell-mono">
                     <span class="uid-badge">{{ $value.UID }}</span>
@@ -341,7 +323,7 @@
           <thead>
             <tr>
               <th class="col-checkbox">
-                <input type="checkbox" class="row-checkbox-header" onchange="toggleAllInTable('silenced-table', this)">
+                <input type="checkbox" class="row-checkbox-header">
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 1)">
                 <span>UID</span>
@@ -377,7 +359,7 @@
               {{if (eq $value.Silenced true)}}
                 <tr class="alert-row silenced-row" data-uid="{{$value.UID}}" data-location="{{$value.Location}}" data-prom="{{$value.Prom}}" data-time="{{$value.Time}}" data-services="{{range $i, $s := $value.Service}}{{if $i}},{{end}}{{$s}}{{end}}">
                   <td class="cell-checkbox">
-                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}" onchange="updateSelectionCount()">
+                    <input type="checkbox" class="row-checkbox" data-hostname="{{$value.Hostname}}">
                   </td>
                   <td class="cell-mono">
                     <span class="uid-badge silenced">{{ $value.UID }}</span>
