@@ -118,6 +118,53 @@
                 </div>
               </div>
             </div>
+            <!-- Quick Filters Section (Built-in Priority-based filters) -->
+            <div class="presets-section">
+              <div class="presets-section-header">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                  <line x1="12" y1="9" x2="12" y2="13"></line>
+                  <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                </svg>
+                <span>Quick Filters</span>
+              </div>
+              <div class="quick-filters-list">
+                <div class="quick-filter-item" onclick="QuickFilters.apply('highPriority')" title="Filter to high-priority alerts (score > 50)">
+                  <svg class="quick-filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
+                    <polyline points="22 4 12 14.01 9 11.01"></polyline>
+                  </svg>
+                  <span class="quick-filter-label">Priority Queue</span>
+                  <span class="quick-filter-badge" id="quick-filter-priority-badge">0</span>
+                </div>
+                <div class="quick-filter-item" onclick="QuickFilters.apply('critical')" title="Filter to critical alerts (> 4 hours old)">
+                  <svg class="quick-filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+                    <line x1="12" y1="9" x2="12" y2="13"></line>
+                    <line x1="12" y1="17" x2="12.01" y2="17"></line>
+                  </svg>
+                  <span class="quick-filter-label">Critical (>4h)</span>
+                  <span class="quick-filter-badge critical" id="quick-filter-critical-badge">0</span>
+                </div>
+                <div class="quick-filter-item" onclick="QuickFilters.apply('newest')" title="Filter to newest alerts (< 1 hour old)">
+                  <svg class="quick-filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <polyline points="12 6 12 12 16 14"></polyline>
+                  </svg>
+                  <span class="quick-filter-label">Newest (<1h)</span>
+                  <span class="quick-filter-badge info" id="quick-filter-newest-badge">0</span>
+                </div>
+                <div class="quick-filter-item" onclick="QuickFilters.apply('recurring')" title="Filter to recurring alerts (multiple alerts on same host)">
+                  <svg class="quick-filter-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="23 4 23 10 17 10"></polyline>
+                    <polyline points="1 20 1 14 7 14"></polyline>
+                    <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+                  </svg>
+                  <span class="quick-filter-label">Recurring</span>
+                  <span class="quick-filter-badge warning" id="quick-filter-recurring-badge">0</span>
+                </div>
+              </div>
+            </div>
             <!-- Saved Filter Presets Section -->
             <div class="presets-section">
               <div class="presets-section-header">
