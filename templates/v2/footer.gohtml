@@ -1743,6 +1743,51 @@ Services: ${this.currentAlert.services}`;
       });
     }
 
+    // Parse location code and populate separate location columns
+    function initLocationDisplayCells() {
+      // Parse location code: B3S2R9K8U27 -> { datacenter: B3, section: S2, row: R9, rack: K8 }
+      function parseLocationParts(location) {
+        if (!location) return null;
+        const match = location.match(/^B(\d+)S(\d+)R(\d+)K(\d+)(?:U(\d+))?$/i);
+        if (!match) return null;
+        return {
+          datacenter: `B${match[1]}`,
+          section: `S${match[2]}`,
+          row: `R${match[3]}`,
+          rack: `K${match[4]}`
+        };
+      }
+
+      // Process all rows that have location cells
+      document.querySelectorAll('.cell-datacenter').forEach(cell => {
+        const location = cell.dataset.location || '';
+        const parsed = parseLocationParts(location);
+        cell.textContent = parsed ? parsed.datacenter : '-';
+        cell.title = location; // Show full location on hover
+      });
+
+      document.querySelectorAll('.cell-section').forEach(cell => {
+        const location = cell.dataset.location || '';
+        const parsed = parseLocationParts(location);
+        cell.textContent = parsed ? parsed.section : '-';
+        cell.title = location;
+      });
+
+      document.querySelectorAll('.cell-row').forEach(cell => {
+        const location = cell.dataset.location || '';
+        const parsed = parseLocationParts(location);
+        cell.textContent = parsed ? parsed.row : '-';
+        cell.title = location;
+      });
+
+      document.querySelectorAll('.cell-rack').forEach(cell => {
+        const location = cell.dataset.location || '';
+        const parsed = parseLocationParts(location);
+        cell.textContent = parsed ? parsed.rack : '-';
+        cell.title = location;
+      });
+    }
+
     // ========================================
     // STATUS CARDS NAVIGATION
     // ========================================
@@ -2004,10 +2049,14 @@ Services: ${this.currentAlert.services}`;
           uid: cells[1]?.textContent.trim() || '',
           account: cells[2]?.textContent.trim() || '',
           hostname: cells[3]?.textContent.trim() || '',
-          location: cells[4]?.textContent.trim() || '',
-          promNode: cells[5]?.textContent.trim() || '',
-          startTime: cells[6]?.textContent.trim() || '',
-          services: Array.from(cells[7]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim())
+          datacenter: cells[4]?.textContent.trim() || '',
+          section: cells[5]?.textContent.trim() || '',
+          row: cells[6]?.textContent.trim() || '',
+          rack: cells[7]?.textContent.trim() || '',
+          promNode: cells[8]?.textContent.trim() || '',
+          startTime: cells[9]?.textContent.trim() || '',
+          duration: cells[10]?.textContent.trim() || '',
+          services: Array.from(cells[11]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim())
         });
       });
 
@@ -2016,9 +2065,9 @@ Services: ${this.currentAlert.services}`;
         downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.json`);
         showToast('Exported as JSON', 'success');
       } else if (format === 'csv') {
-        let csv = 'UID,Account,Hostname,Location,Prom Node,Start Time,Services\n';
+        let csv = 'UID,Account,Hostname,DC,Section,Row,Rack,Prom Node,Start Time,Duration,Services\n';
         data.forEach(row => {
-          csv += `"${row.uid}","${row.account}","${row.hostname}","${row.location}","${row.promNode}","${row.startTime}","${row.services.join('; ')}"\n`;
+          csv += `"${row.uid}","${row.account}","${row.hostname}","${row.datacenter}","${row.section}","${row.row}","${row.rack}","${row.promNode}","${row.startTime}","${row.duration}","${row.services.join('; ')}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -4107,10 +4156,14 @@ Services: ${this.currentAlert.services}`;
             uid: cells[1]?.textContent.trim() || '',
             account: cells[2]?.textContent.trim() || '',
             hostname: hostname,
-            location: cells[4]?.textContent.trim() || '',
-            promNode: cells[5]?.textContent.trim() || '',
-            startTime: cells[6]?.textContent.trim() || '',
-            services: Array.from(cells[7]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim()),
+            datacenter: cells[4]?.textContent.trim() || '',
+            section: cells[5]?.textContent.trim() || '',
+            row: cells[6]?.textContent.trim() || '',
+            rack: cells[7]?.textContent.trim() || '',
+            promNode: cells[8]?.textContent.trim() || '',
+            startTime: cells[9]?.textContent.trim() || '',
+            duration: cells[10]?.textContent.trim() || '',
+            services: Array.from(cells[11]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim()),
             incidentName: incidentName,
             incidentStatus: incidentStatus,
             notes: incidentNotes
@@ -4122,9 +4175,9 @@ Services: ${this.currentAlert.services}`;
           downloadBlob(blob, `prometheos-alerts-annotated-${new Date().toISOString().slice(0, 10)}.json`);
           showToast('Exported with annotations as JSON', 'success');
         } else if (format === 'csv') {
-          let csv = 'UID,Account,Hostname,Location,Prom Node,Start Time,Services,Incident,Status,Notes\n';
+          let csv = 'UID,Account,Hostname,DC,Section,Row,Rack,Prom Node,Start Time,Duration,Services,Incident,Status,Notes\n';
           data.forEach(row => {
-            csv += `"${row.uid}","${row.account}","${row.hostname}","${row.location}","${row.promNode}","${row.startTime}","${row.services.join('; ')}","${row.incidentName}","${row.incidentStatus}","${row.notes.join(' | ')}"\n`;
+            csv += `"${row.uid}","${row.account}","${row.hostname}","${row.datacenter}","${row.section}","${row.row}","${row.rack}","${row.promNode}","${row.startTime}","${row.duration}","${row.services.join('; ')}","${row.incidentName}","${row.incidentStatus}","${row.notes.join(' | ')}"\n`;
           });
           const blob = new Blob([csv], { type: 'text/csv' });
           downloadBlob(blob, `prometheos-alerts-annotated-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -4483,9 +4536,9 @@ Services: ${this.currentAlert.services}`;
       columns: [],
       discoveredFields: { labels: [], annotations: [], core: [] },
       profiles: {
-        default: ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'],
+        default: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'prom', 'time', 'duration', 'services', 'actions'],
         compact: ['checkbox', 'hostname', 'account', 'services', 'time', 'actions'],
-        detailed: ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'],
+        detailed: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'prom', 'time', 'duration', 'services', 'actions'],
         custom: []
       },
       currentProfile: 'default',
@@ -4622,9 +4675,13 @@ Services: ${this.currentAlert.services}`;
           { id: 'uid', name: 'UID', source: 'core' },
           { id: 'account', name: 'Account', source: 'core' },
           { id: 'hostname', name: 'Hostname', source: 'core' },
-          { id: 'location', name: 'Location', source: 'core' },
+          { id: 'datacenter', name: 'DC', source: 'core' },
+          { id: 'section', name: 'Section', source: 'core' },
+          { id: 'row', name: 'Row', source: 'core' },
+          { id: 'rack', name: 'Rack', source: 'core' },
           { id: 'prom', name: 'Prom Node', source: 'core' },
           { id: 'time', name: 'Start Time', source: 'core' },
+          { id: 'duration', name: 'Duration', source: 'core' },
           { id: 'services', name: 'Services', source: 'core' }
         ];
 
@@ -4751,9 +4808,13 @@ Services: ${this.currentAlert.services}`;
           { id: 'uid', name: 'UID', sample: 'ABC123' },
           { id: 'account', name: 'Account', sample: 'Production' },
           { id: 'hostname', name: 'Hostname', sample: 'web-server-01' },
-          { id: 'location', name: 'Location', sample: 'US-East' },
+          { id: 'datacenter', name: 'DC', sample: 'B3' },
+          { id: 'section', name: 'Section', sample: 'S2' },
+          { id: 'row', name: 'Row', sample: 'R9' },
+          { id: 'rack', name: 'Rack', sample: 'K8' },
           { id: 'prom', name: 'Prom Node', sample: 'prometheus-1' },
           { id: 'time', name: 'Start Time', sample: '2024-01-15 10:30' },
+          { id: 'duration', name: 'Duration', sample: '2h 15m' },
           { id: 'services', name: 'Services', sample: 'nginx, php-fpm' }
         ];
       },
@@ -4948,7 +5009,7 @@ Services: ${this.currentAlert.services}`;
       },
 
       getColumnIdByIndex(index) {
-        const mapping = ['checkbox', 'uid', 'account', 'hostname', 'location', 'prom', 'time', 'services', 'actions'];
+        const mapping = ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'prom', 'time', 'duration', 'services', 'actions'];
         return mapping[index] || null;
       },
 
@@ -4993,6 +5054,9 @@ Services: ${this.currentAlert.services}`;
 
       // Initialize simplified prom display names
       initPromDisplayNames();
+
+      // Initialize location display columns (DC, Section, Row, Rack)
+      initLocationDisplayCells();
 
       // Close status dropdowns on outside click
       document.addEventListener('click', (e) => {

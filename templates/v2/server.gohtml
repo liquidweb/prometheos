@@ -256,19 +256,31 @@
                 <span>Hostname</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="location" onclick="sortTable('active-table', 4)">
-                <span>Location</span>
+              <th class="sortable" data-sort="datacenter" onclick="sortTable('active-table', 4)">
+                <span>DC</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 5)">
+              <th class="sortable" data-sort="section" onclick="sortTable('active-table', 5)">
+                <span>Section</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" data-sort="row" onclick="sortTable('active-table', 6)">
+                <span>Row</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" data-sort="rack" onclick="sortTable('active-table', 7)">
+                <span>Rack</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 8)">
                 <span>Prom Node</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 6)">
+              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 9)">
                 <span>Start Time</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="duration" onclick="sortTable('active-table', 7)">
+              <th class="sortable" data-sort="duration" onclick="sortTable('active-table', 10)">
                 <span>Duration</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
@@ -296,7 +308,10 @@
                       {{$value.Hostname}}
                     </div>
                   </td>
-                  <td class="cell-text cell-location" data-location="{{$value.Location}}">{{$value.Location}}</td>
+                  <td class="cell-text cell-datacenter" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-section" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-row" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-rack" data-location="{{$value.Location}}"></td>
                   <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
                     <span class="prom-display"></span>
                   </td>
@@ -366,18 +381,30 @@
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 4)">
-                <span>Location</span>
+                <span>DC</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 5)">
-                <span>Prom Node</span>
+                <span>Section</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 6)">
-                <span>Start Time</span>
+                <span>Row</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 7)">
+                <span>Rack</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 8)">
+                <span>Prom Node</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 9)">
+                <span>Start Time</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 10)">
                 <span>Duration</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
@@ -405,7 +432,10 @@
                       {{$value.Hostname}}
                     </div>
                   </td>
-                  <td class="cell-text cell-location" data-location="{{$value.Location}}">{{$value.Location}}</td>
+                  <td class="cell-text cell-datacenter" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-section" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-row" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-rack" data-location="{{$value.Location}}"></td>
                   <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
                     <span class="prom-display"></span>
                   </td>
