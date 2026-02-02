@@ -1876,35 +1876,30 @@ Services: ${this.currentAlert.services}`;
         'n08.b3.alertmanager.pro.mon.liquidweb.com'
       ],
 
-      stats: {},
+      promStats: {},
 
       init() {
         this.collectStats();
       },
 
       collectStats() {
-        this.stats = {};
+        this.promStats = {};
         const rows = document.querySelectorAll('#active-table tbody tr, #silenced-table tbody tr');
 
-        // Initialize all managers with zero counts
-        this.alertManagers.forEach(am => {
-          this.stats[am] = {
-            count: 0,
-            lastSeen: null
-          };
-        });
-
-        // Count alerts per manager and track last seen times
+        // Count alerts per prometheus node
         rows.forEach(row => {
           const prom = row.dataset.prom;
           const timeStr = row.dataset.time;
 
-          if (prom && this.stats[prom]) {
-            this.stats[prom].count++;
+          if (prom) {
+            if (!this.promStats[prom]) {
+              this.promStats[prom] = { count: 0, lastSeen: null };
+            }
+            this.promStats[prom].count++;
             if (timeStr) {
               const alertTime = new Date(timeStr.replace(' ', 'T'));
-              if (!this.stats[prom].lastSeen || alertTime > this.stats[prom].lastSeen) {
-                this.stats[prom].lastSeen = alertTime;
+              if (!this.promStats[prom].lastSeen || alertTime > this.promStats[prom].lastSeen) {
+                this.promStats[prom].lastSeen = alertTime;
               }
             }
           }
@@ -1922,50 +1917,47 @@ Services: ${this.currentAlert.services}`;
       },
 
       render() {
-        const list = document.getElementById('am-list');
-        const totalCount = document.getElementById('am-total-count');
-        const activeCount = document.getElementById('am-active-count');
+        const amList = document.getElementById('am-list');
+        const promList = document.getElementById('prom-list');
+        const amCount = document.getElementById('am-total-count');
+        const promCount = document.getElementById('prom-total-count');
         const totalAlerts = document.getElementById('am-total-alerts');
 
-        let managersWithAlerts = 0;
+        // Render Alert Managers (simple list)
+        amList.innerHTML = this.alertManagers.map(am => {
+          const shortName = simplifyPromName(am);
+          return `<span class="am-tag" title="${am}">${shortName}</span>`;
+        }).join('');
+
+        amCount.textContent = this.alertManagers.length;
+
+        // Render Prometheus Nodes with alerts
+        const promNodes = Object.keys(this.promStats);
         let totalAlertCount = 0;
 
-        // Sort by alert count (descending), then by name
-        const sorted = this.alertManagers.slice().sort((a, b) => {
-          const countDiff = (this.stats[b]?.count || 0) - (this.stats[a]?.count || 0);
-          if (countDiff !== 0) return countDiff;
-          return a.localeCompare(b);
+        // Sort by alert count descending
+        const sortedProms = promNodes.sort((a, b) => {
+          return (this.promStats[b]?.count || 0) - (this.promStats[a]?.count || 0);
         });
 
-        list.innerHTML = sorted.map(am => {
-          const stat = this.stats[am] || { count: 0, lastSeen: null };
-          const shortName = simplifyPromName(am);
-          const hasAlerts = stat.count > 0;
-
-          if (hasAlerts) {
-            managersWithAlerts++;
-            totalAlertCount += stat.count;
-          }
-
-          const lastSeenStr = this.formatLastSeen(stat.lastSeen);
-          const lastSeenClass = this.getLastSeenClass(stat.lastSeen);
+        promList.innerHTML = sortedProms.map(prom => {
+          const stat = this.promStats[prom];
+          const shortName = simplifyPromName(prom);
+          totalAlertCount += stat.count;
 
           return `
-            <div class="am-item ${hasAlerts ? 'has-alerts' : 'no-alerts'}" onclick="AlertManagersModal.filterByManager('${am}')">
-              <div class="am-name">
-                <span class="am-name-short">${shortName}</span>
-                <span class="am-name-full">${am}</span>
-              </div>
-              <div class="am-alerts">
-                <span class="am-alert-count">${stat.count}</span>
-              </div>
-              <div class="am-last-seen ${lastSeenClass}">${lastSeenStr}</div>
+            <div class="prom-item" onclick="AlertManagersModal.filterByProm('${prom}')">
+              <span class="prom-name" title="${prom}">${shortName}</span>
+              <span class="prom-alert-count">${stat.count}</span>
             </div>
           `;
         }).join('');
 
-        totalCount.textContent = this.alertManagers.length;
-        activeCount.textContent = managersWithAlerts;
+        if (sortedProms.length === 0) {
+          promList.innerHTML = '<div class="prom-empty">No active alerts from any Prometheus node</div>';
+        }
+
+        promCount.textContent = sortedProms.length;
         totalAlerts.textContent = totalAlertCount;
 
         // Update the card count
@@ -1973,44 +1965,17 @@ Services: ${this.currentAlert.services}`;
         if (cardCount) cardCount.textContent = this.alertManagers.length;
       },
 
-      formatLastSeen(date) {
-        if (!date) return 'No alerts';
-
-        const now = new Date();
-        const diff = now - date;
-        const minutes = Math.floor(diff / (60 * 1000));
-        const hours = Math.floor(diff / (60 * 60 * 1000));
-        const days = Math.floor(diff / (24 * 60 * 60 * 1000));
-
-        if (minutes < 1) return 'Just now';
-        if (minutes < 60) return `${minutes}m ago`;
-        if (hours < 24) return `${hours}h ago`;
-        return `${days}d ago`;
-      },
-
-      getLastSeenClass(date) {
-        if (!date) return '';
-
-        const now = new Date();
-        const diff = now - date;
-        const hours = diff / (60 * 60 * 1000);
-
-        if (hours < 1) return 'recent';
-        if (hours < 24) return 'stale';
-        return 'old';
-      },
-
-      filterByManager(manager) {
+      filterByProm(prom) {
         this.close();
 
         // Set the prom filter and apply
         const promFilter = document.getElementById('filter-prom');
         if (promFilter) {
-          promFilter.value = manager;
+          promFilter.value = prom;
           FilterManager.apply();
         }
 
-        showToast(`Filtered by ${simplifyPromName(manager)}`, 'success');
+        showToast(`Filtered by ${simplifyPromName(prom)}`, 'success');
       }
     };
 
@@ -2053,10 +2018,11 @@ Services: ${this.currentAlert.services}`;
           section: cells[5]?.textContent.trim() || '',
           row: cells[6]?.textContent.trim() || '',
           rack: cells[7]?.textContent.trim() || '',
-          promNode: cells[8]?.textContent.trim() || '',
-          startTime: cells[9]?.textContent.trim() || '',
-          duration: cells[10]?.textContent.trim() || '',
-          services: Array.from(cells[11]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim())
+          location: cells[8]?.textContent.trim() || '',
+          promNode: cells[9]?.textContent.trim() || '',
+          startTime: cells[10]?.textContent.trim() || '',
+          duration: cells[11]?.textContent.trim() || '',
+          services: Array.from(cells[12]?.querySelectorAll('.service-tag') || []).map(t => t.textContent.trim())
         });
       });
 
@@ -2065,9 +2031,9 @@ Services: ${this.currentAlert.services}`;
         downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.json`);
         showToast('Exported as JSON', 'success');
       } else if (format === 'csv') {
-        let csv = 'UID,Account,Hostname,DC,Section,Row,Rack,Prom Node,Start Time,Duration,Services\n';
+        let csv = 'UID,Account,Hostname,DC,Section,Row,Rack,Location,Prom Node,Start Time,Duration,Services\n';
         data.forEach(row => {
-          csv += `"${row.uid}","${row.account}","${row.hostname}","${row.datacenter}","${row.section}","${row.row}","${row.rack}","${row.promNode}","${row.startTime}","${row.duration}","${row.services.join('; ')}"\n`;
+          csv += `"${row.uid}","${row.account}","${row.hostname}","${row.datacenter}","${row.section}","${row.row}","${row.rack}","${row.location}","${row.promNode}","${row.startTime}","${row.duration}","${row.services.join('; ')}"\n`;
         });
         const blob = new Blob([csv], { type: 'text/csv' });
         downloadBlob(blob, `prometheos-alerts-${new Date().toISOString().slice(0, 10)}.csv`);
@@ -4536,9 +4502,9 @@ Services: ${this.currentAlert.services}`;
       columns: [],
       discoveredFields: { labels: [], annotations: [], core: [] },
       profiles: {
-        default: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'prom', 'time', 'duration', 'services', 'actions'],
+        default: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'location', 'prom', 'time', 'duration', 'services', 'actions'],
         compact: ['checkbox', 'hostname', 'account', 'services', 'time', 'actions'],
-        detailed: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'prom', 'time', 'duration', 'services', 'actions'],
+        detailed: ['checkbox', 'uid', 'account', 'hostname', 'datacenter', 'section', 'row', 'rack', 'location', 'prom', 'time', 'duration', 'services', 'actions'],
         custom: []
       },
       currentProfile: 'default',
@@ -4679,6 +4645,7 @@ Services: ${this.currentAlert.services}`;
           { id: 'section', name: 'Section', source: 'core' },
           { id: 'row', name: 'Row', source: 'core' },
           { id: 'rack', name: 'Rack', source: 'core' },
+          { id: 'location', name: 'Location', source: 'core' },
           { id: 'prom', name: 'Prom Node', source: 'core' },
           { id: 'time', name: 'Start Time', source: 'core' },
           { id: 'duration', name: 'Duration', source: 'core' },
@@ -4812,6 +4779,7 @@ Services: ${this.currentAlert.services}`;
           { id: 'section', name: 'Section', sample: 'S2' },
           { id: 'row', name: 'Row', sample: 'R9' },
           { id: 'rack', name: 'Rack', sample: 'K8' },
+          { id: 'location', name: 'Location', sample: 'B3-S2-R9-K8' },
           { id: 'prom', name: 'Prom Node', sample: 'prometheus-1' },
           { id: 'time', name: 'Start Time', sample: '2024-01-15 10:30' },
           { id: 'duration', name: 'Duration', sample: '2h 15m' },

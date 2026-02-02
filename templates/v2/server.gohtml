@@ -272,15 +272,19 @@
                 <span>Rack</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 8)">
+              <th class="sortable" data-sort="location" onclick="sortTable('active-table', 8)">
+                <span>Location</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" data-sort="prom" onclick="sortTable('active-table', 9)">
                 <span>Prom Node</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 9)">
+              <th class="sortable" data-sort="time" onclick="sortTable('active-table', 10)">
                 <span>Start Time</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
-              <th class="sortable" data-sort="duration" onclick="sortTable('active-table', 10)">
+              <th class="sortable" data-sort="duration" onclick="sortTable('active-table', 11)">
                 <span>Duration</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
@@ -312,6 +316,7 @@
                   <td class="cell-text cell-section" data-location="{{$value.Location}}"></td>
                   <td class="cell-text cell-row" data-location="{{$value.Location}}"></td>
                   <td class="cell-text cell-rack" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-location">{{$value.Location}}</td>
                   <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
                     <span class="prom-display"></span>
                   </td>
@@ -336,7 +341,6 @@
                           <path d="M18.36 6.64a9 9 0 1 1-12.73 0"></path>
                           <line x1="12" y1="2" x2="12" y2="12"></line>
                         </svg>
-                        Silence
                       </button>
                     </form>
                   </td>
@@ -397,14 +401,18 @@
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 8)">
-                <span>Prom Node</span>
+                <span>Location</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 9)">
-                <span>Start Time</span>
+                <span>Prom Node</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
               <th class="sortable" onclick="sortTable('silenced-table', 10)">
+                <span>Start Time</span>
+                <span class="sort-icon">&#8597;</span>
+              </th>
+              <th class="sortable" onclick="sortTable('silenced-table', 11)">
                 <span>Duration</span>
                 <span class="sort-icon">&#8597;</span>
               </th>
@@ -436,6 +444,7 @@
                   <td class="cell-text cell-section" data-location="{{$value.Location}}"></td>
                   <td class="cell-text cell-row" data-location="{{$value.Location}}"></td>
                   <td class="cell-text cell-rack" data-location="{{$value.Location}}"></td>
+                  <td class="cell-text cell-location">{{$value.Location}}</td>
                   <td class="cell-mono cell-prom" data-prom-full="{{$value.Prom}}">
                     <span class="prom-display"></span>
                   </td>
@@ -460,7 +469,6 @@
                           <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"></path>
                           <path d="m9 12 2 2 4-4"></path>
                         </svg>
-                        Unsilence
                       </button>
                     </form>
                   </td>
