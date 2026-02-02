@@ -1422,6 +1422,14 @@ Services: ${this.currentAlert.services}`;
         document.getElementById('filter-toggle').addEventListener('click', () => {
           this.togglePanel();
         });
+
+        // Update clear all button when search changes
+        const searchBox = document.getElementById('search-box');
+        if (searchBox) {
+          searchBox.addEventListener('input', () => {
+            this.updateClearAllButton();
+          });
+        }
       },
 
       togglePanel() {
@@ -1517,6 +1525,7 @@ Services: ${this.currentAlert.services}`;
 
         this.updateActiveFilterTags();
         this.updateFilterBadge();
+        this.updateClearAllButton();
         updateCounts();
       },
 
@@ -1564,10 +1573,18 @@ Services: ${this.currentAlert.services}`;
       },
 
       clearAll() {
+        // Clear filter dropdowns
         document.getElementById('filter-location').value = '';
         document.getElementById('filter-prom').value = '';
         document.getElementById('filter-time').value = '';
         document.getElementById('filter-service').value = '';
+
+        // Clear search box
+        const searchBox = document.getElementById('search-box');
+        if (searchBox.value) {
+          searchBox.value = '';
+          searchBox.dispatchEvent(new Event('input'));
+        }
 
         this.filters = { location: '', prom: '', time: '', service: '' };
 
@@ -1577,8 +1594,18 @@ Services: ${this.currentAlert.services}`;
 
         this.updateActiveFilterTags();
         this.updateFilterBadge();
+        this.updateClearAllButton();
         updateCounts();
-        showToast('Filters cleared', 'success');
+        showToast('All filters and search cleared', 'success');
+      },
+
+      updateClearAllButton() {
+        const hasFilters = Object.values(this.filters).some(v => v);
+        const hasSearch = document.getElementById('search-box')?.value?.trim();
+        const clearBtn = document.getElementById('clear-all-btn');
+        if (clearBtn) {
+          clearBtn.classList.toggle('show', hasFilters || hasSearch);
+        }
       }
     };
 
@@ -1817,7 +1844,7 @@ Services: ${this.currentAlert.services}`;
       const servicesContainer = document.getElementById('top-services');
       if (topServices.length > 0) {
         servicesContainer.innerHTML = topServices.map(([name, count]) => `
-          <div class="service-row">
+          <div class="service-row clickable" onclick="filterByService('${name.replace(/'/g, "\\'")}')">
             <span class="service-name">${name}</span>
             <span class="service-count-badge">${count}</span>
           </div>
@@ -1868,6 +1895,94 @@ Services: ${this.currentAlert.services}`;
       }
 
       showToast(`Filtered by location: ${location}`, 'success');
+    }
+
+    function filterByService(service) {
+      document.getElementById('filter-service').value = service;
+      FilterManager.apply();
+
+      // Open filters panel if not open
+      const panel = document.getElementById('filters-panel');
+      if (!panel.classList.contains('show')) {
+        panel.classList.add('show');
+      }
+
+      showToast(`Filtered by service: ${service}`, 'success');
+    }
+
+    function filterBySeverity(severity) {
+      // Search for alerts matching severity keywords
+      const searchBox = document.getElementById('search-box');
+      let keywords = '';
+
+      switch (severity) {
+        case 'critical':
+          keywords = 'critical down fail';
+          break;
+        case 'warning':
+          keywords = 'warn high load';
+          break;
+        case 'info':
+          // For info, we exclude critical and warning
+          keywords = '!critical !down !fail !warn !high !load';
+          break;
+      }
+
+      searchBox.value = keywords;
+      searchBox.dispatchEvent(new Event('input'));
+      showToast(`Showing ${severity} severity alerts`, 'success');
+    }
+
+    function filterByHostname(hostname) {
+      const searchBox = document.getElementById('search-box');
+      searchBox.value = hostname;
+      searchBox.dispatchEvent(new Event('input'));
+      showToast(`Filtered by hostname: ${hostname}`, 'success');
+    }
+
+    function filterByAccount(account) {
+      // Search for the specific account
+      const searchBox = document.getElementById('search-box');
+      searchBox.value = account;
+      searchBox.dispatchEvent(new Event('input'));
+      showToast(`Filtered by account: ${account}`, 'success');
+    }
+
+    function filterRecurringSystems() {
+      // Find hosts with 2+ services and filter to show them
+      const rows = document.querySelectorAll('#active-table tbody tr');
+      const hostServiceCounts = {};
+
+      rows.forEach(row => {
+        const hostname = row.querySelector('.hostname')?.textContent.trim();
+        if (hostname) {
+          const services = row.dataset.services ? row.dataset.services.split(',').filter(s => s.trim()) : [];
+          hostServiceCounts[hostname] = (hostServiceCounts[hostname] || 0) + services.length;
+        }
+      });
+
+      // Get recurring hosts (2+ services)
+      const recurringHosts = Object.entries(hostServiceCounts)
+        .filter(([_, count]) => count >= 2)
+        .map(([host]) => host);
+
+      if (recurringHosts.length > 0) {
+        const searchBox = document.getElementById('search-box');
+        searchBox.value = recurringHosts[0]; // Filter to first recurring host
+        searchBox.dispatchEvent(new Event('input'));
+        showToast(`Showing recurring system: ${recurringHosts[0]} (${recurringHosts.length} total)`, 'success');
+      } else {
+        showToast('No recurring systems found', 'info');
+      }
+    }
+
+    function filterOldestAlert() {
+      const hostname = document.getElementById('oldest-hostname').textContent;
+      if (hostname && hostname !== '--') {
+        filterByHostname(hostname);
+      } else {
+        showToast('No oldest alert to filter', 'info');
+      }
     }
 
     // ========================================

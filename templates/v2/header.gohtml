@@ -472,6 +472,18 @@
       display: flex;
       align-items: center;
       gap: 12px;
+      padding: 4px 8px;
+      margin: -4px -8px;
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+    }
+
+    .severity-bar-row.clickable {
+      cursor: pointer;
+    }
+
+    .severity-bar-row.clickable:hover {
+      background: var(--bg-tertiary);
     }
 
     .severity-label {
@@ -523,6 +535,15 @@
       background: var(--bg-tertiary);
       border-radius: var(--radius-md);
       transition: all 0.15s ease;
+    }
+
+    .service-row.clickable {
+      cursor: pointer;
+    }
+
+    .service-row.clickable:hover {
+      background: var(--bg-elevated);
+      transform: translateX(2px);
     }
 
     .service-row:hover {
@@ -610,6 +631,15 @@
 
     .quick-stat:hover {
       background: var(--bg-elevated);
+    }
+
+    .quick-stat.clickable {
+      cursor: pointer;
+    }
+
+    .quick-stat.clickable:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     }
 
     .quick-stat-icon {
@@ -834,6 +864,7 @@
       padding: 16px;
       margin-bottom: 16px;
       display: none;
+      transition: all 0.15s ease;
     }
 
     .oldest-alert-card.show {
@@ -841,11 +872,33 @@
       animation: fadeIn 0.3s ease;
     }
 
+    .oldest-alert-card.clickable {
+      cursor: pointer;
+    }
+
+    .oldest-alert-card.clickable:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+      border-color: var(--critical);
+    }
+
     .oldest-alert-header {
       display: flex;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
       margin-bottom: 12px;
+    }
+
+    .click-hint {
+      font-size: 10px;
+      color: var(--text-muted);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+
+    .oldest-alert-card:hover .click-hint {
+      opacity: 1;
     }
 
     .oldest-alert-badge {
@@ -1121,6 +1174,34 @@
 
     .filter-badge.show {
       display: flex;
+    }
+
+    /* Clear All Filters Button */
+    .btn-clear-filters {
+      display: none;
+      background: var(--critical-bg);
+      border-color: var(--critical);
+      color: var(--critical);
+    }
+
+    .btn-clear-filters:hover {
+      background: var(--critical);
+      color: white;
+    }
+
+    .btn-clear-filters.show {
+      display: inline-flex;
+    }
+
+    .btn-danger {
+      background: var(--critical-bg);
+      border-color: var(--critical);
+      color: var(--critical);
+    }
+
+    .btn-danger:hover {
+      background: var(--critical);
+      color: white;
     }
 
     .search-hint {
@@ -4751,24 +4832,24 @@
               </div>
             </div>
             <div class="severity-bars" id="severity-bars">
-              <div class="severity-bar-row has-tooltip">
-                <div class="tooltip">Services containing: critical, down, fail</div>
+              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('critical')">
+                <div class="tooltip">Click to filter: critical, down, fail</div>
                 <span class="severity-label">Critical</span>
                 <div class="severity-bar-container">
                   <div class="severity-bar critical" id="severity-critical" style="width: 0%"></div>
                 </div>
                 <span class="severity-count" id="severity-critical-count">0</span>
               </div>
-              <div class="severity-bar-row has-tooltip">
-                <div class="tooltip">Services containing: warn, high, load</div>
+              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('warning')">
+                <div class="tooltip">Click to filter: warn, high, load</div>
                 <span class="severity-label">Warning</span>
                 <div class="severity-bar-container">
                   <div class="severity-bar warning" id="severity-warning" style="width: 0%"></div>
                 </div>
                 <span class="severity-count" id="severity-warning-count">0</span>
               </div>
-              <div class="severity-bar-row has-tooltip">
-                <div class="tooltip">All other services</div>
+              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('info')">
+                <div class="tooltip">Click to filter: all other services</div>
                 <span class="severity-label">Info</span>
                 <div class="severity-bar-container">
                   <div class="severity-bar info" id="severity-info" style="width: 0%"></div>
@@ -4879,8 +4960,8 @@
             </div>
           </div>
 
-          <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide">Hosts with 2+ different services alerting</div>
+          <div class="quick-stat has-tooltip clickable" onclick="filterRecurringSystems()">
+            <div class="tooltip tooltip-wide">Click to filter hosts with 2+ services alerting</div>
             <div class="quick-stat-icon recurring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 2.1l4 4-4 4"></path>
@@ -4910,7 +4991,7 @@
         </div>
 
         <!-- Oldest Alert Highlight Card -->
-        <div class="oldest-alert-card" id="oldest-alert-card">
+        <div class="oldest-alert-card clickable" id="oldest-alert-card" onclick="filterOldestAlert()" title="Click to filter to this alert">
           <div class="oldest-alert-header">
             <span class="oldest-alert-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
@@ -4919,6 +5000,7 @@
               </svg>
               Oldest Active Alert
             </span>
+            <span class="click-hint">Click to filter</span>
           </div>
           <div class="oldest-alert-content">
             <div class="oldest-alert-field">

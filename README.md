@@ -279,11 +279,11 @@ go build -o prometheos main.go
 ./prometheos
 ```
 
-The server starts on port `:8000` by default.
+The server starts on port `:8001` by default.
 
 ```
-http://localhost:8000     # Legacy interface
-http://localhost:8000/v2  # Modern interface
+http://localhost:8001     # Legacy interface
+http://localhost:8001/v2  # Modern interface
 ```
 
 ---
@@ -319,7 +319,7 @@ var config = struct {
     RequestTimeout time.Duration
     AlertManagers  []string
 }{
-    Port:           ":8000",
+    Port:           ":8001",
     UpdateInterval: 5 * time.Minute,
     RequestTimeout: 10 * time.Second,
     AlertManagers:  []string{...},
