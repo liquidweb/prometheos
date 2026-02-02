@@ -220,6 +220,173 @@
       color: var(--silenced);
     }
 
+    .duration-badge.new {
+      background: linear-gradient(135deg, #3b82f6, #8b5cf6);
+      color: white;
+      animation: pulse-new 1.5s ease-in-out infinite;
+    }
+
+    @keyframes pulse-new {
+      0%, 100% { opacity: 1; box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+      50% { opacity: 0.9; box-shadow: 0 0 8px 2px rgba(139, 92, 246, 0.3); }
+    }
+
+    /* New alert row highlighting */
+    .alert-row.new-alert {
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.08) 0%, transparent 100%);
+      border-left: 3px solid #3b82f6;
+    }
+
+    .alert-row.new-alert:hover {
+      background: linear-gradient(90deg, rgba(59, 130, 246, 0.12) 0%, var(--bg-tertiary) 100%);
+    }
+
+    /* ========================================
+       GROUPED ROWS (Location/Account Focus)
+       ======================================== */
+
+    .group-header-row {
+      background: var(--bg-tertiary) !important;
+      border-left: 3px solid var(--accent);
+      cursor: pointer;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .group-header-row:hover {
+      background: var(--bg-elevated) !important;
+    }
+
+    .group-header-row td {
+      padding: 10px 16px !important;
+    }
+
+    .group-header-content {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .group-expand-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--text-secondary);
+      transition: transform 0.2s ease;
+    }
+
+    .group-header-row.collapsed .group-expand-icon {
+      transform: rotate(-90deg);
+    }
+
+    .group-label {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .group-icon {
+      width: 16px;
+      height: 16px;
+      color: var(--accent);
+    }
+
+    .group-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .group-count {
+      padding: 2px 8px;
+      background: var(--accent-bg);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--accent);
+    }
+
+    .group-summary {
+      margin-left: auto;
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .group-summary-item {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .group-summary-item.critical {
+      color: var(--critical);
+    }
+
+    .group-summary-item.new {
+      color: #3b82f6;
+    }
+
+    .grouped-row {
+      border-left: 3px solid transparent;
+    }
+
+    .grouped-row.indent-1 {
+      border-left-color: rgba(99, 102, 241, 0.3);
+    }
+
+    .grouped-row.indent-1 td:first-child {
+      padding-left: 32px !important;
+    }
+
+    .grouped-row.indent-2 {
+      border-left-color: rgba(99, 102, 241, 0.15);
+    }
+
+    .grouped-row.indent-2 td:first-child {
+      padding-left: 48px !important;
+    }
+
+    .group-header-row.collapsed + .grouped-row,
+    .group-header-row.collapsed ~ .grouped-row {
+      display: none;
+    }
+
+    /* Subgroup header (e.g., section within datacenter) */
+    .subgroup-header-row {
+      background: var(--bg-secondary) !important;
+      border-left: 3px solid rgba(99, 102, 241, 0.5);
+    }
+
+    .subgroup-header-row td {
+      padding: 8px 16px !important;
+      padding-left: 32px !important;
+    }
+
+    .subgroup-header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+
+    .subgroup-name {
+      color: var(--text-primary);
+    }
+
+    .subgroup-count {
+      padding: 1px 6px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 10px;
+      font-weight: 500;
+    }
+
     /* Service tags */
     .cell-services {
       max-width: 300px;
@@ -1394,6 +1561,32 @@ Services: ${this.currentAlert.services}`;
     // TABLE SORTING
     // ========================================
 
+    // Helper function to parse duration strings to seconds for sorting
+    function parseDurationToSeconds(durationStr) {
+      if (!durationStr || durationStr === 'new' || durationStr === '--') return 0;
+
+      let totalSeconds = 0;
+      const str = durationStr.toLowerCase();
+
+      // Parse days: "1d", "2d 5h"
+      const dayMatch = str.match(/(\d+)d/);
+      if (dayMatch) totalSeconds += parseInt(dayMatch[1]) * 24 * 60 * 60;
+
+      // Parse hours: "5h", "2h 30m"
+      const hourMatch = str.match(/(\d+)h/);
+      if (hourMatch) totalSeconds += parseInt(hourMatch[1]) * 60 * 60;
+
+      // Parse minutes: "30m"
+      const minMatch = str.match(/(\d+)m/);
+      if (minMatch) totalSeconds += parseInt(minMatch[1]) * 60;
+
+      // Parse seconds: "45s"
+      const secMatch = str.match(/(\d+)s/);
+      if (secMatch) totalSeconds += parseInt(secMatch[1]);
+
+      return totalSeconds;
+    }
+
     const sortStates = {};
 
     function sortTable(tableId, columnIndex) {
@@ -1419,6 +1612,26 @@ Services: ${this.currentAlert.services}`;
       rows.sort((a, b) => {
         const aVal = a.cells[columnIndex].textContent.trim().toLowerCase();
         const bVal = b.cells[columnIndex].textContent.trim().toLowerCase();
+
+        // Special handling for duration column - parse duration values
+        const durationPattern = /^(\d+)([smhd])\s*(?:(\d+)([mh]))?$/i;
+        const aIsNew = aVal === 'new' || aVal === '--';
+        const bIsNew = bVal === 'new' || bVal === '--';
+
+        // Handle NEW alerts - they should always come first in ascending (newest first)
+        if (aIsNew && bIsNew) return 0;
+        if (aIsNew) return direction === 'asc' ? -1 : 1;
+        if (bIsNew) return direction === 'asc' ? 1 : -1;
+
+        // Parse duration values like "5m", "2h 30m", "1d 5h"
+        const aDurMatch = aVal.match(durationPattern);
+        const bDurMatch = bVal.match(durationPattern);
+
+        if (aDurMatch && bDurMatch) {
+          const aSeconds = parseDurationToSeconds(aVal);
+          const bSeconds = parseDurationToSeconds(bVal);
+          return direction === 'asc' ? aSeconds - bSeconds : bSeconds - aSeconds;
+        }
 
         const datePattern = /^\d{4}-\d{2}-\d{2}/;
         if (datePattern.test(aVal) && datePattern.test(bVal)) {
@@ -2616,18 +2829,12 @@ Services: ${this.currentAlert.services}`;
           this.current = saved;
           this.apply(saved, false);
         }
-
-        // Close dropdown when clicking outside
-        document.addEventListener('click', (e) => {
-          if (!e.target.closest('.view-presets-control')) {
-            document.getElementById('view-presets-dropdown')?.classList.remove('show');
-          }
-        });
       },
 
       toggle() {
-        const dropdown = document.getElementById('view-presets-dropdown');
-        dropdown.classList.toggle('show');
+        // Now handled by the combined presets dropdown
+        const dropdown = document.getElementById('presets-dropdown');
+        dropdown?.classList.toggle('show');
       },
 
       apply(presetId, showToastMsg = true) {
@@ -2666,20 +2873,317 @@ Services: ${this.currentAlert.services}`;
           });
         });
 
-        // Update UI
-        document.getElementById('view-preset-current').textContent = preset.name;
+        // Update UI - current view indicator in Presets button
+        const viewIndicator = document.getElementById('current-view-indicator');
+        if (viewIndicator) viewIndicator.textContent = preset.name;
 
-        // Update active state in dropdown
-        document.querySelectorAll('.view-preset-option').forEach(opt => {
+        // Update active state in dropdown (new combined structure)
+        document.querySelectorAll('.view-preset-item').forEach(opt => {
           opt.classList.toggle('active', opt.dataset.preset === presetId);
         });
 
-        // Close dropdown
-        document.getElementById('view-presets-dropdown')?.classList.remove('show');
+        // Close combined presets dropdown
+        document.getElementById('presets-dropdown')?.classList.remove('show');
+
+        // Apply grouping for Location Focus and Account Focus views
+        if (presetId === 'location') {
+          GroupingManager.applyLocationGrouping();
+        } else if (presetId === 'account') {
+          GroupingManager.applyAccountGrouping();
+        } else {
+          GroupingManager.clearGrouping();
+        }
 
         if (showToastMsg) {
           showToast(`View: ${preset.name}`, 'success');
         }
+      }
+    };
+
+    // ========================================
+    // GROUPING MANAGER (Location/Account Focus)
+    // ========================================
+
+    const GroupingManager = {
+      currentGrouping: null, // 'location', 'account', or null
+
+      // Parse location code: B3S2R9K8U27 -> { datacenter, section, row, rack }
+      parseLocation(location) {
+        if (!location) return null;
+        const match = location.match(/^B(\d+)S(\d+)R(\d+)K(\d+)(?:U(\d+))?$/i);
+        if (!match) return null;
+        return {
+          datacenter: `B${match[1]}`,
+          section: `S${match[2]}`,
+          row: `R${match[3]}`,
+          rack: `K${match[4]}`,
+          fullDC: `B${match[1]}`,
+          fullSection: `B${match[1]}S${match[2]}`
+        };
+      },
+
+      clearGrouping() {
+        if (!this.currentGrouping) return;
+
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          const tbody = table.querySelector('tbody');
+
+          // Remove all group header rows
+          tbody.querySelectorAll('.group-header-row, .subgroup-header-row').forEach(row => row.remove());
+
+          // Remove grouping classes from alert rows
+          tbody.querySelectorAll('.grouped-row').forEach(row => {
+            row.classList.remove('grouped-row', 'indent-1', 'indent-2');
+          });
+
+          // Show all rows
+          tbody.querySelectorAll('tr').forEach(row => {
+            row.style.display = '';
+          });
+        });
+
+        this.currentGrouping = null;
+      },
+
+      applyLocationGrouping() {
+        this.clearGrouping();
+        this.currentGrouping = 'location';
+
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr.alert-row:not(.filtered-out)'));
+
+          if (rows.length === 0) return;
+
+          // Group by datacenter, then by section
+          const groups = new Map();
+
+          rows.forEach(row => {
+            const location = row.dataset.location || '';
+            const parsed = this.parseLocation(location);
+            const dc = parsed?.fullDC || 'Unknown';
+            const section = parsed?.fullSection || 'Unknown';
+
+            if (!groups.has(dc)) {
+              groups.set(dc, new Map());
+            }
+            if (!groups.get(dc).has(section)) {
+              groups.get(dc).set(section, []);
+            }
+            groups.get(dc).get(section).push(row);
+          });
+
+          // Sort groups by datacenter and section
+          const sortedGroups = new Map([...groups.entries()].sort());
+
+          // Rebuild tbody with grouped structure
+          const fragment = document.createDocumentFragment();
+          const colCount = table.querySelectorAll('thead th').length;
+
+          sortedGroups.forEach((sections, dc) => {
+            // Calculate datacenter stats
+            let dcTotalAlerts = 0;
+            let dcNewAlerts = 0;
+            sections.forEach(sectionRows => {
+              dcTotalAlerts += sectionRows.length;
+              sectionRows.forEach(row => {
+                const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                if (duration === 'new') dcNewAlerts++;
+              });
+            });
+
+            // Create datacenter header
+            const dcHeader = document.createElement('tr');
+            dcHeader.className = 'group-header-row';
+            dcHeader.dataset.group = dc;
+            dcHeader.onclick = () => this.toggleGroup(dcHeader);
+
+            dcHeader.innerHTML = `
+              <td colspan="${colCount}">
+                <div class="group-header-content">
+                  <svg class="group-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                  <div class="group-label">
+                    <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
+                      <circle cx="12" cy="10" r="3"></circle>
+                    </svg>
+                    <span class="group-name">Datacenter ${dc}</span>
+                  </div>
+                  <span class="group-count">${dcTotalAlerts} alert${dcTotalAlerts !== 1 ? 's' : ''}</span>
+                  <div class="group-summary">
+                    ${dcNewAlerts > 0 ? `<span class="group-summary-item new">🆕 ${dcNewAlerts} new</span>` : ''}
+                    <span class="group-summary-item">${sections.size} section${sections.size !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+              </td>
+            `;
+            fragment.appendChild(dcHeader);
+
+            // Sort sections
+            const sortedSections = new Map([...sections.entries()].sort());
+
+            sortedSections.forEach((sectionRows, section) => {
+              // Calculate section stats
+              let sectionNewAlerts = 0;
+              sectionRows.forEach(row => {
+                const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                if (duration === 'new') sectionNewAlerts++;
+              });
+
+              // Create section subheader
+              const sectionHeader = document.createElement('tr');
+              sectionHeader.className = 'subgroup-header-row grouped-row indent-1';
+              sectionHeader.dataset.subgroup = section;
+              sectionHeader.dataset.parentGroup = dc;
+
+              const sectionDisplay = section.replace(dc, ''); // Show just "S2" instead of "B3S2"
+              sectionHeader.innerHTML = `
+                <td colspan="${colCount}">
+                  <div class="subgroup-header-content">
+                    <span class="subgroup-name">Section ${sectionDisplay}</span>
+                    <span class="subgroup-count">${sectionRows.length}</span>
+                    ${sectionNewAlerts > 0 ? `<span class="group-summary-item new" style="margin-left: auto;">🆕 ${sectionNewAlerts}</span>` : ''}
+                  </div>
+                </td>
+              `;
+              fragment.appendChild(sectionHeader);
+
+              // Add rows for this section
+              sectionRows.forEach(row => {
+                row.classList.add('grouped-row', 'indent-2');
+                row.dataset.parentGroup = dc;
+                row.dataset.parentSubgroup = section;
+                fragment.appendChild(row);
+              });
+            });
+          });
+
+          // Clear and append grouped content
+          tbody.innerHTML = '';
+          tbody.appendChild(fragment);
+        });
+      },
+
+      applyAccountGrouping() {
+        this.clearGrouping();
+        this.currentGrouping = 'account';
+
+        ['active-table', 'silenced-table'].forEach(tableId => {
+          const table = document.getElementById(tableId);
+          if (!table) return;
+
+          const tbody = table.querySelector('tbody');
+          const rows = Array.from(tbody.querySelectorAll('tr.alert-row:not(.filtered-out)'));
+
+          if (rows.length === 0) return;
+
+          // Group by account
+          const groups = new Map();
+
+          rows.forEach(row => {
+            const account = row.querySelector('.cell-primary')?.textContent.trim() || 'Unknown';
+
+            if (!groups.has(account)) {
+              groups.set(account, []);
+            }
+            groups.get(account).push(row);
+          });
+
+          // Sort groups by alert count (descending) then alphabetically
+          const sortedGroups = new Map([...groups.entries()].sort((a, b) => {
+            if (b[1].length !== a[1].length) return b[1].length - a[1].length;
+            return a[0].localeCompare(b[0]);
+          }));
+
+          // Rebuild tbody with grouped structure
+          const fragment = document.createDocumentFragment();
+          const colCount = table.querySelectorAll('thead th').length;
+
+          sortedGroups.forEach((accountRows, account) => {
+            // Calculate stats
+            let newAlerts = 0;
+            const services = new Set();
+
+            accountRows.forEach(row => {
+              const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+              if (duration === 'new') newAlerts++;
+
+              const rowServices = row.dataset.services?.split(',') || [];
+              rowServices.forEach(s => { if (s.trim()) services.add(s.trim()); });
+            });
+
+            // Create account header
+            const accountHeader = document.createElement('tr');
+            accountHeader.className = 'group-header-row';
+            accountHeader.dataset.group = account;
+            accountHeader.onclick = () => this.toggleGroup(accountHeader);
+
+            accountHeader.innerHTML = `
+              <td colspan="${colCount}">
+                <div class="group-header-content">
+                  <svg class="group-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <polyline points="6 9 12 15 18 9"></polyline>
+                  </svg>
+                  <div class="group-label">
+                    <svg class="group-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                      <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                      <circle cx="9" cy="7" r="4"></circle>
+                    </svg>
+                    <span class="group-name">${this.escapeHtml(account)}</span>
+                  </div>
+                  <span class="group-count">${accountRows.length} alert${accountRows.length !== 1 ? 's' : ''}</span>
+                  <div class="group-summary">
+                    ${newAlerts > 0 ? `<span class="group-summary-item new">🆕 ${newAlerts} new</span>` : ''}
+                    <span class="group-summary-item">${services.size} service${services.size !== 1 ? 's' : ''}</span>
+                  </div>
+                </div>
+              </td>
+            `;
+            fragment.appendChild(accountHeader);
+
+            // Add rows for this account
+            accountRows.forEach(row => {
+              row.classList.add('grouped-row', 'indent-1');
+              row.dataset.parentGroup = account;
+              fragment.appendChild(row);
+            });
+          });
+
+          // Clear and append grouped content
+          tbody.innerHTML = '';
+          tbody.appendChild(fragment);
+        });
+      },
+
+      toggleGroup(headerRow) {
+        headerRow.classList.toggle('collapsed');
+
+        const groupId = headerRow.dataset.group;
+        const tbody = headerRow.closest('tbody');
+
+        // Find all rows belonging to this group
+        let nextRow = headerRow.nextElementSibling;
+        while (nextRow && (nextRow.dataset.parentGroup === groupId || nextRow.dataset.parentSubgroup)) {
+          if (nextRow.dataset.parentGroup === groupId) {
+            nextRow.style.display = headerRow.classList.contains('collapsed') ? 'none' : '';
+          }
+          nextRow = nextRow.nextElementSibling;
+        }
+      },
+
+      escapeHtml(text) {
+        if (!text) return '';
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
       }
     };
 
@@ -3368,13 +3872,31 @@ Services: ${this.currentAlert.services}`;
       const now = new Date();
       document.querySelectorAll('.cell-duration').forEach(cell => {
         const startTimeStr = cell.dataset.startTime;
-        if (!startTimeStr) return;
+        const row = cell.closest('tr');
+        const badge = cell.querySelector('.duration-badge');
+
+        if (!startTimeStr) {
+          // No start time - mark as new
+          badge.textContent = 'NEW';
+          if (!badge.classList.contains('silenced')) {
+            badge.classList.remove('short', 'medium', 'long');
+            badge.classList.add('new');
+          }
+          if (row) row.classList.add('new-alert');
+          return;
+        }
 
         const startTime = new Date(startTimeStr.replace(' ', 'T'));
         const diffMs = now - startTime;
 
         if (isNaN(diffMs) || diffMs < 0) {
-          cell.querySelector('.duration-badge').textContent = '--';
+          // Invalid time or future time - mark as new
+          badge.textContent = 'NEW';
+          if (!badge.classList.contains('silenced')) {
+            badge.classList.remove('short', 'medium', 'long');
+            badge.classList.add('new');
+          }
+          if (row) row.classList.add('new-alert');
           return;
         }
 
@@ -3383,8 +3905,13 @@ Services: ${this.currentAlert.services}`;
         const hours = Math.floor(minutes / 60);
         const days = Math.floor(hours / 24);
 
+        // Check if this is a very new alert (< 1 minute)
+        const isNew = seconds < 60;
+
         let durationText;
-        if (days > 0) {
+        if (isNew) {
+          durationText = 'NEW';
+        } else if (days > 0) {
           durationText = `${days}d ${hours % 24}h`;
         } else if (hours > 0) {
           durationText = `${hours}h ${minutes % 60}m`;
@@ -3394,13 +3921,17 @@ Services: ${this.currentAlert.services}`;
           durationText = `${seconds}s`;
         }
 
-        const badge = cell.querySelector('.duration-badge');
         badge.textContent = durationText;
 
         // Color-code based on duration (skip if silenced)
         if (!badge.classList.contains('silenced')) {
-          badge.classList.remove('short', 'medium', 'long');
-          if (hours >= 24) {
+          badge.classList.remove('short', 'medium', 'long', 'new');
+          if (row) row.classList.remove('new-alert');
+
+          if (isNew) {
+            badge.classList.add('new');
+            if (row) row.classList.add('new-alert');
+          } else if (hours >= 24) {
             badge.classList.add('long');
           } else if (hours >= 1) {
             badge.classList.add('medium');
@@ -3765,7 +4296,7 @@ Services: ${this.currentAlert.services}`;
       enabledTypes: {
         rack: true,
         row: true,
-        section: true,
+        section: false,  // Disabled by default to reduce noise
         account: true
       },
 
@@ -5815,9 +6346,56 @@ Services: ${this.currentAlert.services}`;
       // Calculate and display alert durations
       updateDurations();
 
+      // Apply default sort by duration (most recent/new alerts first)
+      applyDefaultSort();
+
       // Update durations every minute
       setInterval(updateDurations, 60000);
     });
+
+    // Apply default sort: duration ascending (newest/shortest first)
+    function applyDefaultSort() {
+      // Sort both tables by duration column (index 11)
+      ['active-table', 'silenced-table'].forEach(tableId => {
+        const table = document.getElementById(tableId);
+        if (!table) return;
+
+        const tbody = table.querySelector('tbody');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        if (rows.length === 0) return;
+
+        // Set initial sort state to ascending
+        sortStates[`${tableId}-11`] = 'asc';
+
+        rows.sort((a, b) => {
+          const aVal = a.cells[11]?.textContent.trim().toLowerCase() || '';
+          const bVal = b.cells[11]?.textContent.trim().toLowerCase() || '';
+
+          // NEW alerts come first
+          const aIsNew = aVal === 'new' || aVal === '--';
+          const bIsNew = bVal === 'new' || bVal === '--';
+
+          if (aIsNew && bIsNew) return 0;
+          if (aIsNew) return -1;
+          if (bIsNew) return 1;
+
+          // Sort by duration in seconds (shortest/newest first)
+          const aSeconds = parseDurationToSeconds(aVal);
+          const bSeconds = parseDurationToSeconds(bVal);
+          return aSeconds - bSeconds;
+        });
+
+        rows.forEach(row => tbody.appendChild(row));
+
+        // Update header indicator
+        const th = table.querySelectorAll('th')[11];
+        if (th) {
+          table.querySelectorAll('th').forEach(header => header.classList.remove('asc', 'desc'));
+          th.classList.add('asc');
+        }
+      });
+    }
   </script>
 </body>
 </html>
