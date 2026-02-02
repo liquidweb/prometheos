@@ -2191,14 +2191,8 @@ Services: ${this.currentAlert.services}`;
         this.updateActiveFilterTags();
         this.updateFilterBadge();
         this.updateClearAllButton();
-        updateCounts();
-
-        // Refresh stale alerts grouping after clearing filters
-        if (typeof StaleAlertsManager !== 'undefined') {
-          StaleAlertsManager.refresh();
-        }
-
-        showToast('All filters and search cleared', 'success');
+        // Note: updateCounts() and StaleAlertsManager.refresh() are called by clearAllFilters()
+        // after all view changes are complete to ensure correct final state
       },
 
       updateClearAllButton() {
@@ -2223,6 +2217,17 @@ Services: ${this.currentAlert.services}`;
       if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
         ViewPresets.apply('detailed');
       }
+
+      // Refresh stale alerts grouping AFTER all view changes are complete
+      // This ensures stale rows are properly hidden/shown based on user preference
+      if (typeof StaleAlertsManager !== 'undefined') {
+        StaleAlertsManager.refresh();
+      }
+
+      // Update counts at the very end to reflect the final state
+      updateCounts();
+
+      showToast('All filters and search cleared', 'success');
     }
 
     function removeFilter(type) {
