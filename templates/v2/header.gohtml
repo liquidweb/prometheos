@@ -959,6 +959,593 @@
       color: var(--critical);
     }
 
+    /* ========================================
+       INSIGHT CARDS SECTION
+       ======================================== */
+
+    .insight-cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .insight-card {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow: hidden;
+      display: none;
+      transition: all 0.15s ease;
+    }
+
+    .insight-card.show {
+      display: block;
+      animation: fadeIn 0.3s ease;
+    }
+
+    .insight-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .insight-card-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-secondary);
+    }
+
+    .insight-card-title svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .insight-card-badge {
+      padding: 2px 8px;
+      background: var(--critical);
+      border-radius: 20px;
+      font-size: 10px;
+      font-weight: 600;
+      color: white;
+    }
+
+    .insight-card-badge.warning {
+      background: var(--warning);
+    }
+
+    .insight-card-badge.info {
+      background: var(--info);
+    }
+
+    .insight-card-badge.recurring {
+      background: var(--silenced);
+    }
+
+    .insight-card-actions {
+      display: flex;
+      gap: 8px;
+    }
+
+    .insight-card-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      background: transparent;
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .insight-card-btn:hover {
+      background: var(--bg-secondary);
+      color: var(--text-primary);
+      border-color: var(--text-muted);
+    }
+
+    .insight-card-body {
+      padding: 0;
+    }
+
+    .insight-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+
+    .insight-list-item {
+      display: grid;
+      grid-template-columns: 24px 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 10px 16px;
+      border-bottom: 1px solid var(--border);
+      cursor: pointer;
+      transition: background 0.15s ease;
+    }
+
+    .insight-list-item:last-child {
+      border-bottom: none;
+    }
+
+    .insight-list-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .insight-rank {
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 11px;
+      font-weight: 700;
+      color: var(--text-muted);
+      background: var(--bg-tertiary);
+      border-radius: 50%;
+    }
+
+    .insight-rank.top {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .insight-item-info {
+      min-width: 0;
+      overflow: hidden;
+    }
+
+    .insight-item-primary {
+      font-size: 13px;
+      font-weight: 500;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .insight-item-secondary {
+      font-size: 11px;
+      color: var(--text-muted);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .insight-item-value {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--critical);
+      white-space: nowrap;
+    }
+
+    .insight-item-value.warning {
+      color: var(--warning);
+    }
+
+    .insight-item-value.info {
+      color: var(--info);
+    }
+
+    .insight-filter-btn {
+      padding: 4px 8px;
+      font-size: 10px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      opacity: 0;
+      transition: all 0.15s ease;
+    }
+
+    .insight-list-item:hover .insight-filter-btn {
+      opacity: 1;
+    }
+
+    .insight-filter-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    /* Make quick stats clickable */
+    .quick-stat.clickable {
+      cursor: pointer;
+    }
+
+    .quick-stat.clickable:hover {
+      background: var(--bg-tertiary);
+      transform: translateY(-2px);
+    }
+
+    .quick-stat.clickable:hover .quick-stat-value {
+      color: var(--primary);
+    }
+
+    /* ========================================
+       METRIC DETAIL MODALS
+       ======================================== */
+
+    .metric-modal {
+      max-width: 600px;
+      width: 95%;
+    }
+
+    .metric-modal-summary {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 16px;
+      padding: 24px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-lg);
+      margin-bottom: 20px;
+    }
+
+    .metric-modal-value {
+      font-family: var(--font-mono);
+      font-size: 42px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1;
+    }
+
+    .metric-modal-label {
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .metric-modal-icon {
+      width: 48px;
+      height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--radius-md);
+    }
+
+    .metric-modal-icon svg {
+      width: 24px;
+      height: 24px;
+    }
+
+    .metric-modal-icon.critical {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .metric-modal-icon.warning {
+      background: var(--warning-bg);
+      color: var(--warning);
+    }
+
+    .metric-modal-icon.info {
+      background: var(--info-bg);
+      color: var(--info);
+    }
+
+    .metric-modal-icon.healthy {
+      background: var(--healthy-bg);
+      color: var(--healthy);
+    }
+
+    .metric-section {
+      margin-bottom: 20px;
+    }
+
+    .metric-section-title {
+      font-size: 12px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 12px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric-distribution {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .metric-dist-row {
+      display: grid;
+      grid-template-columns: 80px 1fr 60px;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .metric-dist-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .metric-dist-bar-container {
+      height: 20px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      overflow: hidden;
+    }
+
+    .metric-dist-bar {
+      height: 100%;
+      background: var(--primary);
+      border-radius: var(--radius-sm);
+      transition: width 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      padding-right: 6px;
+      min-width: 24px;
+    }
+
+    .metric-dist-bar.critical {
+      background: var(--critical);
+    }
+
+    .metric-dist-bar.warning {
+      background: var(--warning);
+    }
+
+    .metric-dist-bar.info {
+      background: var(--info);
+    }
+
+    .metric-dist-count {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-align: right;
+    }
+
+    .metric-filter-btns {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      margin-top: 16px;
+    }
+
+    .metric-filter-btn {
+      padding: 6px 12px;
+      font-size: 11px;
+      background: var(--bg-tertiary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .metric-filter-btn:hover {
+      background: var(--primary);
+      border-color: var(--primary);
+      color: white;
+    }
+
+    .metric-detail-list {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .metric-detail-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .metric-detail-item:last-child {
+      border-bottom: none;
+    }
+
+    .metric-detail-item:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .metric-detail-name {
+      font-size: 13px;
+      color: var(--text-primary);
+    }
+
+    .metric-detail-value {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    /* Health Score Breakdown */
+    .health-breakdown {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .health-item {
+      display: grid;
+      grid-template-columns: 1fr auto auto;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+    }
+
+    .health-item-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+
+    .health-item-detail {
+      font-size: 11px;
+      color: var(--text-muted);
+    }
+
+    .health-item-impact {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--critical);
+    }
+
+    .health-item-impact.none {
+      color: var(--healthy);
+    }
+
+    .health-final {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      margin-top: 12px;
+    }
+
+    .health-final-label {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .health-final-score {
+      font-family: var(--font-mono);
+      font-size: 24px;
+      font-weight: 700;
+    }
+
+    .health-final-score.healthy {
+      color: var(--healthy);
+    }
+
+    .health-final-score.warning {
+      color: var(--warning);
+    }
+
+    .health-final-score.critical {
+      color: var(--critical);
+    }
+
+    /* Table View Presets */
+    .view-presets-control {
+      position: relative;
+      display: inline-flex;
+    }
+
+    .view-presets-btn {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 6px 12px;
+      font-size: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .view-presets-btn:hover {
+      background: var(--bg-tertiary);
+      border-color: var(--text-muted);
+    }
+
+    .view-presets-btn svg {
+      width: 14px;
+      height: 14px;
+    }
+
+    .view-presets-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      margin-top: 4px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      min-width: 200px;
+      z-index: 100;
+      display: none;
+    }
+
+    .view-presets-dropdown.show {
+      display: block;
+      animation: fadeIn 0.15s ease;
+    }
+
+    .view-preset-option {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      transition: background 0.15s ease;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .view-preset-option:last-child {
+      border-bottom: none;
+    }
+
+    .view-preset-option:hover {
+      background: var(--bg-tertiary);
+    }
+
+    .view-preset-option.active {
+      background: var(--primary-bg);
+      color: var(--primary);
+    }
+
+    .view-preset-icon {
+      width: 16px;
+      height: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-muted);
+    }
+
+    .view-preset-option.active .view-preset-icon {
+      color: var(--primary);
+    }
+
+    .view-preset-name {
+      flex: 1;
+    }
+
+    .view-preset-check {
+      width: 16px;
+      height: 16px;
+      opacity: 0;
+    }
+
+    .view-preset-option.active .view-preset-check {
+      opacity: 1;
+      color: var(--primary);
+    }
+
     /* Alert Timeline */
     .timeline-container {
       padding: 16px 0;
@@ -3936,10 +4523,34 @@
 
     .tabs-container {
       display: flex;
-      gap: 4px;
+      justify-content: space-between;
+      align-items: center;
       margin-bottom: 16px;
       border-bottom: 1px solid var(--border-subtle);
       padding-bottom: 0;
+    }
+
+    .tabs-left {
+      display: flex;
+      gap: 4px;
+    }
+
+    .tabs-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding-bottom: 8px;
+    }
+
+    .dropdown-chevron {
+      width: 12px;
+      height: 12px;
+      transition: transform 0.15s ease;
+    }
+
+    .view-presets-dropdown.show + .dropdown-chevron,
+    .view-presets-btn[aria-expanded="true"] .dropdown-chevron {
+      transform: rotate(180deg);
     }
 
     .tab-btn {
@@ -4533,6 +5144,25 @@
               <div class="shortcut-keys"><span class="key">→</span></div>
             </div>
           </div>
+          <div class="shortcut-category">
+            <div class="shortcut-category-title">Metric Insights</div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Oldest alert details</span>
+              <div class="shortcut-keys"><span class="key">O</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Velocity breakdown</span>
+              <div class="shortcut-keys"><span class="key">V</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Health score details</span>
+              <div class="shortcut-keys"><span class="key">G</span></div>
+            </div>
+            <div class="shortcut-row">
+              <span class="shortcut-description">Filter to top N oldest</span>
+              <div class="shortcut-keys"><span class="key">1</span>-<span class="key">5</span></div>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -5030,6 +5660,236 @@
     </div>
   </div>
 
+  <!-- Average Duration Modal -->
+  <div class="modal-overlay" id="avg-duration-modal">
+    <div class="modal metric-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Alert Duration Analysis</h2>
+        <button class="modal-close" onclick="MetricModals.close('avg-duration')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="metric-modal-summary">
+          <div class="metric-modal-icon warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <circle cx="12" cy="12" r="10"></circle>
+              <polyline points="12 6 12 12 16 14"></polyline>
+            </svg>
+          </div>
+          <div>
+            <div class="metric-modal-value" id="modal-avg-duration">--</div>
+            <div class="metric-modal-label">Average Duration</div>
+          </div>
+        </div>
+
+        <div class="metric-section">
+          <div class="metric-section-title">Duration Distribution</div>
+          <div class="metric-distribution" id="duration-distribution">
+            <!-- Populated by JavaScript -->
+          </div>
+        </div>
+
+        <div class="metric-filter-btns">
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('1h')">Filter: &lt; 1 Hour</button>
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('4h')">Filter: 1-4 Hours</button>
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('12h')">Filter: 4-12 Hours</button>
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('24h')">Filter: 12-24 Hours</button>
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('24h+')">Filter: &gt; 24 Hours</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="MetricModals.close('avg-duration')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Oldest Alert Modal -->
+  <div class="modal-overlay" id="oldest-alert-modal">
+    <div class="modal metric-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Oldest Alert Details</h2>
+        <button class="modal-close" onclick="MetricModals.close('oldest-alert')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="metric-modal-summary">
+          <div class="metric-modal-icon critical">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
+              <line x1="12" y1="9" x2="12" y2="13"></line>
+              <line x1="12" y1="17" x2="12.01" y2="17"></line>
+            </svg>
+          </div>
+          <div>
+            <div class="metric-modal-value" id="modal-oldest-duration">--</div>
+            <div class="metric-modal-label">Oldest Alert Duration</div>
+          </div>
+        </div>
+
+        <div class="metric-section">
+          <div class="metric-section-title">Alert Details</div>
+          <ul class="metric-detail-list" id="oldest-alert-details">
+            <!-- Populated by JavaScript -->
+          </ul>
+        </div>
+
+        <div class="metric-filter-btns">
+          <button class="metric-filter-btn" id="btn-filter-oldest" onclick="MetricModals.filterOldestAlert()">Filter to this Alert</button>
+          <button class="metric-filter-btn" onclick="MetricModals.silenceOldestAlert()">Silence Alert</button>
+          <button class="metric-filter-btn" onclick="InsightCards.sortByDuration()">View All by Duration</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="MetricModals.close('oldest-alert')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Velocity Modal -->
+  <div class="modal-overlay" id="velocity-modal">
+    <div class="modal metric-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Alert Velocity Analysis</h2>
+        <button class="modal-close" onclick="MetricModals.close('velocity')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="metric-modal-summary">
+          <div class="metric-modal-icon info">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+            </svg>
+          </div>
+          <div>
+            <div class="metric-modal-value" id="modal-velocity-count">--</div>
+            <div class="metric-modal-label">Alerts in Period</div>
+          </div>
+        </div>
+
+        <div class="metric-section">
+          <div class="metric-section-title">Time Breakdown</div>
+          <ul class="metric-detail-list" id="velocity-breakdown">
+            <!-- Populated by JavaScript -->
+          </ul>
+        </div>
+
+        <div class="metric-filter-btns">
+          <button class="metric-filter-btn" onclick="MetricModals.filterByTimeRange('1h')">Filter: Last Hour</button>
+          <button class="metric-filter-btn" onclick="MetricModals.filterByTimeRange('6h')">Filter: Last 6 Hours</button>
+          <button class="metric-filter-btn" onclick="InsightCards.sortByTime()">View by Time</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="MetricModals.close('velocity')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Recurring Systems Modal -->
+  <div class="modal-overlay" id="recurring-modal">
+    <div class="modal metric-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Recurring Systems Analysis</h2>
+        <button class="modal-close" onclick="MetricModals.close('recurring')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="metric-modal-summary">
+          <div class="metric-modal-icon warning">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M17 2.1l4 4-4 4"></path>
+              <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"></path>
+              <path d="M7 21.9l-4-4 4-4"></path>
+              <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="metric-modal-value" id="modal-recurring-count">--</div>
+            <div class="metric-modal-label">Systems with Multiple Alerts</div>
+          </div>
+        </div>
+
+        <div class="metric-section">
+          <div class="metric-section-title">Top Recurring Systems</div>
+          <ul class="metric-detail-list" id="recurring-systems-details">
+            <!-- Populated by JavaScript -->
+          </ul>
+        </div>
+
+        <div class="metric-filter-btns">
+          <button class="metric-filter-btn" onclick="filterRecurringSystems(); MetricModals.close('recurring');">Filter to Recurring Systems</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="MetricModals.close('recurring')">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Health Score Modal -->
+  <div class="modal-overlay" id="health-score-modal">
+    <div class="modal metric-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Health Score Breakdown</h2>
+        <button class="modal-close" onclick="MetricModals.close('health-score')">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="metric-modal-summary">
+          <div class="metric-modal-icon healthy" id="health-modal-icon">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
+            </svg>
+          </div>
+          <div>
+            <div class="metric-modal-value" id="modal-health-score">--</div>
+            <div class="metric-modal-label">Current Health Score</div>
+          </div>
+        </div>
+
+        <div class="metric-section">
+          <div class="metric-section-title">Score Deductions</div>
+          <div class="health-breakdown" id="health-breakdown">
+            <!-- Populated by JavaScript -->
+          </div>
+          <div class="health-final">
+            <span class="health-final-label">Final Score</span>
+            <span class="health-final-score healthy" id="health-final-value">100</span>
+          </div>
+        </div>
+
+        <div class="metric-filter-btns">
+          <button class="metric-filter-btn" onclick="MetricModals.filterByDuration('1h+'); MetricModals.close('health-score');">Filter: Long-running</button>
+          <button class="metric-filter-btn" onclick="filterRecurringSystems(); MetricModals.close('health-score');">Filter: Recurring</button>
+          <button class="metric-filter-btn" onclick="SectionManager.scrollTo('incidents'); MetricModals.close('health-score');">View Incidents</button>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="MetricModals.close('health-score')">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Alert Details Drawer -->
   <div class="alert-drawer-overlay" id="alert-drawer-overlay">
     <div class="alert-drawer" id="alert-drawer">
@@ -5400,10 +6260,10 @@
         </div>
       </div>
       <div class="section-content" id="metrics-content">
-        <!-- Quick Stats Bar with Tooltips -->
+        <!-- Quick Stats Bar with Tooltips - All Clickable -->
         <div class="quick-stats" id="quick-stats">
-          <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide">Average time alerts have been open (all active alerts)</div>
+          <div class="quick-stat has-tooltip clickable" onclick="MetricModals.openAvgDuration()">
+            <div class="tooltip tooltip-wide">Click for duration breakdown</div>
             <div class="quick-stat-icon time">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <circle cx="12" cy="12" r="10"></circle>
@@ -5416,8 +6276,8 @@
             </div>
           </div>
 
-          <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide">The longest-running active alert</div>
+          <div class="quick-stat has-tooltip clickable" onclick="MetricModals.openOldestAlert()">
+            <div class="tooltip tooltip-wide">Click for oldest alert details</div>
             <div class="quick-stat-icon oldest">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
@@ -5431,8 +6291,8 @@
             </div>
           </div>
 
-          <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide">New alerts in the selected time range</div>
+          <div class="quick-stat has-tooltip clickable" onclick="MetricModals.openVelocity()">
+            <div class="tooltip tooltip-wide">Click for velocity breakdown</div>
             <div class="quick-stat-icon velocity">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
@@ -5444,8 +6304,8 @@
             </div>
           </div>
 
-          <div class="quick-stat has-tooltip clickable" onclick="filterRecurringSystems()">
-            <div class="tooltip tooltip-wide">Click to filter hosts with 2+ services alerting</div>
+          <div class="quick-stat has-tooltip clickable" onclick="MetricModals.openRecurring()">
+            <div class="tooltip tooltip-wide">Click for recurring systems details</div>
             <div class="quick-stat-icon recurring">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M17 2.1l4 4-4 4"></path>
@@ -5460,18 +6320,9 @@
             </div>
           </div>
 
-          <div class="quick-stat has-tooltip">
-            <div class="tooltip tooltip-wide tooltip-health">
-              <strong>Health Score (0-100)</strong><br>
-              Starts at 100, deducts points for:<br>
-              • Alert count: -2 per alert (max -30)<br>
-              • Long-running (>1h): -5 each (max -20)<br>
-              • Recurring systems: -5 each (max -20)<br>
-              • Recent alerts (1h): -3 each (max -15)<br>
-              • Incidents: -3 each (max -15)<br>
-              <span class="tooltip-hint">80+ = Healthy, 50-79 = Warning, &lt;50 = Critical</span>
-            </div>
-            <div class="quick-stat-icon" style="background: var(--healthy-bg); color: var(--healthy);">
+          <div class="quick-stat has-tooltip clickable" onclick="MetricModals.openHealthScore()">
+            <div class="tooltip tooltip-wide">Click for health score breakdown</div>
+            <div class="quick-stat-icon" id="health-score-icon" style="background: var(--healthy-bg); color: var(--healthy);">
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                 <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
               </svg>
@@ -5483,8 +6334,102 @@
           </div>
         </div>
 
-        <!-- Oldest Alert Highlight Card -->
-        <div class="oldest-alert-card clickable" id="oldest-alert-card" onclick="filterOldestAlert()" title="Click to filter to this alert">
+        <!-- Insight Cards Grid -->
+        <div class="insight-cards-grid">
+          <!-- Top 5 Oldest Alerts -->
+          <div class="insight-card" id="oldest-alerts-card">
+            <div class="insight-card-header">
+              <div class="insight-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <polyline points="12 6 12 12 16 14"></polyline>
+                </svg>
+                Top 5 Oldest Alerts
+                <span class="insight-card-badge" id="oldest-alerts-badge">0</span>
+              </div>
+              <div class="insight-card-actions">
+                <button class="insight-card-btn" onclick="InsightCards.sortByDuration()" title="Sort table by duration">View All</button>
+              </div>
+            </div>
+            <div class="insight-card-body">
+              <ul class="insight-list" id="oldest-alerts-list">
+                <!-- Populated by JavaScript -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Top 5 Recurring Systems -->
+          <div class="insight-card" id="recurring-systems-card">
+            <div class="insight-card-header">
+              <div class="insight-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 2.1l4 4-4 4"></path>
+                  <path d="M3 12.2v-2a4 4 0 0 1 4-4h12.8"></path>
+                  <path d="M7 21.9l-4-4 4-4"></path>
+                  <path d="M21 11.8v2a4 4 0 0 1-4 4H4.2"></path>
+                </svg>
+                Top 5 Recurring Systems
+                <span class="insight-card-badge recurring" id="recurring-systems-badge">0</span>
+              </div>
+              <div class="insight-card-actions">
+                <button class="insight-card-btn" onclick="filterRecurringSystems()" title="Filter to recurring systems">View All</button>
+              </div>
+            </div>
+            <div class="insight-card-body">
+              <ul class="insight-list" id="recurring-systems-list">
+                <!-- Populated by JavaScript -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Top 5 Recent Alerts -->
+          <div class="insight-card" id="recent-alerts-card">
+            <div class="insight-card-header">
+              <div class="insight-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+                </svg>
+                Top 5 Recent Alerts
+                <span class="insight-card-badge info" id="recent-alerts-badge">0</span>
+              </div>
+              <div class="insight-card-actions">
+                <button class="insight-card-btn" onclick="InsightCards.sortByTime()" title="Sort table by time">View All</button>
+              </div>
+            </div>
+            <div class="insight-card-body">
+              <ul class="insight-list" id="recent-alerts-list">
+                <!-- Populated by JavaScript -->
+              </ul>
+            </div>
+          </div>
+
+          <!-- Top 5 Affected Accounts -->
+          <div class="insight-card" id="affected-accounts-card">
+            <div class="insight-card-header">
+              <div class="insight-card-title">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                  <circle cx="9" cy="7" r="4"></circle>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+                </svg>
+                Top 5 Affected Accounts
+                <span class="insight-card-badge warning" id="affected-accounts-badge">0</span>
+              </div>
+              <div class="insight-card-actions">
+                <button class="insight-card-btn" onclick="InsightCards.sortByAccount()" title="Sort table by account">View All</button>
+              </div>
+            </div>
+            <div class="insight-card-body">
+              <ul class="insight-list" id="affected-accounts-list">
+                <!-- Populated by JavaScript -->
+              </ul>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legacy Oldest Alert Card (hidden, kept for compatibility) -->
+        <div class="oldest-alert-card clickable" id="oldest-alert-card" onclick="filterOldestAlert()" title="Click to filter to this alert" style="display: none;">
           <div class="oldest-alert-header">
             <span class="oldest-alert-badge">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
