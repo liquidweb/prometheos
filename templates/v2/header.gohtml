@@ -420,6 +420,20 @@
       color: var(--text-muted);
     }
 
+    /* Clickable Status Cards */
+    .status-card.clickable {
+      cursor: pointer;
+    }
+
+    .status-card.clickable:hover {
+      transform: translateY(-3px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .status-card.clickable:active {
+      transform: translateY(-1px);
+    }
+
     /* ========================================
        DASHBOARD WIDGETS
        ======================================== */
@@ -1257,6 +1271,11 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
       gap: 16px;
+    }
+
+    .filters-grid.filters-grid-extended {
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      gap: 12px;
     }
 
     .filter-group {
@@ -4166,6 +4185,179 @@
       from { opacity: 0; transform: translateY(8px); }
       to { opacity: 1; transform: translateY(0); }
     }
+
+    /* ========================================
+       ALERT MANAGERS MODAL
+       ======================================== */
+
+    .alert-managers-modal {
+      max-width: 700px;
+      width: 95%;
+    }
+
+    .am-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      padding: 16px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-md);
+      margin-bottom: 20px;
+    }
+
+    .am-summary-item {
+      text-align: center;
+    }
+
+    .am-summary-value {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 28px;
+      font-weight: 700;
+      color: var(--text-primary);
+      line-height: 1.2;
+    }
+
+    .am-summary-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .am-list-header {
+      display: grid;
+      grid-template-columns: 1fr 80px 120px;
+      gap: 12px;
+      padding: 10px 12px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: var(--text-muted);
+      margin-bottom: 8px;
+    }
+
+    .am-col-alerts,
+    .am-col-last-seen {
+      text-align: right;
+    }
+
+    .am-list {
+      max-height: 400px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .am-item {
+      display: grid;
+      grid-template-columns: 1fr 80px 120px;
+      gap: 12px;
+      padding: 12px;
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-subtle);
+      border-radius: var(--radius-md);
+      transition: all 0.15s ease;
+      cursor: pointer;
+    }
+
+    .am-item:hover {
+      border-color: var(--border-default);
+      background: var(--bg-tertiary);
+    }
+
+    .am-item.has-alerts {
+      border-left: 3px solid var(--critical);
+    }
+
+    .am-item.no-alerts {
+      opacity: 0.7;
+    }
+
+    .am-name {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .am-name-short {
+      font-family: var(--font-mono);
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .am-name-full {
+      font-size: 11px;
+      color: var(--text-muted);
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .am-alerts {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+    }
+
+    .am-alert-count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      height: 24px;
+      padding: 0 8px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-family: var(--font-mono);
+      font-size: 13px;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .am-item.has-alerts .am-alert-count {
+      background: var(--critical-bg);
+      color: var(--critical);
+    }
+
+    .am-last-seen {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+
+    .am-last-seen.recent {
+      color: var(--healthy);
+    }
+
+    .am-last-seen.stale {
+      color: var(--warning);
+    }
+
+    .am-last-seen.old {
+      color: var(--critical);
+    }
+
+    /* Prom Node simplified display */
+    .prom-short {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .prom-full {
+      font-size: 10px;
+      color: var(--text-muted);
+      display: block;
+      margin-top: 2px;
+    }
   </style>
 </head>
 <body>
@@ -4818,6 +5010,48 @@
     </div>
   </div>
 
+  <!-- Alert Managers Modal -->
+  <div class="modal-overlay" id="alert-managers-modal">
+    <div class="modal alert-managers-modal">
+      <div class="modal-header">
+        <h2 class="modal-title">Alert Managers</h2>
+        <button class="modal-close" onclick="AlertManagersModal.close()">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="am-summary">
+          <div class="am-summary-item">
+            <span class="am-summary-value" id="am-total-count">16</span>
+            <span class="am-summary-label">Total Sources</span>
+          </div>
+          <div class="am-summary-item">
+            <span class="am-summary-value" id="am-active-count">0</span>
+            <span class="am-summary-label">With Active Alerts</span>
+          </div>
+          <div class="am-summary-item">
+            <span class="am-summary-value" id="am-total-alerts">0</span>
+            <span class="am-summary-label">Total Alerts</span>
+          </div>
+        </div>
+        <div class="am-list-header">
+          <span class="am-col-name">Alert Manager</span>
+          <span class="am-col-alerts">Alerts</span>
+          <span class="am-col-last-seen">Last Seen</span>
+        </div>
+        <div class="am-list" id="am-list">
+          <!-- Populated by JavaScript -->
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="AlertManagersModal.close()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- Alert Details Drawer -->
   <div class="alert-drawer-overlay" id="alert-drawer-overlay">
     <div class="alert-drawer" id="alert-drawer">
@@ -4994,8 +5228,8 @@
   <section class="status-overview">
     <!-- Primary Status Cards - Always Visible -->
     <div class="status-grid">
-      <div class="status-card critical has-tooltip">
-        <div class="tooltip">Total active alerts requiring attention</div>
+      <div class="status-card critical has-tooltip clickable" id="active-alerts-card" onclick="StatusCards.goToActiveAlerts()">
+        <div class="tooltip">Click to view active alerts</div>
         <div class="status-card-header">
           <span class="status-card-label">Active Alerts</span>
           <div class="status-card-icon">
@@ -5013,8 +5247,8 @@
         </div>
       </div>
 
-      <div class="status-card info has-tooltip">
-        <div class="tooltip">Unique servers with active alerts</div>
+      <div class="status-card info has-tooltip clickable" id="affected-servers-card" onclick="StatusCards.goToAffectedServers()">
+        <div class="tooltip">Click to view affected servers</div>
         <div class="status-card-header">
           <span class="status-card-label">Affected Servers</span>
           <div class="status-card-icon">
@@ -5030,8 +5264,8 @@
         <div class="status-card-detail">Unique hosts</div>
       </div>
 
-      <div class="status-card warning has-tooltip" id="incidents-card">
-        <div class="tooltip tooltip-wide">Detected incidents - alerts grouped by time correlation</div>
+      <div class="status-card warning has-tooltip clickable" id="incidents-card" onclick="StatusCards.goToIncidents()">
+        <div class="tooltip tooltip-wide">Click to scroll to incidents panel</div>
         <div class="status-card-header">
           <span class="status-card-label">Incidents</span>
           <div class="status-card-icon">
@@ -5046,8 +5280,8 @@
         <div class="status-card-detail">Auto-detected groups</div>
       </div>
 
-      <div class="status-card silenced has-tooltip" id="silenced-card">
-        <div class="tooltip">Alerts currently muted/silenced</div>
+      <div class="status-card silenced has-tooltip clickable" id="silenced-card" onclick="StatusCards.goToSilenced()">
+        <div class="tooltip">Click to view silenced alerts</div>
         <div class="status-card-header">
           <span class="status-card-label">Silenced</span>
           <div class="status-card-icon">
@@ -5061,8 +5295,8 @@
         <div class="status-card-detail">Muted alerts</div>
       </div>
 
-      <div class="status-card healthy has-tooltip">
-        <div class="tooltip">Alert manager sources being monitored</div>
+      <div class="status-card healthy has-tooltip clickable" id="alert-managers-card" onclick="AlertManagersModal.open()">
+        <div class="tooltip">Click to view alert manager details</div>
         <div class="status-card-header">
           <span class="status-card-label">Alert Managers</span>
           <div class="status-card-icon">
@@ -5072,7 +5306,7 @@
             </svg>
           </div>
         </div>
-        <div class="status-card-value">16</div>
+        <div class="status-card-value" id="alert-managers-count">16</div>
         <div class="status-card-detail">Sources monitored</div>
       </div>
     </div>
