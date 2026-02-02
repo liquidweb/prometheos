@@ -475,149 +475,6 @@
       color: var(--text-muted);
     }
 
-    /* Severity Distribution Widget */
-    .severity-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 12px;
-    }
-
-    .severity-bar-row {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 4px 8px;
-      margin: -4px -8px;
-      border-radius: var(--radius-md);
-      transition: all 0.15s ease;
-    }
-
-    .severity-bar-row.clickable {
-      cursor: pointer;
-    }
-
-    .severity-bar-row.clickable:hover {
-      background: var(--bg-tertiary);
-    }
-
-    .severity-label {
-      width: 80px;
-      font-size: 12px;
-      font-weight: 500;
-      color: var(--text-secondary);
-    }
-
-    .severity-bar-container {
-      flex: 1;
-      height: 8px;
-      background: var(--bg-tertiary);
-      border-radius: 4px;
-      overflow: hidden;
-    }
-
-    .severity-bar {
-      height: 100%;
-      border-radius: 4px;
-      transition: width 0.5s ease;
-    }
-
-    .severity-bar.critical { background: var(--critical); }
-    .severity-bar.warning { background: var(--warning); }
-    .severity-bar.info { background: var(--info); }
-
-    .severity-count {
-      width: 40px;
-      text-align: right;
-      font-family: var(--font-mono);
-      font-size: 12px;
-      font-weight: 600;
-      color: var(--text-primary);
-    }
-
-    /* Top Services Widget */
-    .services-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .service-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      transition: all 0.15s ease;
-    }
-
-    .service-row.clickable {
-      cursor: pointer;
-    }
-
-    .service-row.clickable:hover {
-      background: var(--bg-elevated);
-      transform: translateX(2px);
-    }
-
-    .service-row:hover {
-      background: var(--bg-elevated);
-    }
-
-    .service-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .service-count-badge {
-      padding: 2px 8px;
-      background: var(--critical-bg);
-      border-radius: 12px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--critical);
-    }
-
-    /* Top Locations Widget */
-    .locations-list {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
-
-    .location-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 8px 12px;
-      background: var(--bg-tertiary);
-      border-radius: var(--radius-md);
-      cursor: pointer;
-      transition: all 0.15s ease;
-    }
-
-    .location-row:hover {
-      background: var(--bg-elevated);
-    }
-
-    .location-name {
-      font-size: 13px;
-      font-weight: 500;
-      color: var(--text-primary);
-    }
-
-    .location-count-badge {
-      padding: 2px 8px;
-      background: var(--info-bg);
-      border-radius: 12px;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--info);
-    }
-
     /* ========================================
        QUICK STATS BAR
        ======================================== */
@@ -2033,21 +1890,28 @@
       display: flex;
     }
 
-    /* Clear All Filters Button */
+    /* Clear All Filters Button - Always visible */
     .btn-clear-filters {
-      display: none;
-      background: var(--critical-bg);
-      border-color: var(--critical);
-      color: var(--critical);
-    }
-
-    .btn-clear-filters:hover {
-      background: var(--critical);
-      color: white;
+      display: inline-flex;
+      background: var(--bg-tertiary);
+      border-color: var(--border);
+      color: var(--text-muted);
+      opacity: 0.6;
+      cursor: not-allowed;
+      transition: all 0.15s ease;
     }
 
     .btn-clear-filters.show {
-      display: inline-flex;
+      background: var(--critical-bg);
+      border-color: var(--critical);
+      color: var(--critical);
+      opacity: 1;
+      cursor: pointer;
+    }
+
+    .btn-clear-filters.show:hover {
+      background: var(--critical);
+      color: white;
     }
 
     .btn-danger {
@@ -5693,7 +5557,6 @@
             <h3 class="help-section-title">Analytics Sections</h3>
             <p class="help-text">Click any section header to expand/collapse. Sections auto-collapse by default but remember your preference.</p>
             <ul class="help-list">
-              <li><strong>Distribution</strong> - Alerts by location, account, and service</li>
               <li><strong>Metrics</strong> - Alert age, velocity, recurring systems</li>
               <li><strong>Charts</strong> - Visual alert velocity timeline</li>
               <li><strong>Incidents</strong> - Auto-detected alert clusters</li>
@@ -6496,95 +6359,6 @@
         </div>
         <div class="status-card-value" id="alert-managers-count">16</div>
         <div class="status-card-detail">Sources monitored</div>
-      </div>
-    </div>
-
-    <!-- Distribution Widgets Section - Collapsible -->
-    <div class="analytics-section" id="distribution-section">
-      <div class="section-header" onclick="SectionManager.toggle('distribution')">
-        <div class="section-header-left">
-          <div class="section-collapse-icon">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="6 9 12 15 18 9"></polyline>
-            </svg>
-          </div>
-          <span class="section-title">Distribution Overview</span>
-          <span class="section-badge">3 widgets</span>
-        </div>
-      </div>
-      <div class="section-content" id="distribution-content">
-        <div class="widgets-grid">
-          <!-- Severity Distribution Widget -->
-          <div class="widget">
-            <div class="widget-header">
-              <div>
-                <div class="widget-title has-tooltip">
-                  Alert Severity Distribution
-                  <div class="tooltip tooltip-wide">Categorized by service keywords: critical, warning, info</div>
-                </div>
-                <div class="widget-subtitle">Based on active alerts</div>
-              </div>
-            </div>
-            <div class="severity-bars" id="severity-bars">
-              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('critical')">
-                <div class="tooltip">Click to filter: critical, down, fail</div>
-                <span class="severity-label">Critical</span>
-                <div class="severity-bar-container">
-                  <div class="severity-bar critical" id="severity-critical" style="width: 0%"></div>
-                </div>
-                <span class="severity-count" id="severity-critical-count">0</span>
-              </div>
-              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('warning')">
-                <div class="tooltip">Click to filter: warn, high, load</div>
-                <span class="severity-label">Warning</span>
-                <div class="severity-bar-container">
-                  <div class="severity-bar warning" id="severity-warning" style="width: 0%"></div>
-                </div>
-                <span class="severity-count" id="severity-warning-count">0</span>
-              </div>
-              <div class="severity-bar-row has-tooltip clickable" onclick="filterBySeverity('info')">
-                <div class="tooltip">Click to filter: all other services</div>
-                <span class="severity-label">Info</span>
-                <div class="severity-bar-container">
-                  <div class="severity-bar info" id="severity-info" style="width: 0%"></div>
-                </div>
-                <span class="severity-count" id="severity-info-count">0</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Top Services Widget -->
-          <div class="widget">
-            <div class="widget-header">
-              <div>
-                <div class="widget-title">Top Affected Services</div>
-                <div class="widget-subtitle">Most frequent alerts</div>
-              </div>
-            </div>
-            <div class="services-list" id="top-services">
-              <div class="service-row">
-                <span class="service-name">Loading...</span>
-                <span class="service-count-badge">-</span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Top Locations Widget -->
-          <div class="widget">
-            <div class="widget-header">
-              <div>
-                <div class="widget-title">Alerts by Location</div>
-                <div class="widget-subtitle">Click to filter by location</div>
-              </div>
-            </div>
-            <div class="locations-list" id="top-locations">
-              <div class="location-row">
-                <span class="location-name">Loading...</span>
-                <span class="location-count-badge">-</span>
-              </div>
-            </div>
-          </div>
-        </div>
       </div>
     </div>
 
