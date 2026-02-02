@@ -90,6 +90,10 @@
       display: none;
     }
 
+    .data-table tbody tr.quick-filtered-out {
+      display: none;
+    }
+
     .data-table td {
       padding: 14px 16px;
       vertical-align: middle;
@@ -2200,9 +2204,11 @@ Services: ${this.currentAlert.services}`;
         const hasFilters = Object.values(this.filters).some(v => v);
         // Also check if grouping is active (Location/Account Focus views)
         const hasGrouping = typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping;
+        // Also check if quick filters are active
+        const hasQuickFilter = typeof QuickFilters !== 'undefined' && QuickFilters.isActive();
         const clearBtn = document.getElementById('clear-all-btn');
         if (clearBtn) {
-          clearBtn.classList.toggle('show', hasFilters || hasGrouping);
+          clearBtn.classList.toggle('show', hasFilters || hasGrouping || hasQuickFilter);
         }
       }
     };
@@ -2223,6 +2229,11 @@ Services: ${this.currentAlert.services}`;
       const searchBox = document.getElementById('search-box');
       if (searchBox) {
         searchBox.value = '';
+      }
+
+      // Clear quick filters (priority-based filtering)
+      if (typeof QuickFilters !== 'undefined') {
+        QuickFilters.clear(false);
       }
 
       // Use FilterManager.apply() to properly update the data table
@@ -4075,6 +4086,16 @@ Services: ${this.currentAlert.services}`;
       updatePriorityQueue(alertData, now);
       updateResponseMetrics(alertData, now);
       updateServiceImpact(alertData);
+
+      // Update Quick Filters badge counts
+      if (typeof QuickFilters !== 'undefined') {
+        QuickFilters.updateBadges();
+      }
+    }
+
+    // Wrapper function to refresh operational insights (called by PriorityQueueManager)
+    function refreshOperationalInsights() {
+      updateAdvancedAnalytics();
     }
 
     function formatDuration(ms) {
@@ -4231,7 +4252,7 @@ Services: ${this.currentAlert.services}`;
         labelInterval = 4;
       }
 
-      // Generate buckets
+      // Generate buckets for current period
       const buckets = [];
       for (let i = bucketCount - 1; i >= 0; i--) {
         const bucketStart = new Date(now - (i + 1) * bucketMs);
@@ -4247,7 +4268,7 @@ Services: ${this.currentAlert.services}`;
           }
         }
 
-        buckets.push({ label, count });
+        buckets.push({ label, count, index: bucketCount - 1 - i });
       }
 
       const maxCount = Math.max(...buckets.map(b => b.count), 1);
@@ -4271,34 +4292,59 @@ Services: ${this.currentAlert.services}`;
         `;
       }).join('');
 
-      // Update velocity trend indicator and vs previous
+      // Calculate trend using linear regression for more accurate velocity analysis
       const trendIndicator = document.getElementById('velocity-trend-indicator');
       const velocityChange = document.getElementById('velocity-change');
       if (trendIndicator) {
-        // Compare first half vs second half of the period
-        const halfPoint = Math.floor(bucketCount / 2);
-        const firstHalf = buckets.slice(0, halfPoint).reduce((sum, b) => sum + b.count, 0);
-        const secondHalf = buckets.slice(halfPoint).reduce((sum, b) => sum + b.count, 0);
+        // Linear regression to determine trend direction and strength
+        const n = buckets.length;
+        let sumX = 0, sumY = 0, sumXY = 0, sumX2 = 0;
 
-        if (firstHalf === 0) {
+        buckets.forEach((bucket, i) => {
+          sumX += i;
+          sumY += bucket.count;
+          sumXY += i * bucket.count;
+          sumX2 += i * i;
+        });
+
+        // Calculate slope (rate of change per bucket)
+        const slope = n > 1 ? (n * sumXY - sumX * sumY) / (n * sumX2 - sumX * sumX) : 0;
+
+        // Calculate average for normalization
+        const avgCount = sumY / n;
+
+        // Calculate percentage change based on slope relative to average
+        // Slope represents change per bucket, multiply by bucket count for total change
+        const totalChange = slope * (n - 1);
+        const changePercent = avgCount > 0 ? Math.round((totalChange / avgCount) * 100) : 0;
+
+        // Also calculate recent trend (last 1/3 vs first 1/3) for confirmation
+        const thirdPoint = Math.floor(n / 3);
+        const firstThird = buckets.slice(0, thirdPoint).reduce((sum, b) => sum + b.count, 0);
+        const lastThird = buckets.slice(-thirdPoint).reduce((sum, b) => sum + b.count, 0);
+        const recentChangePercent = firstThird > 0 ? Math.round(((lastThird - firstThird) / firstThird) * 100) : 0;
+
+        // Determine trend based on both slope and recent change
+        // Use 10% threshold for more sensitivity
+        const isIncreasing = slope > 0.1 && (changePercent > 10 || recentChangePercent > 15);
+        const isDecreasing = slope < -0.1 && (changePercent < -10 || recentChangePercent < -15);
+
+        if (totalAlerts === 0) {
+          trendIndicator.className = 'velocity-trend-indicator stable';
+          trendIndicator.innerHTML = '— No Data';
+          if (velocityChange) velocityChange.textContent = '--';
+        } else if (isIncreasing) {
+          trendIndicator.className = 'velocity-trend-indicator up';
+          trendIndicator.innerHTML = `↑ Increasing`;
+          if (velocityChange) velocityChange.textContent = `+${Math.abs(changePercent)}%`;
+        } else if (isDecreasing) {
+          trendIndicator.className = 'velocity-trend-indicator down';
+          trendIndicator.innerHTML = `↓ Decreasing`;
+          if (velocityChange) velocityChange.textContent = `-${Math.abs(changePercent)}%`;
+        } else {
           trendIndicator.className = 'velocity-trend-indicator stable';
           trendIndicator.innerHTML = '— Stable';
-          if (velocityChange) velocityChange.textContent = '--';
-        } else {
-          const changePercent = Math.round(((secondHalf - firstHalf) / firstHalf) * 100);
-          if (changePercent > 15) {
-            trendIndicator.className = 'velocity-trend-indicator up';
-            trendIndicator.innerHTML = `↑ Increasing`;
-            if (velocityChange) velocityChange.textContent = `+${changePercent}%`;
-          } else if (changePercent < -15) {
-            trendIndicator.className = 'velocity-trend-indicator down';
-            trendIndicator.innerHTML = `↓ Decreasing`;
-            if (velocityChange) velocityChange.textContent = `${changePercent}%`;
-          } else {
-            trendIndicator.className = 'velocity-trend-indicator stable';
-            trendIndicator.innerHTML = '— Stable';
-            if (velocityChange) velocityChange.textContent = `${changePercent > 0 ? '+' : ''}${changePercent}%`;
-          }
+          if (velocityChange) velocityChange.textContent = `${changePercent >= 0 ? '+' : ''}${changePercent}%`;
         }
       }
     }
@@ -4306,6 +4352,49 @@ Services: ${this.currentAlert.services}`;
     // ========================================
     // OPERATIONAL INSIGHTS FUNCTIONS
     // ========================================
+
+    // Priority Queue Manager for handling different ordering modes
+    const PriorityQueueManager = {
+      mode: 'priority', // Default mode
+      modes: {
+        priority: { label: 'Priority Score', sort: (a, b) => b.score - a.score },
+        fifo: { label: 'FIFO (Oldest First)', sort: (a, b) => a.time - b.time },
+        lifo: { label: 'LIFO (Newest First)', sort: (a, b) => b.time - a.time },
+        age: { label: 'Age Only', sort: (a, b) => b.ageHours - a.ageHours },
+        services: { label: 'Service Count', sort: (a, b) => b.serviceCount - a.serviceCount }
+      },
+
+      init() {
+        // Load saved mode from localStorage
+        const saved = localStorage.getItem('prometheos-queue-mode');
+        if (saved && this.modes[saved]) {
+          this.mode = saved;
+        }
+        // Update select element
+        const select = document.getElementById('queue-mode-select');
+        if (select) {
+          select.value = this.mode;
+        }
+      },
+
+      setMode(mode) {
+        if (this.modes[mode]) {
+          this.mode = mode;
+          localStorage.setItem('prometheos-queue-mode', mode);
+          // Refresh the queue display
+          refreshOperationalInsights();
+          showToast(`Queue mode: ${this.modes[mode].label}`, 'success');
+        }
+      },
+
+      getMode() {
+        return this.mode;
+      },
+
+      getSortFunction() {
+        return this.modes[this.mode]?.sort || this.modes.priority.sort;
+      }
+    };
 
     function updatePriorityQueue(alertData, now) {
       const container = document.getElementById('priority-queue');
@@ -4328,12 +4417,16 @@ Services: ${this.currentAlert.services}`;
         return { ...alert, score, ageHours, serviceCount, isRecurring };
       });
 
-      // Sort by priority score descending and take top 5
-      const prioritized = scored
-        .sort((a, b) => b.score - a.score)
+      // Get current queue mode and sort accordingly
+      const mode = PriorityQueueManager.getMode();
+      const sortFn = PriorityQueueManager.getSortFunction();
+
+      // Sort by selected mode and take top 5
+      const prioritized = [...scored]
+        .sort(sortFn)
         .slice(0, 5);
 
-      // Count high priority (score > 50)
+      // Count high priority (score > 50) - always based on score regardless of sort mode
       const highPriority = scored.filter(a => a.score > 50).length;
       if (badge) {
         badge.textContent = highPriority;
@@ -4350,11 +4443,46 @@ Services: ${this.currentAlert.services}`;
                 <polyline points="22 4 12 14.01 9 11.01"></polyline>
               </svg>
             </div>
-            <span class="widget-empty-text">No high-priority alerts</span>
+            <span class="widget-empty-text">No alerts in queue</span>
           </div>
         `;
         return;
       }
+
+      // Determine what secondary info to show based on mode
+      const getSecondaryLabel = (alert) => {
+        switch (mode) {
+          case 'fifo':
+          case 'lifo':
+            return alert.time.toLocaleString();
+          case 'age':
+            const ageText = alert.ageHours >= 24 ? `${Math.floor(alert.ageHours / 24)}d` :
+                            alert.ageHours >= 1 ? `${Math.floor(alert.ageHours)}h` :
+                            `${Math.floor(alert.ageHours * 60)}m`;
+            return `${ageText} old`;
+          case 'services':
+            return `${alert.serviceCount} service${alert.serviceCount !== 1 ? 's' : ''}`;
+          default:
+            return `score`;
+        }
+      };
+
+      const getSecondaryValue = (alert) => {
+        switch (mode) {
+          case 'fifo':
+          case 'lifo':
+            const ageText = alert.ageHours >= 24 ? `${Math.floor(alert.ageHours / 24)}d` :
+                            alert.ageHours >= 1 ? `${Math.floor(alert.ageHours)}h` :
+                            `${Math.floor(alert.ageHours * 60)}m`;
+            return ageText;
+          case 'age':
+            return alert.score;
+          case 'services':
+            return alert.score;
+          default:
+            return alert.score;
+        }
+      };
 
       container.innerHTML = prioritized.map((alert, i) => {
         const priority = alert.score > 80 ? 'high' : alert.score > 40 ? 'medium' : 'low';
@@ -4371,8 +4499,8 @@ Services: ${this.currentAlert.services}`;
               <div class="priority-meta">${services} • ${ageText} old${alert.isRecurring ? ' • Recurring' : ''}</div>
             </div>
             <div class="priority-score">
-              <span class="priority-score-value">${alert.score}</span>
-              <span class="priority-score-label">score</span>
+              <span class="priority-score-value">${getSecondaryValue(alert)}</span>
+              <span class="priority-score-label">${getSecondaryLabel(alert)}</span>
             </div>
           </div>
         `;
@@ -6387,6 +6515,162 @@ Services: ${this.currentAlert.services}`;
     };
 
     // ========================================
+    // QUICK FILTERS (Priority-based filtering)
+    // ========================================
+
+    const QuickFilters = {
+      activeFilter: null,
+      cachedScores: null,
+
+      // Calculate scores for all alerts (cached for efficiency)
+      calculateAlertScores() {
+        const now = new Date();
+        const rows = Array.from(document.querySelectorAll('#alert-table tbody tr:not(.stale-section-row):not(.stale-alerts-row)'));
+
+        return rows.map(row => {
+          const timeStr = row.dataset.time;
+          const hostname = row.dataset.hostname;
+          const services = row.dataset.services || '';
+
+          if (!timeStr) return null;
+
+          const time = new Date(timeStr.replace(' ', 'T'));
+          const duration = now - time;
+          const ageHours = duration / (60 * 60 * 1000);
+          const serviceCount = services.split(',').filter(s => s.trim()).length;
+
+          // Check recurring (same hostname appears multiple times)
+          const hostCount = rows.filter(r => r.dataset.hostname === hostname).length;
+          const isRecurring = hostCount > 1;
+
+          // Calculate priority score
+          const score = Math.round((ageHours * 10) + (serviceCount * 5) + (isRecurring ? 20 : 0));
+
+          return { row, hostname, time, duration, ageHours, serviceCount, isRecurring, score };
+        }).filter(Boolean);
+      },
+
+      // Update badge counts for each quick filter
+      updateBadges() {
+        const scored = this.calculateAlertScores();
+        const HOUR = 60 * 60 * 1000;
+        const FOUR_HOURS = 4 * HOUR;
+
+        // Priority Queue (score > 50)
+        const highPriority = scored.filter(a => a.score > 50).length;
+        const priorityBadge = document.getElementById('quick-filter-priority-badge');
+        if (priorityBadge) priorityBadge.textContent = highPriority;
+
+        // Critical (> 4 hours)
+        const critical = scored.filter(a => a.duration > FOUR_HOURS).length;
+        const criticalBadge = document.getElementById('quick-filter-critical-badge');
+        if (criticalBadge) criticalBadge.textContent = critical;
+
+        // Newest (< 1 hour)
+        const newest = scored.filter(a => a.duration < HOUR).length;
+        const newestBadge = document.getElementById('quick-filter-newest-badge');
+        if (newestBadge) newestBadge.textContent = newest;
+
+        // Recurring
+        const recurring = scored.filter(a => a.isRecurring).length;
+        const recurringBadge = document.getElementById('quick-filter-recurring-badge');
+        if (recurringBadge) recurringBadge.textContent = recurring;
+
+        this.cachedScores = scored;
+      },
+
+      apply(filterType) {
+        const scored = this.cachedScores || this.calculateAlertScores();
+        const HOUR = 60 * 60 * 1000;
+        const FOUR_HOURS = 4 * HOUR;
+
+        // First, clear any existing quick filter
+        this.clear(false);
+
+        // Determine which rows to show
+        let matchingHostnames = [];
+        let filterLabel = '';
+
+        switch (filterType) {
+          case 'highPriority':
+            matchingHostnames = scored.filter(a => a.score > 50).map(a => a.hostname);
+            filterLabel = 'Priority Queue';
+            break;
+          case 'critical':
+            matchingHostnames = scored.filter(a => a.duration > FOUR_HOURS).map(a => a.hostname);
+            filterLabel = 'Critical (>4h)';
+            break;
+          case 'newest':
+            matchingHostnames = scored.filter(a => a.duration < HOUR).map(a => a.hostname);
+            filterLabel = 'Newest (<1h)';
+            break;
+          case 'recurring':
+            matchingHostnames = scored.filter(a => a.isRecurring).map(a => a.hostname);
+            filterLabel = 'Recurring';
+            break;
+          default:
+            return;
+        }
+
+        // Apply filter - show only matching rows
+        const allRows = document.querySelectorAll('#alert-table tbody tr:not(.stale-section-row):not(.stale-alerts-row)');
+        let visibleCount = 0;
+
+        allRows.forEach(row => {
+          const hostname = row.dataset.hostname;
+          if (matchingHostnames.includes(hostname)) {
+            row.classList.remove('quick-filtered-out');
+            visibleCount++;
+          } else {
+            row.classList.add('quick-filtered-out');
+          }
+        });
+
+        this.activeFilter = filterType;
+
+        // Close the presets dropdown
+        const dropdown = document.getElementById('presets-dropdown');
+        if (dropdown) dropdown.classList.remove('show');
+
+        // Update filter badge to show quick filter is active
+        const filterBadge = document.getElementById('filter-badge');
+        if (filterBadge) {
+          const currentCount = parseInt(filterBadge.textContent) || 0;
+          filterBadge.textContent = currentCount + 1;
+          filterBadge.style.display = 'flex';
+        }
+
+        // Show clear button
+        const clearBtn = document.getElementById('clear-all-btn');
+        if (clearBtn) clearBtn.style.display = 'flex';
+
+        showToast(`${filterLabel}: ${visibleCount} alerts`, 'success');
+
+        // Update visible count
+        updateVisibleCount();
+      },
+
+      clear(showMessage = true) {
+        if (!this.activeFilter) return;
+
+        // Remove quick filter class from all rows
+        const allRows = document.querySelectorAll('#alert-table tbody tr.quick-filtered-out');
+        allRows.forEach(row => row.classList.remove('quick-filtered-out'));
+
+        this.activeFilter = null;
+
+        if (showMessage) {
+          showToast('Quick filter cleared', 'success');
+          updateVisibleCount();
+        }
+      },
+
+      isActive() {
+        return this.activeFilter !== null;
+      }
+    };
+
+    // ========================================
     // COLUMN MANAGER
     // ========================================
 
@@ -6914,6 +7198,7 @@ Services: ${this.currentAlert.services}`;
       AlertManagersModal.init();
       ViewPresets.init();
       InsightCards.init();
+      PriorityQueueManager.init();
 
       // Initialize simplified prom display names
       initPromDisplayNames();
