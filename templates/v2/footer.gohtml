@@ -462,6 +462,64 @@
       padding-left: 64px !important;
     }
 
+    /* Rack-level header (rack within row) */
+    .rack-header-row {
+      background: var(--bg-primary) !important;
+      border-left: 3px solid rgba(99, 102, 241, 0.2);
+      cursor: pointer;
+    }
+
+    .rack-header-row:hover {
+      background: var(--bg-secondary) !important;
+    }
+
+    .rack-header-row td {
+      padding: 5px 16px !important;
+      padding-left: 64px !important;
+    }
+
+    .rack-header-content {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 500;
+      font-size: 11px;
+      color: var(--text-secondary);
+    }
+
+    .rack-expand-icon {
+      width: 11px;
+      height: 11px;
+      color: var(--text-muted);
+      transition: transform 0.2s ease;
+    }
+
+    .rack-header-row.collapsed .rack-expand-icon {
+      transform: rotate(-90deg);
+    }
+
+    .rack-header-name {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .rack-header-count {
+      padding: 1px 5px;
+      background: var(--bg-tertiary);
+      border-radius: var(--radius-sm);
+      font-size: 9px;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+
+    .grouped-row.indent-4 {
+      border-left-color: rgba(99, 102, 241, 0.05);
+    }
+
+    .grouped-row.indent-4 td:first-child {
+      padding-left: 80px !important;
+    }
+
     /* Stale Alerts Collapsing */
     .stale-alerts-header {
       background: linear-gradient(135deg, rgba(255, 193, 7, 0.08) 0%, rgba(255, 152, 0, 0.05) 100%);
@@ -3297,15 +3355,16 @@ Services: ${this.currentAlert.services}`;
 
           const tbody = table.querySelector('tbody');
 
-          // Remove all group/subgroup/row header rows
-          tbody.querySelectorAll('.group-header-row, .subgroup-header-row, .row-header-row').forEach(row => row.remove());
+          // Remove all group/subgroup/row/rack header rows
+          tbody.querySelectorAll('.group-header-row, .subgroup-header-row, .row-header-row, .rack-header-row').forEach(row => row.remove());
 
           // Remove grouping classes and data attributes from alert rows
           tbody.querySelectorAll('.grouped-row').forEach(row => {
-            row.classList.remove('grouped-row', 'indent-1', 'indent-2', 'indent-3');
+            row.classList.remove('grouped-row', 'indent-1', 'indent-2', 'indent-3', 'indent-4');
             delete row.dataset.parentGroup;
             delete row.dataset.parentSubgroup;
             delete row.dataset.parentRowgroup;
+            delete row.dataset.parentRackgroup;
           });
 
           // Show all rows
@@ -3330,7 +3389,7 @@ Services: ${this.currentAlert.services}`;
 
           if (rows.length === 0) return;
 
-          // Group by datacenter > section > row
+          // Group by datacenter > section > row > rack
           const groups = new Map();
 
           rows.forEach(row => {
@@ -3339,6 +3398,7 @@ Services: ${this.currentAlert.services}`;
             const dc = parsed?.fullDC || 'Unknown';
             const section = parsed?.fullSection || 'Unknown';
             const rowKey = parsed ? `${parsed.fullSection}${parsed.row}` : 'Unknown';
+            const rackKey = parsed ? `${parsed.fullSection}${parsed.row}${parsed.rack}` : 'Unknown';
 
             if (!groups.has(dc)) {
               groups.set(dc, new Map());
@@ -3347,9 +3407,12 @@ Services: ${this.currentAlert.services}`;
               groups.get(dc).set(section, new Map());
             }
             if (!groups.get(dc).get(section).has(rowKey)) {
-              groups.get(dc).get(section).set(rowKey, []);
+              groups.get(dc).get(section).set(rowKey, new Map());
             }
-            groups.get(dc).get(section).get(rowKey).push(row);
+            if (!groups.get(dc).get(section).get(rowKey).has(rackKey)) {
+              groups.get(dc).get(section).get(rowKey).set(rackKey, []);
+            }
+            groups.get(dc).get(section).get(rowKey).get(rackKey).push(row);
           });
 
           // Sort groups by datacenter and section
@@ -3364,11 +3427,13 @@ Services: ${this.currentAlert.services}`;
             let dcTotalAlerts = 0;
             let dcNewAlerts = 0;
             sections.forEach(sectionRows => {
-              sectionRows.forEach(rowAlerts => {
-                dcTotalAlerts += rowAlerts.length;
-                rowAlerts.forEach(row => {
-                  const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
-                  if (duration === 'new') dcNewAlerts++;
+              sectionRows.forEach(rowRacks => {
+                rowRacks.forEach(rackAlerts => {
+                  dcTotalAlerts += rackAlerts.length;
+                  rackAlerts.forEach(row => {
+                    const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                    if (duration === 'new') dcNewAlerts++;
+                  });
                 });
               });
             });
@@ -3410,11 +3475,13 @@ Services: ${this.currentAlert.services}`;
               // Calculate section stats
               let sectionTotalAlerts = 0;
               let sectionNewAlerts = 0;
-              sectionRowsMap.forEach(rowAlerts => {
-                sectionTotalAlerts += rowAlerts.length;
-                rowAlerts.forEach(row => {
-                  const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
-                  if (duration === 'new') sectionNewAlerts++;
+              sectionRowsMap.forEach(rowRacks => {
+                rowRacks.forEach(rackAlerts => {
+                  sectionTotalAlerts += rackAlerts.length;
+                  rackAlerts.forEach(row => {
+                    const duration = row.querySelector('.duration-badge')?.textContent.trim().toLowerCase();
+                    if (duration === 'new') sectionNewAlerts++;
+                  });
                 });
               });
 
@@ -3446,17 +3513,15 @@ Services: ${this.currentAlert.services}`;
               // Sort rows within section
               const sortedRowsMap = new Map([...sectionRowsMap.entries()].sort());
 
-              sortedRowsMap.forEach((rowAlerts, rowKey) => {
+              sortedRowsMap.forEach((rowRacksMap, rowKey) => {
                 // Get row display name (e.g., "R9" from "B3S2R9")
                 const rowMatch = rowKey.match(/R(\d+)$/i);
                 const rowDisplay = rowMatch ? `R${rowMatch[1]}` : rowKey.replace(section, '');
 
-                // Calculate rack info
-                const racks = new Set();
-                rowAlerts.forEach(row => {
-                  const loc = row.dataset.location || '';
-                  const parsed = this.parseLocation(loc);
-                  if (parsed?.rack) racks.add(parsed.rack);
+                // Calculate row total alerts
+                let rowTotalAlerts = 0;
+                rowRacksMap.forEach(rackAlerts => {
+                  rowTotalAlerts += rackAlerts.length;
                 });
 
                 // Create row header (collapsed by default, hidden initially)
@@ -3476,21 +3541,55 @@ Services: ${this.currentAlert.services}`;
                         <polyline points="6 9 12 15 18 9"></polyline>
                       </svg>
                       <span class="row-header-name">Row ${rowDisplay}</span>
-                      <span class="row-header-count">${rowAlerts.length} alert${rowAlerts.length !== 1 ? 's' : ''}</span>
-                      <span class="row-header-count" style="margin-left: 4px;">${racks.size} rack${racks.size !== 1 ? 's' : ''}</span>
+                      <span class="row-header-count">${rowTotalAlerts} alert${rowTotalAlerts !== 1 ? 's' : ''}</span>
+                      <span class="row-header-count" style="margin-left: 4px;">${rowRacksMap.size} rack${rowRacksMap.size !== 1 ? 's' : ''}</span>
                     </div>
                   </td>
                 `;
                 fragment.appendChild(rowHeader);
 
-                // Add alert rows (hidden initially)
-                rowAlerts.forEach(row => {
-                  row.classList.add('grouped-row', 'indent-3');
-                  row.dataset.parentGroup = dc;
-                  row.dataset.parentSubgroup = section;
-                  row.dataset.parentRowgroup = rowKey;
-                  row.style.display = 'none'; // Hidden because parent is collapsed
-                  fragment.appendChild(row);
+                // Sort racks within row
+                const sortedRacksMap = new Map([...rowRacksMap.entries()].sort());
+
+                sortedRacksMap.forEach((rackAlerts, rackKey) => {
+                  // Get rack display name (e.g., "K8" from "B3S2R9K8")
+                  const rackMatch = rackKey.match(/K(\d+)$/i);
+                  const rackDisplay = rackMatch ? `K${rackMatch[1]}` : rackKey.replace(rowKey, '');
+
+                  // Create rack header (collapsed by default, hidden initially)
+                  const rackHeader = document.createElement('tr');
+                  rackHeader.className = 'rack-header-row grouped-row indent-3 collapsed';
+                  rackHeader.dataset.rackgroup = rackKey;
+                  rackHeader.dataset.parentGroup = dc;
+                  rackHeader.dataset.parentSubgroup = section;
+                  rackHeader.dataset.parentRowgroup = rowKey;
+                  rackHeader.dataset.level = 'rack';
+                  rackHeader.style.display = 'none'; // Hidden because parent is collapsed
+                  rackHeader.onclick = (e) => { e.stopPropagation(); this.toggleRackGroup(rackHeader); };
+
+                  rackHeader.innerHTML = `
+                    <td colspan="${colCount}">
+                      <div class="rack-header-content">
+                        <svg class="rack-expand-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <polyline points="6 9 12 15 18 9"></polyline>
+                        </svg>
+                        <span class="rack-header-name">Rack ${rackDisplay}</span>
+                        <span class="rack-header-count">${rackAlerts.length} alert${rackAlerts.length !== 1 ? 's' : ''}</span>
+                      </div>
+                    </td>
+                  `;
+                  fragment.appendChild(rackHeader);
+
+                  // Add alert rows (hidden initially)
+                  rackAlerts.forEach(row => {
+                    row.classList.add('grouped-row', 'indent-4');
+                    row.dataset.parentGroup = dc;
+                    row.dataset.parentSubgroup = section;
+                    row.dataset.parentRowgroup = rowKey;
+                    row.dataset.parentRackgroup = rackKey;
+                    row.style.display = 'none'; // Hidden because parent is collapsed
+                    fragment.appendChild(row);
+                  });
                 });
               });
             });
@@ -3601,8 +3700,11 @@ Services: ${this.currentAlert.services}`;
         const groupId = headerRow.dataset.group;
         const tbody = headerRow.closest('tbody');
 
-        // Find all direct children of this group (sections or alert rows)
-        tbody.querySelectorAll(`tr[data-parent-group="${groupId}"]`).forEach(row => {
+        // Use data attribute matching to handle special characters in account names
+        const allRows = Array.from(tbody.querySelectorAll('tr[data-parent-group]'));
+        const matchingRows = allRows.filter(row => row.dataset.parentGroup === groupId);
+
+        matchingRows.forEach(row => {
           if (isCollapsed) {
             // Collapse: hide all children
             row.style.display = 'none';
@@ -3618,12 +3720,14 @@ Services: ${this.currentAlert.services}`;
 
         // Also hide deeper nested items when collapsing datacenter
         if (isCollapsed) {
-          tbody.querySelectorAll(`tr.row-header-row[data-parent-group="${groupId}"]`).forEach(row => {
-            row.style.display = 'none';
-          });
-          tbody.querySelectorAll(`tr.alert-row[data-parent-group="${groupId}"]`).forEach(row => {
-            row.style.display = 'none';
-          });
+          const rowHeaders = allRows.filter(row => row.dataset.parentGroup === groupId && row.classList.contains('row-header-row'));
+          rowHeaders.forEach(row => { row.style.display = 'none'; });
+
+          const rackHeaders = allRows.filter(row => row.dataset.parentGroup === groupId && row.classList.contains('rack-header-row'));
+          rackHeaders.forEach(row => { row.style.display = 'none'; });
+
+          const alertRows = allRows.filter(row => row.dataset.parentGroup === groupId && row.classList.contains('alert-row'));
+          alertRows.forEach(row => { row.style.display = 'none'; });
         }
       },
 
@@ -3634,7 +3738,7 @@ Services: ${this.currentAlert.services}`;
         const tbody = headerRow.closest('tbody');
 
         // Find all direct children of this subgroup (row headers)
-        tbody.querySelectorAll(`tr[data-parent-subgroup="${subgroupId}"]`).forEach(row => {
+        tbody.querySelectorAll(`tr[data-parent-subgroup="${CSS.escape(subgroupId)}"]`).forEach(row => {
           if (isCollapsed) {
             // Collapse: hide all children
             row.style.display = 'none';
@@ -3646,22 +3750,52 @@ Services: ${this.currentAlert.services}`;
           }
         });
 
-        // Also hide alert rows when collapsing section
+        // Also hide rack headers and alert rows when collapsing section
         if (isCollapsed) {
-          tbody.querySelectorAll(`tr.alert-row[data-parent-subgroup="${subgroupId}"]`).forEach(row => {
+          tbody.querySelectorAll(`tr.rack-header-row[data-parent-subgroup="${CSS.escape(subgroupId)}"]`).forEach(row => {
+            row.style.display = 'none';
+          });
+          tbody.querySelectorAll(`tr.alert-row[data-parent-subgroup="${CSS.escape(subgroupId)}"]`).forEach(row => {
             row.style.display = 'none';
           });
         }
       },
 
-      // Toggle row group (third level in location grouping - shows individual alerts)
+      // Toggle row group (third level in location grouping - shows rack headers)
       toggleRowGroup(headerRow) {
         const isCollapsed = headerRow.classList.toggle('collapsed');
         const rowgroupId = headerRow.dataset.rowgroup;
         const tbody = headerRow.closest('tbody');
 
-        // Find all alert rows belonging to this row group
-        tbody.querySelectorAll(`tr.alert-row[data-parent-rowgroup="${rowgroupId}"]`).forEach(row => {
+        // Find all rack headers belonging to this row group
+        tbody.querySelectorAll(`tr[data-parent-rowgroup="${CSS.escape(rowgroupId)}"]`).forEach(row => {
+          if (isCollapsed) {
+            // Collapse: hide all children
+            row.style.display = 'none';
+          } else {
+            // Expand: show rack headers only (they remain collapsed)
+            if (row.classList.contains('rack-header-row')) {
+              row.style.display = '';
+            }
+          }
+        });
+
+        // Also hide alert rows when collapsing row
+        if (isCollapsed) {
+          tbody.querySelectorAll(`tr.alert-row[data-parent-rowgroup="${CSS.escape(rowgroupId)}"]`).forEach(row => {
+            row.style.display = 'none';
+          });
+        }
+      },
+
+      // Toggle rack group (fourth level in location grouping - shows individual alerts)
+      toggleRackGroup(headerRow) {
+        const isCollapsed = headerRow.classList.toggle('collapsed');
+        const rackgroupId = headerRow.dataset.rackgroup;
+        const tbody = headerRow.closest('tbody');
+
+        // Find all alert rows belonging to this rack group
+        tbody.querySelectorAll(`tr.alert-row[data-parent-rackgroup="${CSS.escape(rackgroupId)}"]`).forEach(row => {
           row.style.display = isCollapsed ? 'none' : '';
         });
       },
