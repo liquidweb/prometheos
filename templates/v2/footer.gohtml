@@ -2677,6 +2677,7 @@ Services: ${this.currentAlert.services}`;
 
     const IncidentManager = {
       incidents: [],
+      dismissedIncidents: [], // Track deleted incidents to prevent re-detection
       selectedAlerts: new Set(),
       windowMinutes: 5,
       CLUSTER_WINDOW_MS: 5 * 60 * 1000, // 5 minutes (default)
@@ -2716,9 +2717,53 @@ Services: ${this.currentAlert.services}`;
 
         const saved = localStorage.getItem('prometheos-incidents');
         this.incidents = saved ? JSON.parse(saved) : [];
+
+        // Load dismissed incidents
+        const dismissed = localStorage.getItem('prometheos-dismissed-incidents');
+        this.dismissedIncidents = dismissed ? JSON.parse(dismissed) : [];
+
         this.detectIncidents();
         this.render();
         this.updateExportCounts();
+      },
+
+      // Generate a signature for an incident to track dismissals
+      getIncidentSignature(incident) {
+        // Signature based on type + key (location or account)
+        if (incident.type === 'account') {
+          return `account:${incident.account}`;
+        } else if (incident.locationKey) {
+          return `${incident.type}:${incident.locationKey}`;
+        }
+        // Fallback: use sorted hostnames
+        const hostnames = incident.alerts.map(a => a.hostname).sort().join(',');
+        return `hosts:${hostnames}`;
+      },
+
+      // Check if an incident signature is dismissed
+      isIncidentDismissed(signature) {
+        return this.dismissedIncidents.includes(signature);
+      },
+
+      // Dismiss an incident by its signature
+      dismissIncident(signature) {
+        if (!this.dismissedIncidents.includes(signature)) {
+          this.dismissedIncidents.push(signature);
+          this.saveDismissed();
+        }
+      },
+
+      // Clear all dismissed incidents (allows them to be re-detected)
+      clearDismissed() {
+        this.dismissedIncidents = [];
+        this.saveDismissed();
+        this.detectIncidents();
+        this.render();
+        showToast('Dismissed incidents cleared - they may reappear on next scan', 'info');
+      },
+
+      saveDismissed() {
+        localStorage.setItem('prometheos-dismissed-incidents', JSON.stringify(this.dismissedIncidents));
       },
 
       // Parse location code: B3S2R9K8U27 -> { datacenter, section, row, rack, unit }
@@ -2837,10 +2882,16 @@ Services: ${this.currentAlert.services}`;
         // and by account for non-excluded hosts
         const newIncidents = [];
 
+        // Helper to check if incident should be created (not dismissed)
+        const shouldCreateIncident = (type, key) => {
+          const signature = type === 'account' ? `account:${key}` : `${type}:${key}`;
+          return !this.isIncidentDismissed(signature);
+        };
+
         // 1. First, detect RACK-level incidents (highest priority)
         const rackGroups = this.groupAlertsByKey(alerts, a => a.parsedLocation?.rack);
         rackGroups.forEach((groupAlerts, rack) => {
-          if (rack && this.meetsInfrastructureCriteria(groupAlerts)) {
+          if (rack && this.meetsInfrastructureCriteria(groupAlerts) && shouldCreateIncident('rack', rack)) {
             newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'rack', rack));
           }
         });
@@ -2852,7 +2903,7 @@ Services: ${this.currentAlert.services}`;
         const remainingForRow = alerts.filter(a => !rackAlertIds.has(a.id));
         const rowGroups = this.groupAlertsByKey(remainingForRow, a => a.parsedLocation?.row);
         rowGroups.forEach((groupAlerts, row) => {
-          if (row && this.meetsInfrastructureCriteria(groupAlerts)) {
+          if (row && this.meetsInfrastructureCriteria(groupAlerts) && shouldCreateIncident('row', row)) {
             newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'row', row));
           }
         });
@@ -2864,7 +2915,7 @@ Services: ${this.currentAlert.services}`;
         const remainingForSection = alerts.filter(a => !infraAlertIds.has(a.id));
         const sectionGroups = this.groupAlertsByKey(remainingForSection, a => a.parsedLocation?.section);
         sectionGroups.forEach((groupAlerts, section) => {
-          if (section && this.meetsInfrastructureCriteria(groupAlerts)) {
+          if (section && this.meetsInfrastructureCriteria(groupAlerts) && shouldCreateIncident('section', section)) {
             newIncidents.push(this.createInfrastructureIncident(groupAlerts, 'section', section));
           }
         });
@@ -2878,7 +2929,7 @@ Services: ${this.currentAlert.services}`;
         );
         const accountGroups = this.groupAlertsByKey(remainingForAccount, a => a.account);
         accountGroups.forEach((groupAlerts, account) => {
-          if (account && this.meetsAccountCriteria(groupAlerts)) {
+          if (account && this.meetsAccountCriteria(groupAlerts) && shouldCreateIncident('account', account)) {
             newIncidents.push(this.createAccountIncident(groupAlerts, account));
           }
         });
@@ -3311,15 +3362,22 @@ Services: ${this.currentAlert.services}`;
       },
 
       deleteIncident(id) {
-        if (!confirm('Delete this incident grouping? The alerts will remain but the grouping and notes will be lost.')) {
+        const incident = this.incidents.find(i => i.id === id);
+        if (!incident) return;
+
+        if (!confirm('Delete this incident grouping? It will not reappear on rescan. The alerts will remain but the grouping and notes will be lost.')) {
           return;
         }
+
+        // Add to dismissed list so it won't be re-detected
+        const signature = this.getIncidentSignature(incident);
+        this.dismissIncident(signature);
 
         this.incidents = this.incidents.filter(i => i.id !== id);
         this.save();
         this.render();
         this.updateIncidentCounts();
-        showToast('Incident deleted', 'success');
+        showToast('Incident deleted and dismissed', 'success');
       },
 
       save() {
