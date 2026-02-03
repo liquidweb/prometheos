@@ -1886,7 +1886,7 @@ Services: ${this.currentAlert.services}`;
 
       const table = document.getElementById(tableId);
       const tbody = table.querySelector('tbody');
-      const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
+      const rows = Array.from(tbody.querySelectorAll('tr.alert-row:not(.filtered-out)'));
       const th = table.querySelectorAll('th')[columnIndex];
 
       const stateKey = `${tableId}-${columnIndex}`;
@@ -1909,8 +1909,8 @@ Services: ${this.currentAlert.services}`;
       th.classList.add(direction);
 
       rows.sort((a, b) => {
-        const aVal = a.cells[columnIndex].textContent.trim().toLowerCase();
-        const bVal = b.cells[columnIndex].textContent.trim().toLowerCase();
+        const aVal = a.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
+        const bVal = b.cells[columnIndex]?.textContent.trim().toLowerCase() || '';
 
         // Special handling for duration column - parse duration values
         const durationPattern = /^(\d+)([smhd])\s*(?:(\d+)([mh]))?$/i;
@@ -7418,7 +7418,7 @@ Services: ${this.currentAlert.services}`;
         if (!table) return;
 
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('tr.alert-row'));
 
         if (rows.length === 0) return;
 
@@ -7466,7 +7466,7 @@ Services: ${this.currentAlert.services}`;
         if (!table) return;
 
         const tbody = table.querySelector('tbody');
-        const rows = Array.from(tbody.querySelectorAll('tr'));
+        const rows = Array.from(tbody.querySelectorAll('tr.alert-row'));
 
         if (rows.length === 0) return;
 
