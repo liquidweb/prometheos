@@ -1878,6 +1878,12 @@ Services: ${this.currentAlert.services}`;
     const sortStates = {};
 
     function sortTable(tableId, columnIndex) {
+      // Skip sorting when grouping is active (it destroys the hierarchical structure)
+      if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
+        showToast('Sorting is disabled in grouped views', 'info');
+        return;
+      }
+
       const table = document.getElementById(tableId);
       const tbody = table.querySelector('tbody');
       const rows = Array.from(tbody.querySelectorAll('tr:not(.filtered-out)'));
@@ -3298,18 +3304,21 @@ Services: ${this.currentAlert.services}`;
         // Update clear all button state based on new view
         FilterManager.updateClearAllButton();
 
-        // Always reapply default sort (newest/shortest duration first) unless preset has saved sort
-        // Check if there's a saved sort preference for this preset
-        const savedSort = localStorage.getItem(`prometheos-preset-sort-${presetId}`);
-        if (savedSort) {
-          try {
-            const sortConfig = JSON.parse(savedSort);
-            applySavedSort(sortConfig.columnIndex, sortConfig.direction);
-          } catch (e) {
+        // Only apply sorting if no grouping is active (sorting destroys the hierarchical structure)
+        if (!GroupingManager.currentGrouping) {
+          // Always reapply default sort (newest/shortest duration first) unless preset has saved sort
+          // Check if there's a saved sort preference for this preset
+          const savedSort = localStorage.getItem(`prometheos-preset-sort-${presetId}`);
+          if (savedSort) {
+            try {
+              const sortConfig = JSON.parse(savedSort);
+              applySavedSort(sortConfig.columnIndex, sortConfig.direction);
+            } catch (e) {
+              applyDefaultSort();
+            }
+          } else {
             applyDefaultSort();
           }
-        } else {
-          applyDefaultSort();
         }
 
         if (showToastMsg) {
@@ -7398,6 +7407,11 @@ Services: ${this.currentAlert.services}`;
 
     // Apply default sort: duration ascending (newest/shortest first)
     function applyDefaultSort() {
+      // Skip sorting when grouping is active (it destroys the hierarchical structure)
+      if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
+        return;
+      }
+
       // Sort both tables by duration column (index 11)
       ['active-table', 'silenced-table'].forEach(tableId => {
         const table = document.getElementById(tableId);
@@ -7442,6 +7456,11 @@ Services: ${this.currentAlert.services}`;
 
     // Apply a saved sort configuration
     function applySavedSort(columnIndex, direction) {
+      // Skip sorting when grouping is active (it destroys the hierarchical structure)
+      if (typeof GroupingManager !== 'undefined' && GroupingManager.currentGrouping) {
+        return;
+      }
+
       ['active-table', 'silenced-table'].forEach(tableId => {
         const table = document.getElementById(tableId);
         if (!table) return;
